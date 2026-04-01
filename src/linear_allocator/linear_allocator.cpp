@@ -2,7 +2,6 @@
 #include <cstdlib>
 
 namespace Util {
-    template<typename T>
     size_t LinearAllocator::allocate(size_t size)
     {
         if (memory_region_size < memory_top + size)

@@ -3,8 +3,6 @@
 #include <lexer/lexer.hpp>
 #include <linear_allocator/linear_allocator.hpp>
 
-#include "ast_nodes.hpp"
-
 namespace ASTParser{
     using namespace std::literals::string_literals;
 
@@ -26,7 +24,6 @@ namespace ASTParser{
         Util::TokenGeneric last_token = static_cast<Util::TokenGeneric>(Util::NoToken()); //last acquired token really, but it points to current token in a way
 
         ParserErrorCode last_parser_error = ParserErrorCode::None;
-
         size_t report_index = 0;
 
         Util::TokenGeneric get_next_non_neutral_token()
@@ -114,13 +111,12 @@ namespace ASTParser{
 
     class Parser{
         ParserContext parser_context;
+        Util::LinearAllocator allocator;
         public:
 
         Parser(Util::Source& source): parser_context(source)
         {};        
 
         void generate_AST();
-
-        double eval_math();
     };
 }

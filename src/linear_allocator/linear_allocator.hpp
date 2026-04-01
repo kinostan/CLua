@@ -35,17 +35,7 @@ namespace Util {
             memory_region_size = 0;
         };
         
-
-        template<typename ObjectType>
         size_t allocate(size_t object_count);
-
-        template<typename ObjectType>
-        size_t allocate()
-        {   
-            return allocate<ObjectType>(1);
-        };
     };
-
-    template size_t LinearAllocator::allocate<int>(size_t);
 };
 

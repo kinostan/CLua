@@ -1,11 +1,13 @@
 #pragma once
-namespace ASTNodes {
+#include "ast_nodes/base/base.hpp"
+
+namespace CLuaNodes {
     class CharLiteral {
-        char* value;
+        char value;
     };
 
     class StringLiteral {
-        const char* string;
+        char* string;
     };
 
     class NumberLiteral {
