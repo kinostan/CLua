@@ -146,7 +146,12 @@ namespace CLuaNodes {
     };
 
     class ExpressionNode : public BaseNode {
-
+        public:
+        ExpressionNode(NodeHandle expression_node_handle): expression_node_handle(expression_node_handle)
+        {
+            node_type = NodeType::Expression;
+        };
+        NodeHandle expression_node_handle;
     };
 
     class ActionNode : public BaseNode {

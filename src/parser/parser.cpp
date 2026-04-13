@@ -15,15 +15,20 @@ namespace ASTParser{
 
         };
 
+        NodeHandle get_binary_expression(ParserContext& parser_context)
+        {
+
+        };
+
         NodeHandle get_expression(ParserContext& parser_context)
         {
-            //ternary op should be processed here first but 
-            //I am not intending to keep them for now
-
-            //process ternary op, then binary op, then unary op
+            auto binary_expression_start = get_binary_expression(parser_context);  
+            
+            return binary_expression_start;
         };
     };
 
+    /*
     namespace Statement {  
         void consume_statement()
         {
@@ -43,19 +48,10 @@ namespace ASTParser{
         {
 
         };
-    }
+    }*/
 
     NodeHandle get_action(ParserContext& parser_context)
     {
-        /*/
-        for now get_action is expected to be
-        consisting of expression/simple expression, 
-        because of this other elements like declaration/statements/metalang will not
-        be included for now in this get_action body
-
-        also it's the first element in the graph that will
-        be implemented in memory in linear manager
-        /*/
         NodeHandle expression_node = Expression::get_expression(parser_context);  
         if (parser_context.is_error_node(expression_node))
         {
@@ -108,9 +104,9 @@ namespace ASTParser{
     NodeHandle Parser::generate_AST(){
      auto action_chain = get_action_chain(parser_context);
 
-     if (action_chain == InvalidNode)
+     if (parser_context.is_error_node(action_chain))
      {
-        std::cout << "Error occured. Parsing proccess was unsuccessful" << std::endl;
+        std::cout << "Totally failed to compile the input" << std::endl;
      };
 
      return action_chain;

@@ -42,7 +42,7 @@ namespace ASTParser{
             while (token.token_type == Util::TokenType::Comment ||
                 token.token_type == Util::TokenType::NewLine ||
                 token.token_type == Util::TokenType::Whitespace);
-
+                
             return token;
         }
 
