@@ -1,14 +1,12 @@
 #pragma once
 
+#include "node_manager.hpp"
+
 #include <lexer/lexer.hpp>
-#include <linear_allocator/linear_allocator.hpp>
+#include <ast_nodes/index.hpp>
+#include <vector>
 
 namespace ASTParser{
-    using namespace std::literals::string_literals;
-
-    constexpr auto ParserError = "Parser Error: "s;
-    constexpr auto ParserErrorEnd = "\n"s;
-    
     //AST-concept-1 should only parse math expressions and evaluate them immedieatly i
     enum class ParserErrorCode {
         None,
@@ -16,15 +14,22 @@ namespace ASTParser{
         InvalidExpression
     };
 
+    class ParserError {
+        public:
+        ParserErrorCode error_code = ParserErrorCode::None;
+        CLuaNodes::NodeHandle node_handle = InvalidNode;
+    };
+
     class ParserContext{
+        bool has_reached_eof = false;
+
         Util::Lexer lexer;
-        Util::LinearAllocator linear_allocator;
+        Util::NodeManager node_manager;
         
         Util::TokenGeneric current_token = static_cast<Util::TokenGeneric>(Util::NoToken()); //last acquired token really, but it points to current token in a way
         Util::TokenGeneric last_token = static_cast<Util::TokenGeneric>(Util::NoToken()); //last acquired token really, but it points to current token in a way
 
-        ParserErrorCode last_parser_error = ParserErrorCode::None;
-        size_t report_index = 0;
+        std::vector<ParserError> error_list;
 
         Util::TokenGeneric get_next_non_neutral_token()
         {
@@ -42,8 +47,68 @@ namespace ASTParser{
         }
 
         public:
-        ParserContext(Util::Source& source): lexer(source)
+
+        ParserContext(Util::Source& source): 
+        lexer(source), node_manager(source.source_size / 3)
         {};
+
+        bool is_error_node(NodeHandle node_handle)
+        {   
+            return node_handle & InvalidNodeMask;
+        };
+
+        size_t get_error_id_from_node_handle(NodeHandle node_handle)
+        {
+            PAssert(
+                !is_error_node(node_handle),
+                "get_error_id_from_node_handle called when node_handle is a valid node"
+            );
+
+            return node_handle & ~InvalidNodeMask;
+        };
+
+        template <typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        inline bool is_node_type(NodeHandle node_handle,NodeType expected_node_type)
+        {
+            //function is redundant and should not exist in the future or it's use should be
+            //turned down
+            auto& node = get_node_from_handle<Node>(node_handle);
+            return node.node_type == expected_node_type;
+        };
+
+        template<typename Node, typename... Args>
+        requires (std::derived_from<Node,BaseNode> && std::is_constructible_v<Node, Args...>)
+        inline CLuaNodes::NodeHandle create_node(Args&&... args)
+        {
+            return node_manager.create_node<Node>(std::forward(args)...);
+        };
+
+        template<typename Node>
+        requires (std::derived_from<Node,BaseNode>) 
+        inline Node* get_node_pointer_from_handle(NodeHandle node_handle){
+            PAssert(
+                !is_error_node(node_handle),
+                "node handle must be valid to be casted from node handle to node pointer"
+            )
+            return node_manager.get_node_pointer_from_handle<Node>(node_handle);
+        }
+
+        template<typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        inline Node& get_node_from_handle(NodeHandle node_handle)
+        {
+            PAssert(
+                !is_error_node(node_handle),
+                "node handle must be valid for function to be able to return a reference of a node"
+            )
+            return *get_node_pointer_from_handle<Node>(node_handle);
+        };
+
+        bool has_reached_end()
+        {
+            return has_reached_eof;
+        };
 
         Util::Lexer& get_lexer()
         {
@@ -96,27 +161,34 @@ namespace ASTParser{
             return lexer.get_last_keyword();
         };
     
-        void record_error(ParserErrorCode error_code)
+        //****Nodes****//
+        CLuaNodes::NodeHandle create_error_handle(size_t error_id)
         {
-            Assert(
-                report_index < (current_token.offset + 1),
-                ParserError +
-                "attempted to record the same token under different error code"s + 
-                ParserErrorEnd
-            )
-            report_index = current_token.offset + 1;
-            last_parser_error = error_code;
+            return InvalidNodeMask | error_id;
+        };
+        
+        CLuaNodes::NodeHandle emit_error(ParserError& parser_error)
+        {
+            //due to error spans, then it means that
+            //the current assertion no longer fits under the requirements.
+            //it should keep track of error spans to monitor overlaps and report
+            //if they happen in the code
+            auto error_id = error_list.size();
+            auto error_handle = create_error_handle(error_id);
+
+            error_list.push_back(parser_error);
+
+            return error_handle;
         };
     };
 
     class Parser{
         ParserContext parser_context;
-        Util::LinearAllocator allocator;
         public:
 
         Parser(Util::Source& source): parser_context(source)
         {};        
 
-        void generate_AST();
+        CLuaNodes::NodeHandle generate_AST();
     };
 }

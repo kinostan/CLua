@@ -13,9 +13,6 @@ namespace Util {
 
     using namespace std::string_literals;
 
-    constexpr auto LexerError = "Lexer Error: "s;
-    constexpr auto LexerErrorEnd = "\n"s;
-
     enum class ConsumerMode: uint8_t  {
         CLua,
         MetaCLua
@@ -81,8 +78,8 @@ namespace Util {
     class Source {
         public:
         size_t index;
-        private:
-        size_t source_size;       
+        size_t source_size;    
+        private:   
         unsigned char* source_buffer;
 
         public:
@@ -90,37 +87,37 @@ namespace Util {
         Source() = default;
         Source(unsigned char* source_buffer, size_t source_size) : source_buffer(source_buffer), source_size(source_size), index(0)
         {
-            Assert(source_buffer,
-                LexerError +
-                "Source buffer must exist"s +
-                LexerErrorEnd
+            LAssert(source_buffer,
+                "Source buffer must exist"s
             );
         };
 
-        Source slice(size_t start_index = 0,size_t length = 0)
+        std::string_view slice_string(size_t string_index, size_t string_length)
         {
-            Assert(length > 0,
-                LexerError +
-                "length must be greater than 0"s +
-                LexerErrorEnd
+            return std::string_view(
+                reinterpret_cast<char*>(source_buffer + string_index),
+                string_length
+            );
+        };
+
+        Source slice(size_t start_index,size_t length)
+        {
+            LAssert(length > 0,
+                "length must be greater than 0"s
             )
             size_t end_index = start_index + length;
-            Assert(
+            LAssert(
                 end_index <= source_size,
-                LexerError +
-                "broken assumption that end_index <= source_size is true"s +
-                LexerErrorEnd
+                "broken assumption that end_index <= source_size is true"s
             )
             return Source(source_buffer + start_index,length);
         };
 
-        Source slice(size_t start_index = 0)
+        Source slice(size_t start_index)
         {
-            Assert(
+            LAssert(
                 source_size > start_index,
-                LexerError +
-                "source_size > start_index is not true"s +
-                LexerErrorEnd
+                "source_size > start_index is not true"s
             )
 
             return slice(start_index,source_size-start_index);
@@ -144,22 +141,18 @@ namespace Util {
 
         inline void consume(size_t consume_distance = 1)
         {
-            Assert(
+            LAssert(
                 can_consume_sentinel(consume_distance),
-                LexerError +
-                "index is reading beyond the source_buffer"s +
-                LexerErrorEnd
+                "index is reading beyond the source_buffer"s
             );
             index += consume_distance;
         };
 
         inline unsigned char see_current()
         {
-            Assert(
+            LAssert(
                 can_consume_sentinel(),
-                LexerError +
-                "index is reading beyond the source_buffer"s + 
-                LexerErrorEnd
+                "index is reading beyond the source_buffer"s
             );
             if (!can_consume())
             {
@@ -180,11 +173,9 @@ namespace Util {
 
         inline unsigned char peek(size_t peek_distance = 1)
         {   
-            Assert(
+            LAssert(
                 can_peek_sentinel(peek_distance),
-                LexerError +
-                "Can't peek here"s + 
-                LexerErrorEnd
+                "Can't peek here"s
             );
             if (!can_peek())
             {
@@ -195,10 +186,8 @@ namespace Util {
     
         inline void set_index(size_t new_index)
         {
-            Assert(new_index < source_size,
-                LexerError + 
-                "new_index is stepping outside of source buffer"s +
-                LexerErrorEnd
+            LAssert(new_index < source_size, 
+                "new_index is stepping outside of source buffer"s
             )
             index = new_index;
         };
@@ -305,7 +294,7 @@ namespace Util {
             There's a real use case of NoToken being created from TokenGeneric
             */
 
-            Assert(
+            LAssert(
                 token_type == expected,
                 LexerError 
                 + "expected this token type: "s 
@@ -401,11 +390,9 @@ namespace Util {
 
         private:
         inline void on_emit(){
-            Assert(
+            LAssert(
                 !emitted,
-                LexerError+
-                "trying to emit hint multiple times within the same token"s +
-                LexerErrorEnd
+                "trying to emit hint multiple times within the same token"s
             )
 
             emitted = true;
@@ -434,11 +421,9 @@ namespace Util {
         {
             on_emit();
 
-            Assert(
+            LAssert(
                 last_number_fraction >= 0,
-                LexerError +
-                "lexer can't consume unary minus operator"s + 
-                LexerErrorEnd
+                "lexer can't consume unary minus operator"s
             );
 
             last_number_integer = number_integer;
@@ -518,11 +503,9 @@ namespace Util {
         };
 
         TokenGeneric peek_next_token() {
-            Assert(
-                last_peeked_token.token_type == TokenType::None,
-                LexerError + 
-                "can't peek next token again after doing it before"s + 
-                LexerErrorEnd
+            LAssert(
+                last_peeked_token.token_type == TokenType::None, 
+                "can't peek next token again after doing it before"s
             )
             lexer_context.token_enter();
             auto token = get_next_token();

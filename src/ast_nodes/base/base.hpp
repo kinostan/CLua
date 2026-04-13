@@ -1,69 +1,161 @@
-#include <linear_allocator/linear_allocator.hpp>
 #pragma once
 
 namespace CLuaNodes {
     enum class NodeType {
-        Null,
-        Unassgined,
+        Invalid,
         CharLiteral,
         StringLiteral,
         NumberLiteral,
         IntegerLiteral,
+
+        Identifier,
+
+        Action,
+        Expression,
+
+        UnaryExpression,
+        BinaryExpression,
+        TernaryExpression
     };
 
-    enum class OperationType {
+    enum class UnOperationType{
+        None,
+        Minus,
+        
+        Reference,
+        Dereference,
+
+        PreIncrement,
+        PreDecrement,
+        PostIncrement,
+        PostDecrement,
+    };
+
+    enum class BinOperationType {
+        None,
+        Assign,
+
         Add,
         Sub,
+
         Mul,
-        Div
+        Div,
+        Mod,
+
+        //comparative
+        Eq, //equal
+        Gt, //greater than
+        Lt, //less than
+        GtEq, //greater or equal
+        LtEq, //less or equal
+
+        //logical
+        Or,
+        And,
+
+        //bitwise operations
+        BinOr,
+        BinAnd,
+        BinXor,
+
+        BinRight,
+        BinLeft
+    };
+
+    enum class TernarnyOperationType{
+        None,
+        Conditional
     };
 
     using NodeHandle = size_t;
 
-    class NodeManager {
-        private:
-        Util::LinearAllocator& allocator;
+    const NodeHandle InvalidNodeMask = ~LLONG_MAX;
+    const NodeHandle InvalidNode = ULLONG_MAX;
+
+    class BaseNode {
         public:
-        NodeManager(Util::LinearAllocator allocator): allocator(allocator)
-        {}
-
-        template<typename Node>
-        Node* get_node(NodeHandle reference)
-        {
-            return static_cast<Node*>(allocator.memory_region_start + reference.offset);
-        };
-
-        template<typename Node>
-        requires is_base_of<Node>;
-        NodeHandle create_node(Node node_value)
-        {
-            NodeHandle ast_node_reference;
-            ast_node_reference = allocator.allocate(sizeof(Node));
-            *(static_cast<Node*>(allocator.memory_region_start)) = node_value;
-
-            return ast_node_reference;
-        };
+        NodeType node_type = NodeType::Invalid;
     };
 
-    class Identifier{
-        char* identifier;      
+    class CharLiteral: public BaseNode {
+        char value;
     };
 
-    class IdentifierPath {
+    class StringLiteral: public BaseNode {
         
+        char* string;
     };
 
-    struct Node {
-        NodeType node_type;
+    class NumberNode : public BaseNode {
+        public:
+        NumberNode()
+        {
+            node_type = NodeType::NumberLiteral;
+        };
+        long double value = 0;
     };
 
-    struct NumberNode : Node {
-        double value;
+    class IntegerLiteral: public BaseNode {
+        public:
+        IntegerLiteral()
+        {
+            node_type = NodeType::IntegerLiteral;
+        };
+        long long value = 0;
     };
 
-    struct BinaryNode : Node {
-        NodeHandle left;
-        NodeHandle right;
-        OperationType operation_type;
+    class Identifier: public BaseNode {
+        public:
+        Identifier()
+        {
+            node_type = NodeType::Identifier;
+        };
+        char* identifier = nullptr;      
     };
-};
+
+    class TernaryNode : public BaseNode {
+        public:
+        TernaryNode()
+        {
+            node_type = NodeType::TernaryExpression;
+        };
+        NodeHandle left = InvalidNode;
+        NodeHandle center = InvalidNode;
+        NodeHandle right = InvalidNode;
+    };
+
+    class BinaryNode : public BaseNode {
+        public:
+        BinaryNode()
+        {
+            node_type = NodeType::BinaryExpression;
+        };
+        NodeHandle left = InvalidNode;
+        NodeHandle right = InvalidNode;
+        BinOperationType operation_type = BinOperationType::None;
+    };
+
+    class UnaryNode : public BaseNode {
+        public:
+        UnaryNode()
+        {
+            node_type = NodeType::UnaryExpression;
+        };
+        NodeHandle node = InvalidNode;
+        UnOperationType operation_type = UnOperationType::None;
+    };
+
+    class ExpressionNode : public BaseNode {
+
+    };
+
+    class ActionNode : public BaseNode {
+        public:
+        ActionNode(NodeHandle action_description): action_description(action_description)
+        {
+            node_type = NodeType::Action;
+        };
+        NodeHandle action_description;
+        NodeHandle next_action;
+    };
+}

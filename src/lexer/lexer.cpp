@@ -6,17 +6,13 @@
 namespace Util { 
 
    using namespace std::string_literals;
-
    unsigned char get_binary_char_code_value(unsigned char bin_char)
    {
       if (bin_char >= '0' && bin_char <= '1')
       {
          return bin_char - '0';
       };
-      Assert(false,
-         LexerError +
-         "bin_char is not in binary code"s +
-         LexerErrorEnd
+      LAssert(false,"bin_char is not in binary code"s
       )
       return 0;
    };
@@ -33,11 +29,11 @@ namespace Util {
       {
          return hex_char - 'A' + (unsigned char)10;
       } else {
-         Assert(false,
-            LexerError +
+         LAssert(false,
+            
             std::to_string(hex_char) + //retarded
-            " char code is not a hex code char"s + 
-            LexerErrorEnd
+            " char code is not a hex code char"s 
+            
          )
          return 0;
       };
@@ -141,15 +137,12 @@ namespace Util {
     
       CharacterType actual_type = character_map[index_char];
 
-      Assert(
+      LAssert(
          actual_type == expected_type,
-         LexerError + 
-         "expected not to give an error"s +
-         "Character mapping mismatch for char '"s + std::string(1,static_cast<char>(index_char)) + 
-         "' (code: "s + std::to_string(index_char) + "). "s +
-         "Expected type "s + std::to_string((int)(expected_type)) + 
-         ", but map returneds " + std::to_string((int)(actual_type)) + 
-         LexerErrorEnd
+          
+         "expected not to give an error"s + "Character mapping mismatch for char '"s + std::string(1,static_cast<char>(index_char)) + 
+         "' (code: "s  + std::to_string(index_char) + ")."s + "Expected type "s + std::to_string((int)(expected_type)) + 
+         ", but map returned " + std::to_string((int)(actual_type))  
       );
    };
 
@@ -199,11 +192,8 @@ namespace Util {
       auto current_char = lexer_context.source.see_current();
       auto next_char = lexer_context.source.peek();
 
-      Assert(current_char == '0' && next_char == 'x',
-         LexerError +
-         "expected hex code number, got something else"s + 
-         LexerErrorEnd
-      )
+      LAssert(current_char == '0' && next_char == 'x',
+         "expected hex code number, got something else"s)
 
       lexer_context.source.consume(2);
 
@@ -246,10 +236,8 @@ namespace Util {
       auto current_char = lexer_context.source.see_current();
       auto next_char = lexer_context.source.peek();
 
-      Assert(current_char == '0' && next_char == 'b',
-         LexerError +
-         "expected hex code number, got something else"s + 
-         LexerErrorEnd
+      LAssert(current_char == '0' && next_char == 'b',"expected hex code number, got something else"s 
+         
       )
 
       lexer_context.source.consume(2);
@@ -302,11 +290,9 @@ namespace Util {
          lexer_context.source.consume();
          current_char = lexer_context.source.see_current();
       
-         Assert(
+         LAssert(
             character_map[current_char] == CharacterType::Numeric,
-            LexerError + 
-            "unexpected behaviour: token guesser misslcassified token type"s + 
-            LexerErrorEnd
+            "unexpected behaviour: token guesser misslcassified token type"s
          )
 
          number_fraction = consume_and_eval_fraction(lexer_context);
@@ -441,8 +427,8 @@ namespace Util {
       test_char_type(current_char,CharacterType::Symbol);
 
       auto next_char = lexer_context.source.peek();
-      Assert(current_char == '/' && next_char == '/',
-         LexerError + 
+      LAssert(current_char == '/' && next_char == '/',
+          
          "expected inline comment char start, got somethign else"
       );
 
@@ -470,8 +456,8 @@ namespace Util {
       test_char_type(current_char,CharacterType::Symbol);
 
       auto next_char = lexer_context.source.peek();
-      Assert(current_char == '/' && next_char == '*',
-         LexerError + 
+      LAssert(current_char == '/' && next_char == '*',
+          
          "expected inline comment char start, got somethign else"
       );
       
@@ -502,7 +488,7 @@ namespace Util {
       test_char_type(current_char,CharacterType::Symbol);
       auto next_char = lexer_context.source.peek();
 
-      Assert(current_char == '/' && (next_char == '/' || next_char == '*'), "expected comment symbol sequence, got something else")
+      LAssert(current_char == '/' && (next_char == '/' || next_char == '*'), "expected comment symbol sequence, got something else")
 
       bool is_multiline_comment = next_char == '*';
 
@@ -528,20 +514,15 @@ namespace Util {
       auto current_char = lexer_context.source.see_current();
       auto char_type = character_map[current_char];
 
-      Assert(
-         current_char == '"',
-         LexerError +
-         "expected string to begin with \"\"\", got something else instead"s +
-         LexerErrorEnd
+      LAssert(
+         current_char == '"',"expected string to begin with \"\"\", got something else instead"s
       )
 
       do
       {
          lexer_context.source.consume();
          current_char = lexer_context.source.see_current();
-         char_type = character_map[current_char];
-         
-         if (char_type == CharacterType::EndOfFile) [[unlikely]]
+         char_type = character_map[current_char];if (char_type == CharacterType::EndOfFile) [[unlikely]]
          {
             return lexer_context.record_error(ErrorCode::UnclosedString);
          } else if (current_char == '\\') 
@@ -561,11 +542,8 @@ namespace Util {
    };
 
    void consume_char_token(LexerContext& lexer_context) {
-      Assert(
-         lexer_context.source.see_current() == '\'',
-         LexerError +
-         "expected string to begin with \"\'\", got something else instead"s +
-         LexerErrorEnd
+      LAssert(
+         lexer_context.source.see_current() == '\'',"expected string to begin with \"\'\", got something else instead"s
       )
 
       lexer_context.source.consume(); 
@@ -690,16 +668,14 @@ namespace Util {
             consume_error_token(lexer_context);
             break;
          case TokenType::None:
-            Assert(false,
-               LexerError +
-               "unexpected token type: got none"s +
-               LexerErrorEnd  
+            LAssert(false,
+               
+               "unexpected token type: got none"s        
             );
          default:
-            Assert(false,
-               LexerError +
-               "unhandled token type: one at least has been forgotten"s +
-               LexerErrorEnd  
+            LAssert(false,
+               
+               "unhandled token type: one at least has been forgotten"s        
             );
             break;
          }
@@ -853,9 +829,7 @@ namespace Util {
          luau_char_type_map[static_cast<unsigned char>('{')] = LuaUCharType::LBracket;
          luau_char_type_map[static_cast<unsigned char>('}')] = LuaUCharType::RBracket;
 
-         luau_char_type_map[static_cast<unsigned char>('\0')] = LuaUCharType::EndOfFile;
-         
-         return luau_char_type_map;
+         luau_char_type_map[static_cast<unsigned char>('\0')] = LuaUCharType::EndOfFile;return luau_char_type_map;
       }();
 
       LuaUTokenType guess_luau_token_type(LexerContext& lexer_context)
@@ -898,11 +872,10 @@ namespace Util {
       /// @return 
       void assert_is_lua_comment(LexerContext &lexer_context)
       {
-         Assert(
+         LAssert(
             lexer_context.source.see_current() == '-' && lexer_context.source.peek() == '-',
-            LexerError +
-            "expected comment mode character, got something else"s +
-            LexerErrorEnd
+            
+            "expected comment mode character, got something else"s   
          )
          lexer_context.source.consume(2);
       };    
@@ -911,11 +884,10 @@ namespace Util {
       {
          size_t equal_signs_in_row = 0;
 
-         Assert(
+         LAssert(
             lexer_context.source.see_current() == ']',
-            LexerError +
-            "assertion broken, expected comment closing character, got something else instead"s +
-            LexerErrorEnd
+            
+            "assertion broken, expected comment closing character, got something else instead"s   
          )
 
          lexer_context.source.consume();
@@ -948,9 +920,7 @@ namespace Util {
             equal_sign_count++;
          };
 
-         lexer_context.source.consume(equal_sign_count + 1);
-         
-         if (lexer_context.source.see_current() != '[')
+         lexer_context.source.consume(equal_sign_count + 1);if (lexer_context.source.see_current() != '[')
          {
             return false;
          };
@@ -976,22 +946,19 @@ namespace Util {
 
             current_char = lexer_context.source.see_current();
             char_type = character_map[current_char];
-         };
-         
-         return lexer_context.record_error(ErrorCode::UnclosedLuaBlock);
+         };return lexer_context.record_error(ErrorCode::UnclosedLuaBlock);
       };
 
       void consume_lua_basic_string_token(LexerContext& lexer_context)
       {
          auto start_char = lexer_context.source.see_current();
 
-         Assert(
+         LAssert(
             start_char == '\'' ||
             start_char == '"' ||
             start_char == '`',
-            LexerError + 
-            "assertion broken, the tested char is not a string start char"s +
-            LexerErrorEnd
+             
+            "assertion broken, the tested char is not a string start char"s   
          )
 
          lexer_context.source.consume();
@@ -1051,11 +1018,11 @@ namespace Util {
             return consume_lua_block_token(lexer_context,equal_sign_count);
          } else {
             /*
-               Assert(
+               LAssert(
                   equal_sign_count == 0,
-                  LexerError +
-                  "unexpected state where equal sign count is non-zero, where it should be"s +  
-                  LexerErrorEnd
+                  
+                  "unexpected state where equal sign count is non-zero, where it should be"s  
+                  
                )
 
                //ignore byproduct as it's not harmful
@@ -1071,11 +1038,11 @@ namespace Util {
 
       void consume_l_bracket(LexerContext& lexer_context)
       {
-         Assert(
+         LAssert(
             lexer_context.source.see_current() == '{',
-            LexerError +
-            "expected { token, got something else instead"s + 
-            LexerErrorEnd
+            
+            "expected { token, got something else instead"s
+            
          )
 
          auto& brace_balance = lexer_context.luau_code_state.brace_balance;
@@ -1086,11 +1053,11 @@ namespace Util {
 
       void consume_r_bracket(LexerContext& lexer_context)
       {
-         Assert(
+         LAssert(
             lexer_context.source.see_current() == '}',
-            LexerError +
-            "expected } token, got something else instead"s + 
-            LexerErrorEnd
+            
+            "expected } token, got something else instead"s 
+            
          )
 
          auto& brace_balance = lexer_context.luau_code_state.brace_balance;
@@ -1168,9 +1135,7 @@ namespace Util {
       void process_next_token(LexerContext& lexer_context){
          TokenType token_type = guess_token_type(lexer_context);
          lexer_context.original_token_type = token_type;
-         lexer_context.ultimate_token_type = token_type;
-         
-         switch (token_type)
+         lexer_context.ultimate_token_type = token_type;switch (token_type)
          {
          case TokenType::LuaBlock:
             consume_lua_block(lexer_context);
@@ -1243,10 +1208,9 @@ namespace Util {
          break;
       }
       case MetaConsumerMode::None:
-         Assert(false,
-            LexerError + 
-            "Unexpected behaviour of the code, this case should not be happening"s +
-            LexerErrorEnd   
+         LAssert(false,
+             
+            "Unexpected behaviour of the code, this case should not be happening"s      
          );
       }
    };
@@ -1281,10 +1245,9 @@ namespace Util {
          break;
       }      
       default:{
-         Assert(false,
-            LexerError +
-            "unhandled case for consumer type"s +
-            LexerErrorEnd
+         LAssert(false,
+            
+            "unhandled case for consumer type"s   
          )
          break;
       }
