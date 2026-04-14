@@ -126,7 +126,7 @@ namespace CLuaNodes {
 
     class BinaryNode : public BaseNode {
         public:
-        BinaryNode()
+        BinaryNode(BinOperationType operation_type): operation_type(operation_type)
         {
             node_type = NodeType::BinaryExpression;
         };
@@ -137,7 +137,7 @@ namespace CLuaNodes {
 
     class UnaryNode : public BaseNode {
         public:
-        UnaryNode()
+        UnaryNode(UnOperationType operation_type): operation_type(operation_type)
         {
             node_type = NodeType::UnaryExpression;
         };

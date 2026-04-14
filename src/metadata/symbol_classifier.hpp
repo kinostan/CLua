@@ -34,6 +34,7 @@ namespace SymbolClassifier {
         Comma,
         Semicolon,
         Colon,
+        DoubleColon,
         Arrow,
         LParen,
         RParen,
@@ -90,7 +91,7 @@ namespace SymbolClassifier {
         {"{", SymbolKind::LBrace}, {"}", SymbolKind::RBrace},
         {"[", SymbolKind::LBracket}, {"]", SymbolKind::RBracket},
         {"?", SymbolKind::Question}, {"?=", SymbolKind::TernaryAssign},
-        {"@", SymbolKind::AtSign}
+        {"@", SymbolKind::AtSign}, {"::", SymbolKind::DoubleColon},
     };
 
     inline SymbolKind get_symbol_from_buffer(const char* buffer, size_t length) {
