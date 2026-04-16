@@ -39,7 +39,7 @@ void run_test(const Test<TokenCount>& test)
 
     if (test.expect_error)
     {
-        assert(lexer.get_last_error().error_code == test.expected_error);
+        assert(lexer.get_current_error().error_code == test.expected_error);
     }
 
     std::cout << "  OK\n";

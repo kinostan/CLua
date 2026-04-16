@@ -39,7 +39,7 @@ namespace ASTParser{
         bool is_assignement_symbol_token(ParserContext& parser_context)
         {
             auto current_token = parser_context.see_current_token();
-            SymbolKind symbol;
+            SymbolKind symbol = parser_context.get_current_symbol();
             switch (symbol)
             {
             case SymbolKind::Equal: case SymbolKind::PlusEqual: case SymbolKind::MinusEqual: 
@@ -48,6 +48,11 @@ namespace ASTParser{
             default:
                 return false;
             }
+        };
+
+        bool is_keyword_identifier(ParserContext& parser_context)
+        {
+            return parser_context.get_current_keyword() != KeywordClassifier::Keyword::Unknown;
         };
 
         bool is_additive_symbol_token(ParserContext& parser_context)
@@ -78,35 +83,10 @@ namespace ASTParser{
 
         };
 
-        NodeHandle process_local_expression(ParserContext& parser_context)
-        {
-
-        };
-
-        NodeHandle process_atom(ParserContext& parser_context)
-        {
-            auto current_token = parser_context.see_current_token();
-
-            PAssert(
-                is_one_of(current_token.token_type,
-                    TokenType::Identifier,
-                    TokenType::Symbol,
-                    TokenType::Char,
-                    TokenType::String,
-                    TokenType::Numeric
-                ),
-                "unexpected token type in process_atom() function"
-            )
-
-            auto simple_node = InvalidNode;
-
-            
-        };
-
         inline UnOperationType get_unary_prefix_operator(ParserContext& parser_context)
         {
             auto current_symbol = parser_context.get_current_symbol();
-            auto operation_type = symbol_kind_to_unary_operation_type(current_symbol);
+            auto operation_type = symbol_kind_to_unary_operation_type_prefix(current_symbol);
 
             if (operation_type != UnOperationType::None)
             {
@@ -119,7 +99,7 @@ namespace ASTParser{
         inline UnOperationType get_unary_postfix_operator(ParserContext& parser_context)
         {
             auto current_symbol = parser_context.get_current_symbol();
-            auto operation_type = symbol_kind_to_unary_operation_type(current_symbol);
+            auto operation_type = symbol_kind_to_unary_operation_type_postfix(current_symbol);
 
             if (operation_type != UnOperationType::None)
             {
@@ -127,6 +107,84 @@ namespace ASTParser{
             };
 
             return operation_type;
+        };
+
+        NodeHandle process_local_expression(ParserContext& parser_context)
+        {
+
+        };
+
+        NodeHandle process_identifier_path(ParserContext& parser_context)
+        {
+
+        }
+
+        NodeHandle process_atom(ParserContext& parser_context)
+        {
+            auto current_token = parser_context.see_current_token();
+
+            PAssert(
+                is_one_of(current_token.token_type,
+                    TokenType::Identifier,
+                    TokenType::Symbol,
+                    TokenType::Char,
+                    TokenType::String,
+                    TokenType::Numeric
+                )//basically if it's an atom type first barrier check 
+                , "unexpected token type in process_atom() function"
+            )
+
+            auto simple_node = InvalidNode;
+
+            /*/
+            atom either can be a:
+            IdentifierPath where it means
+            ("::"? identifier)("." .. identifier | "::" .. identifier)* 
+            
+            where identifier must not be a keyword.
+            /*/ 
+
+            if (current_token.token_type == TokenType::Identifier)
+            {
+
+
+            } else {
+                //plain literal
+
+            };
+            
+            /*/
+
+            When identifier is a keyword and is used for expressions then 
+            it's legal, it's more less understood as a local expression which is initialized 
+            in a different way
+
+            A literal of any type
+
+            or a local expression starting with "(" symbol
+            /*/
+        };
+
+        NodeHandle process_keyword_expression(ParserContext& parser_context)
+        {
+            using KeywordType = KeywordClassifier::Keyword;
+            auto keyword_type = parser_context.get_current_keyword();
+            switch (keyword_type)
+            {
+            case KeywordType::Sizeof:
+                //size of expression
+                return;
+            case KeywordType::StaticCast:
+                return;  
+            case KeywordType::ReinterpretCast:
+                return;
+            default:
+                ParserError error = ParserError();
+                error.error_code = ParserErrorCode::InvalidExpression;
+                error.node_handle = InvalidNode;
+
+                return parser_context.emit_error(error);
+            }
         };
 
         NodeHandle process_postfix_unary_expression(ParserContext& parser_context)
@@ -139,11 +197,31 @@ namespace ASTParser{
             {
                 case TokenType::Symbol:
                 {
-                    simple_node = process_local_expression(parser_context);
+                    auto current_symbol = parser_context.get_current_symbol();
+                    if (current_symbol == SymbolKind::LParen)
+                    {
+                        simple_node = process_local_expression(parser_context);
+                    } else if(current_symbol == SymbolKind::DoubleColon) 
+                    {
+                        simple_node = process_atom(parser_context);
+                    }
+                    else {
+                        PAssert(
+                            false, 
+                            "unhandled case"
+                        )
+                    }
+                    break;
                 };
                 case TokenType::Char: case TokenType::String: case TokenType::Numeric: case TokenType::Identifier:
                 {
-                    simple_node = process_atom(parser_context);
+                    if (token_type == TokenType::Identifier && is_keyword_identifier(parser_context))
+                    {
+                        simple_node = process_keyword_expression(parser_context);
+                    } else {
+                        simple_node = process_atom(parser_context);
+                    };
+                    break;
                 };
                 default: 
                 {
@@ -160,10 +238,8 @@ namespace ASTParser{
                 return simple_node; 
             };
 
-            auto top_node = simple_node;
-
-
-            
+            auto top_node = simple_node;    
+            //unfinished
         };
     
         NodeHandle process_unary_expression(ParserContext& parser_context)
@@ -224,25 +300,35 @@ namespace ASTParser{
 
         NodeHandle process_additive_expression(ParserContext& parser_context)
         {
-            auto top = process_unary_expression(parser_context);//should be replaced with multiplicative soon enough
-            if (parser_context.is_error_node(top))
-            {
-                return top;
-            };
-            auto most_left_expression = top;
-            auto process_next = is_additive_symbol_token(parser_context);
+            auto top = InvalidNode;
 
+            auto most_left_expression = process_unary_expression(parser_context);//should be replaced with multiplicative soon enough
+            if (parser_context.is_error_node(most_left_expression))
+            {
+                return most_left_expression;
+            };
+
+            top = most_left_expression;
+
+            auto process_next = is_additive_symbol_token(parser_context);
             while (process_next)
             {
-                most_left_expression = process_unary_expression(parser_context);
-                process_next = is_additive_symbol_token(parser_context);
+                auto operator = get_
+                auto right_side = process_unary_expression(parser_context);
+                if (parser_context.is_error_node(most_left_expression))
+                {
+                    return most_left_expression;
+                };
+
+                auto new_top = parser_context.create_node<BinaryNode>(BinOperationType::Add);
+
             }
 
             if (!is_expression_termination_token(parser_context))
             {
                 ParserError new_error = ParserError();
                 new_error.error_code = ParserErrorCode::InvalidExpression;
-                new_error.node_handle = top;
+                new_error.node_handle = InvalidNode;
                 return parser_context.emit_error(new_error);
             };
             
@@ -275,10 +361,6 @@ namespace ASTParser{
         NodeHandle get_expression(ParserContext& parser_context)
         {
             auto binary_expression_head = process_assignement_expression(parser_context);  
-            if (parser_context.is_error_node(binary_expression_head))
-            {
-                std::cout << "failed to parse an expression" << std::endl;
-            };
             return binary_expression_head;
         };
     };

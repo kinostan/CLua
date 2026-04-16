@@ -16,7 +16,8 @@ namespace ASTParser{
 
     class ParserError {
         public:
-        ParserErrorCode error_code = ParserErrorCode::None;
+        ParserErrorCode error_code = ParserErrorCode::None; 
+        //^ should be changed to error node type
         CLuaNodes::NodeHandle node_handle = InvalidNode;
     };
 
@@ -137,14 +138,14 @@ namespace ASTParser{
             return lexer.peek_next_token();
         };
 
-        Util::NumberHint get_last_number_hint()
+        Util::NumberHint get_current_number_hint()
         {
-            return lexer.get_last_number_hint();
+            return lexer.get_current_number_hint();
         };
 
-        Util::Error get_last_error()
+        Util::Error get_current_error()
         {
-            return lexer.get_last_error();
+            return lexer.get_current_error();
         };
 
         SymbolClassifier::SymbolKind get_current_symbol()
@@ -153,12 +154,12 @@ namespace ASTParser{
             {
                 return SymbolClassifier::SymbolKind::Unknown;
             };
-            return lexer.get_last_symbol();
+            return lexer.get_current_symbol();
         };
 
-        KeywordClassifier::Keyword get_last_keyword()
+        KeywordClassifier::Keyword get_current_keyword()
         {
-            return lexer.get_last_keyword();
+            return lexer.get_current_keyword();
         };
     
         //****Nodes****//

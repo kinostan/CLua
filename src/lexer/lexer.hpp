@@ -296,12 +296,10 @@ namespace Util {
 
             LAssert(
                 token_type == expected,
-                LexerError 
-                + "expected this token type: "s 
+                "expected this token type: "s 
                 + std::to_string(static_cast<int>(expected)) 
                 + " got: "s 
-                + std::to_string(static_cast<int>(token_type)) 
-                + LexerErrorEnd
+                + std::to_string(static_cast<int>(token_type))
             );
 
             return reinterpret_cast<T&>(*this);
@@ -339,13 +337,13 @@ namespace Util {
 
         Source source;
 
-        Error last_error;
-        NumberHint last_number;
-        SymbolClassifier::SymbolKind last_symbol = SymbolClassifier::SymbolKind::Unknown;  
-        KeywordClassifier::Keyword last_keyword = KeywordClassifier::Keyword::Unknown;
+        Error current_error;
+        NumberHint current_number;
+        SymbolClassifier::SymbolKind current_symbol = SymbolClassifier::SymbolKind::Unknown;  
+        KeywordClassifier::Keyword current_keyword = KeywordClassifier::Keyword::Unknown;
 
-        uint64_t last_number_integer = 0;
-        long double last_number_fraction = 0; //belongs to <0,inf) in any other case it's invalid
+        uint64_t current_number_integer = 0;
+        long double current_number_fraction = 0; //belongs to <0,inf) in any other case it's invalid
 
         TokenType ultimate_token_type = TokenType::Error;
         TokenType original_token_type = ultimate_token_type; //this variable is strictly for recover if user chooses to do so
@@ -411,7 +409,7 @@ namespace Util {
 
             Error error;
             error.error_code = error_code;
-            last_error = error;
+            current_error = error;
 
             original_token_type = ultimate_token_type;
             ultimate_token_type = TokenKind<ErrorToken>::value;
@@ -422,18 +420,18 @@ namespace Util {
             on_emit();
 
             LAssert(
-                last_number_fraction >= 0,
+                current_number_fraction >= 0,
                 "lexer can't consume unary minus operator"s
             );
 
-            last_number_integer = number_integer;
-            last_number_fraction = number_fraction;
+            current_number_integer = number_integer;
+            current_number_fraction = number_fraction;
 
             NumberHint number_hint;
             number_hint.number_base = number_base;
             number_hint.number_type = number_type;
 
-            last_number = number_hint;
+            current_number = number_hint;
 
             original_token_type = ultimate_token_type;
             ultimate_token_type = TokenKind<NumericToken>::value;
@@ -443,7 +441,7 @@ namespace Util {
         {
             on_emit();
 
-            last_symbol = symbol;
+            current_symbol = symbol;
 
             original_token_type = ultimate_token_type;
             ultimate_token_type = TokenKind<SymbolToken>::value;
@@ -454,7 +452,7 @@ namespace Util {
             on_emit();
 
             auto keyword_type = KeywordClassifier::get_keyword_type(identifier);
-            last_keyword = keyword_type;
+            current_keyword = keyword_type;
 
             original_token_type = ultimate_token_type;
             ultimate_token_type = TokenKind<IdentifierToken>::value;
@@ -513,24 +511,24 @@ namespace Util {
             return token;
         }
 
-        const Error get_last_error()
+        const Error get_current_error()
         {
-            return lexer_context.last_error;
+            return lexer_context.current_error;
         };
 
-        const NumberHint get_last_number_hint()
+        const NumberHint get_current_number_hint()
         {
-            return lexer_context.last_number;
+            return lexer_context.current_number;
         };
 
-        const SymbolClassifier::SymbolKind get_last_symbol()
+        const SymbolClassifier::SymbolKind get_current_symbol()
         {
-            return lexer_context.last_symbol;
+            return lexer_context.current_symbol;
         };
 
-        const KeywordClassifier::Keyword get_last_keyword()
+        const KeywordClassifier::Keyword get_current_keyword()
         {
-            return lexer_context.last_keyword;
+            return lexer_context.current_keyword;
         };
     };
 

@@ -46,7 +46,9 @@
     Keyword(Sizeof, "sizeof")   \
     Keyword(LuaEmbed,"lua_embed") \
     Keyword(Import,"import")\
-    Keyword(Export,"export")
+    Keyword(Export,"export")\
+    Keyword(StaticCast,"static_cast")\
+    Keyword(ReinterpretCast,"reinterpret_cast")\
 
 namespace KeywordClassifier {
     enum class Keyword {

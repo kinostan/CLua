@@ -1177,7 +1177,7 @@ namespace Util {
          MetaCLua::get_next_token(lexer_context,token_type);
 
          if (lexer_context.ultimate_token_type == TokenType::Identifier 
-            && lexer_context.last_keyword == KeywordClassifier::Keyword::LuaEmbed)
+            && lexer_context.current_keyword == KeywordClassifier::Keyword::LuaEmbed)
          {
             lexer_context.switch_meta_consumer_mode(MetaConsumerMode::LuaCapture);
          } else if(lexer_context.ultimate_token_type == TokenType::NewLine)
@@ -1229,7 +1229,7 @@ namespace Util {
          lexer_context.original_token_type = token_type;
          lexer_context.ultimate_token_type = token_type;
          CLua::get_next_token(lexer_context,token_type);
-         if (lexer_context.ultimate_token_type == TokenType::Symbol && lexer_context.last_symbol == SymbolKind::AtSign)
+         if (lexer_context.ultimate_token_type == TokenType::Symbol && lexer_context.current_symbol == SymbolKind::AtSign)
          {
             lexer_context.switch_consumer_mode(ConsumerMode::MetaCLua);
          };
