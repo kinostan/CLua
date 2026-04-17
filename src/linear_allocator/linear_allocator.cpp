@@ -27,13 +27,13 @@ namespace Util {
 
             memcpy(new_region,memory_region_start,memory_region_size);
 
-            //delete[] memory_region_start;
+            delete[] memory_region_start;
             
             memory_region_start = new_region;
             memory_region_size = new_size;
         };
 
-        auto current_index = new_top;
+        auto current_index = new_element_address;
         return current_index;
     };
 };

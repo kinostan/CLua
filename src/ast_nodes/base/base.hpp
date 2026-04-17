@@ -13,6 +13,8 @@ namespace CLuaNodes {
         Identifier,
         IdentifierPath,
 
+        GroupedExpression,
+
         Action,
         Expression,
 
@@ -91,8 +93,7 @@ namespace CLuaNodes {
     };
 
     class StringLiteral: public BaseNode {
-        
-        char* string;
+        char* string; //should be changed to memory region
     };
 
     class NumberNode : public BaseNode {
@@ -131,6 +132,15 @@ namespace CLuaNodes {
         Util::TokenGeneric identifier_token;
         IdentifierPathSeparator separator_from_previous = IdentifierPathSeparator::None;
         NodeHandle next_segment = InvalidNode;
+    };
+
+    class GroupedExpression : public BaseNode {
+        public:
+        GroupedExpression()
+        {
+            node_type = NodeType::GroupedExpression;
+        };
+        NodeHandle local_expression = InvalidNode;
     };
 
     class TernaryNode : public BaseNode {

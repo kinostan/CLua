@@ -28,7 +28,7 @@ static std::string run_parser_print(const char* input)
 
 int main()
 {
-    auto output = run_parser_print("(a::b::c::d.e.f.g.h.j)");
+    auto output = run_parser_print("((a::b::c::d.e.f.g.h.j))");
 
     assert(output.find("IdentifierPath: a") != std::string::npos);
     assert(output.find(":: b") != std::string::npos);

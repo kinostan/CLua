@@ -1,0 +1,18 @@
+Problem 2: 
+Title: Memory corruption for linear allocator 
+Level: Low
+Severity: High
+Description: Unidentified bug occurs where allocated memory in linear allocator's heap is invalid after some event and causes the crash. 
+(Problem is unidentified). It reveals itself with "delete[] memory_region_start" statement.
+Explanation: The bug was caused by the fact that linear allocator was returning the top upper bound of the memory allocator region, 
+instead of cell's address.
+
+Problem 3: 
+Title: Invalid data initialization 
+Level: Low
+Severity: High
+Description: Token is returned with 
+invalid data (token offset is a junk data).
+Cause is unknow as it has not been explored.
+The issue occurs while the generation of AST node tree has ended and the AST node tree is being printed.
+Explanation: Issue was related to Problem 2 as no memory corruption is happening now.

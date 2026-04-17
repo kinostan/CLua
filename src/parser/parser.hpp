@@ -56,7 +56,9 @@ namespace ASTParser{
 
         ParserContext(Util::Source& source): 
         lexer(source), node_manager(source.source_size / 3)
-        {};
+        {
+            
+        };
 
         bool is_error_node(NodeHandle node_handle)
         {   
@@ -268,6 +270,10 @@ namespace ASTParser{
                               << " " << get_token_text(segment_node->identifier_token) << std::endl;
                     next_segment_handle = segment_node->next_segment;
                 }
+                break;
+            }
+            case NodeType::GroupedExpression: {
+                std::cout << "GroupedExpression is not handled yet" << std::endl;
                 break;
             }
             case NodeType::Action: {

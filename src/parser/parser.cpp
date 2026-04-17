@@ -177,7 +177,6 @@ namespace ASTParser{
     };  
 
     void Parser::print_node_tree(NodeHandle node_handle,size_t current_depth){
-
         if (parser_context.is_error_node(node_handle))
         {
             print_error_node(node_handle,current_depth);

@@ -20,7 +20,6 @@
             "cStandard": "c17",
             "cppStandard": "gnu++26",
             "intelliSenseMode": "windows-gcc-x64"
-
         }
     ],
     "version": 4
