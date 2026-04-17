@@ -3,22 +3,27 @@
 #include "node_manager.hpp"
 
 #include <lexer/lexer.hpp>
+
 #include <ast_nodes/index.hpp>
+#include <ast_nodes/error_nodes.hpp>
+
+#include <iostream>
 #include <vector>
 
 namespace ASTParser{
-    //AST-concept-1 should only parse math expressions and evaluate them immedieatly i
-    enum class ParserErrorCode {
-        None,
-        LexerError,
-        InvalidExpression
-    };
 
+    using NodeType = CLuaNodes::NodeType;
+    using NodeHandle = CLuaNodes::NodeHandle;
+    using BaseNode = CLuaNodes::BaseNode;
+    const auto InvalidNode = CLuaNodes::InvalidNode;
+    const auto InvalidNodeMask = CLuaNodes::InvalidNodeMask;
+
+    //AST-concept-1 should only parse math expressions and evaluate them immedieatly i
     class ParserError {
         public:
-        ParserErrorCode error_code = ParserErrorCode::None; 
-        //^ should be changed to error node type
-        CLuaNodes::NodeHandle node_handle = InvalidNode;
+        NodeType error_node_type = NodeType::Invalid;
+        NodeHandle node_handle = InvalidNode;
+        //TokenSpan error_span;
     };
 
     class ParserContext{
@@ -67,7 +72,6 @@ namespace ASTParser{
 
             return node_handle & ~InvalidNodeMask;
         };
-
         template <typename Node>
         requires (std::derived_from<Node,BaseNode>)
         inline bool is_node_type(NodeHandle node_handle,NodeType expected_node_type)
@@ -80,7 +84,7 @@ namespace ASTParser{
 
         template<typename Node, typename... Args>
         requires (std::derived_from<Node,BaseNode> && std::is_constructible_v<Node, Args...>)
-        inline CLuaNodes::NodeHandle create_node(Args&&... args)
+        inline NodeHandle create_node(Args&&... args)
         {
             return node_manager.create_node<Node>(std::forward(args)...);
         };
@@ -163,12 +167,12 @@ namespace ASTParser{
         };
     
         //****Nodes****//
-        CLuaNodes::NodeHandle create_error_handle(size_t error_id)
+        NodeHandle create_error_handle(size_t error_id)
         {
             return InvalidNodeMask | error_id;
         };
         
-        CLuaNodes::NodeHandle emit_error(ParserError& parser_error)
+        NodeHandle emit_error(ParserError& parser_error)
         {
             //due to error spans, then it means that
             //the current assertion no longer fits under the requirements.
@@ -190,6 +194,127 @@ namespace ASTParser{
         Parser(Util::Source& source): parser_context(source)
         {};        
 
-        CLuaNodes::NodeHandle generate_AST();
+        NodeHandle generate_AST();
+
+        private:
+
+        void print_node_tree(NodeHandle,size_t);
+        
+        void print_error_node(NodeHandle node_handle,size_t current_depth)
+        {
+            std::cout << "Error Node ID: " << node_handle << std::endl;
+        };
+
+        std::string_view get_token_text(const Util::TokenGeneric& token)
+        {
+            auto& source = parser_context.get_lexer().get_lexer_context().source;
+            return source.slice_string(token.offset, token.length);
+        }
+
+        const char* separator_to_string(CLuaNodes::IdentifierPathSeparator separator)
+        {
+            switch (separator)
+            {
+            case CLuaNodes::IdentifierPathSeparator::None:
+                return "";
+            case CLuaNodes::IdentifierPathSeparator::Dot:
+                return ".";
+            case CLuaNodes::IdentifierPathSeparator::DoubleColon:
+                return "::";
+            default:
+                return "?";
+            }
+        }
+
+        void print_valid_node(NodeHandle node_handle,size_t current_depth)
+        {
+            using namespace CLuaNodes;
+            auto* node_ptr = parser_context.get_node_pointer_from_handle<BaseNode>(node_handle);
+            auto node_type = node_ptr->node_type;
+            std::string indent(current_depth * 2, ' ');
+            
+            switch (node_type)
+            {
+            case NodeType::CharLiteral:
+                std::cout << indent << "CharLiteral" << std::endl;
+                break;
+            case NodeType::StringLiteral:
+                std::cout << indent << "StringLiteral" << std::endl;
+                break;
+            case NodeType::NumberLiteral: {
+                auto* number_node = static_cast<CLuaNodes::NumberNode*>(node_ptr);
+                std::cout << indent << "NumberLiteral: " << number_node->value << std::endl;
+                break;
+            }
+            case NodeType::IntegerLiteral: {
+                auto* integer_node = static_cast<CLuaNodes::IntegerLiteral*>(node_ptr);
+                std::cout << indent << "IntegerLiteral: " << integer_node->value << std::endl;
+                break;
+            }
+            case NodeType::Identifier: {
+                auto* identifier_node = static_cast<CLuaNodes::Identifier*>(node_ptr);
+                std::cout << indent << "Identifier: " << get_token_text(identifier_node->identifier_token) << std::endl;
+                break;
+            }
+            case NodeType::IdentifierPath: {
+                auto* identifier_path_node = static_cast<CLuaNodes::IdentifierPathNode*>(node_ptr);
+                std::cout << indent << "IdentifierPath: " << get_token_text(identifier_path_node->identifier_token) << std::endl;
+
+                auto next_segment_handle = identifier_path_node->next_segment;
+                while (next_segment_handle != InvalidNode)
+                {
+                    auto* segment_node = parser_context.get_node_pointer_from_handle<CLuaNodes::IdentifierPathNode>(next_segment_handle);
+                    std::cout << indent << "  " << separator_to_string(segment_node->separator_from_previous)
+                              << " " << get_token_text(segment_node->identifier_token) << std::endl;
+                    next_segment_handle = segment_node->next_segment;
+                }
+                break;
+            }
+            case NodeType::Action: {
+                std::cout << indent << "Action" << std::endl;
+                auto* action_node = static_cast<CLuaNodes::ActionNode*>(node_ptr);
+                print_node_tree(action_node->action_description, current_depth + 1);
+                if (action_node->next_action != InvalidNode) {
+                    print_node_tree(action_node->next_action, current_depth + 1);
+                }
+                break;
+            }
+            case NodeType::Expression: {
+                std::cout << indent << "Expression" << std::endl;
+                auto* expression_node = static_cast<CLuaNodes::ExpressionNode*>(node_ptr);
+                print_node_tree(expression_node->expression_node_handle, current_depth + 1);
+                break;
+            }
+            case NodeType::UnaryExpression: {
+                std::cout << indent << "UnaryExpression" << std::endl;
+                auto* unary_node = static_cast<CLuaNodes::UnaryNode*>(node_ptr);
+                print_node_tree(unary_node->node, current_depth + 1);
+                break;
+            }
+            case NodeType::BinaryExpression: {
+                std::cout << indent << "BinaryExpression" << std::endl;
+                auto* binary_node = static_cast<CLuaNodes::BinaryNode*>(node_ptr);
+                print_node_tree(binary_node->left, current_depth + 1);
+                print_node_tree(binary_node->right, current_depth + 1);
+                break;
+            }
+            case NodeType::TernaryExpression: {
+                std::cout << indent << "TernaryExpression" << std::endl;
+                auto* ternary_node = static_cast<CLuaNodes::TernaryNode*>(node_ptr);
+                print_node_tree(ternary_node->left, current_depth + 1);
+                print_node_tree(ternary_node->center, current_depth + 1);
+                print_node_tree(ternary_node->right, current_depth + 1);
+                break;
+            }
+            default:
+                std::cout << indent << "Unknown Node Type: " << static_cast<int>(node_type) << std::endl;
+                break;
+            }
+        };
+
+        public:
+        void print_node_tree(NodeHandle node_handle) {
+            return print_node_tree(node_handle,0);
+        };
     };
 }

@@ -1,11 +1,16 @@
 {
     "configurations": [
         {
+            
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/src/",
                 "C:/dev/C_C++/StdToolset/"
             ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [ "${workspaceFolder}/src/" ]
+            },
             "defines": [
                 "_DEBUG",
                 "UNICODE",
@@ -15,6 +20,7 @@
             "cStandard": "c17",
             "cppStandard": "gnu++26",
             "intelliSenseMode": "windows-gcc-x64"
+
         }
     ],
     "version": 4

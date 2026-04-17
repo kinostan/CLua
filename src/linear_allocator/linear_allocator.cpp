@@ -21,12 +21,13 @@ namespace Util {
 
         if (memory_region_size < new_top)
         {
-            auto new_size = new_top * 1.5;
+            auto new_size = static_cast<size_t>(new_top * 1.5);
 
             auto new_region = new Byte[new_size];
+
             memcpy(new_region,memory_region_start,memory_region_size);
 
-            delete[] memory_region_start;
+            //delete[] memory_region_start;
             
             memory_region_start = new_region;
             memory_region_size = new_size;

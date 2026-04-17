@@ -10,12 +10,11 @@ namespace Util {
     );
 
     class LinearAllocator {
-        
+        public:        
         Byte* memory_region_start = nullptr;
         size_t memory_region_size = 0;
         size_t memory_top = 0;
 
-        public:
         LinearAllocator() = default;
         LinearAllocator(size_t initial_size)
         {

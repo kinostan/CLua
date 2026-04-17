@@ -1,2 +1,2 @@
-#include <test.cpp>
+#include "test.cpp"
 #include <lexer/lexer.cpp>

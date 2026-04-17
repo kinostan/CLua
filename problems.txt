@@ -1,0 +1,4 @@
+I should learn better how memory management works in C++ and operating systems
+
+There's an issue with memory block values being initialized incorrectly causing
+windows to panic and give error messages.

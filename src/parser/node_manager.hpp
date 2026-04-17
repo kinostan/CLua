@@ -30,14 +30,14 @@ namespace Util{
         requires (std::derived_from<Node,BaseNode>)
         inline Node& get_node_from_handle(NodeHandle node_handle)
         {
-            return *(static_cast<Node*>(allocator.memory_region_start + node_handle));
+            return *(reinterpret_cast<Node*>(allocator.memory_region_start + node_handle));
         };
 
         template<typename Node, typename... Args>
         requires (std::derived_from<Node,BaseNode>) 
         inline Node* get_node_pointer_from_handle(NodeHandle node_handle)
         {
-            return static_cast<Node*>(allocator.memory_region_start + node_handle);
+            return reinterpret_cast<Node*>(allocator.memory_region_start + node_handle);
         };
     };
 };

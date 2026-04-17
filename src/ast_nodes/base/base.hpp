@@ -1,5 +1,7 @@
 #pragma once
 
+#include <lexer/lexer.hpp>
+
 namespace CLuaNodes {
     enum class NodeType {
         Invalid,
@@ -9,6 +11,7 @@ namespace CLuaNodes {
         IntegerLiteral,
 
         Identifier,
+        IdentifierPath,
 
         Action,
         Expression,
@@ -16,6 +19,12 @@ namespace CLuaNodes {
         UnaryExpression,
         BinaryExpression,
         TernaryExpression
+    };
+
+    enum class IdentifierPathSeparator {
+        None,
+        Dot,
+        DoubleColon
     };
 
     enum class UnOperationType{
@@ -104,13 +113,24 @@ namespace CLuaNodes {
         long long value = 0;
     };
 
+
     class Identifier: public BaseNode {
         public:
         Identifier()
         {
             node_type = NodeType::Identifier;
         };
-        char* identifier = nullptr;      
+        Util::TokenGeneric identifier_token;
+    };
+
+    class IdentifierPathNode : public BaseNode {
+    public:
+        IdentifierPathNode() {
+            node_type = NodeType::IdentifierPath;
+        }
+        Util::TokenGeneric identifier_token;
+        IdentifierPathSeparator separator_from_previous = IdentifierPathSeparator::None;
+        NodeHandle next_segment = InvalidNode;
     };
 
     class TernaryNode : public BaseNode {
