@@ -4,8 +4,7 @@
             
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/src/",
-                "C:/dev/C_C++/StdToolset/"
+                "${workspaceFolder}/src/"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
