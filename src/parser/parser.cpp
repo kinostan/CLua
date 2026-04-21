@@ -66,10 +66,10 @@ namespace ASTParser{
         NodeHandle expect_identifier(ParserContext& parser_context)
         {
             auto current_token = parser_context.see_current_token();
-            parser_context.get_next_token(); 
 
             if (parser_context.is_identifier())
             {
+                parser_context.get_next_token(); 
                 return parser_context.create_node<Identifier>(
                     current_token.as<Util::IdentifierToken>()
                 );
@@ -82,6 +82,8 @@ namespace ASTParser{
 
                 return unexpected_token;
             };
+
+            return InvalidNode;
         };
 
         NodeHandle get_scoped_identifier(ParserContext& parser_context)

@@ -124,7 +124,7 @@ namespace CLuaNodes {
     inline NodeHandle create_error_node_handle(size_t error_id)
     {
         Assert(
-            (error_id & ~NodeTagMask) != error_id,
+            (error_id & ~NodeTagMask) == error_id,
             "Error id exceeded the maximum number range"
         );
         return static_cast<NodeHandle>(NodeHandleTag::Error) | (error_id & ~NodeTagMask);

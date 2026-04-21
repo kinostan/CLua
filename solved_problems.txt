@@ -16,3 +16,13 @@ invalid data (token offset is a junk data).
 Cause is unknow as it has not been explored.
 The issue occurs while the generation of AST node tree has ended and the AST node tree is being printed.
 Explanation: Issue was related to Problem 2 as no memory corruption is happening now.
+
+Problem 8:
+Title: Error id range check assertion is inverted
+Level: Medium
+Severity: High
+Description:
+create_error_node_handle checks error id fit using an inverted assertion expression.
+Current check allows invalid assumptions and can reject valid ids or accept overflowing ids depending on build mode.
+Explanation: assert(expr & left_sided_mask == expr) was here to check if number limit is not crossed
+but the logic was inverted

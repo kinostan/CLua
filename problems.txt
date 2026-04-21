@@ -1,4 +1,4 @@
-TopUID: 5
+TopUID: 11
 
 Problem 1:
 Title: Unimplemented logic for loop end condition for parser
@@ -21,3 +21,43 @@ Severity: Low
 Description: 
 Current linear allocator will not be able to handle removal parts of the memory and would force the remove the entire model
 instead only it's fragment to refit.
+
+Problem 6:
+Title: Node handle tag mask assumes 64-bit size_t
+Level: High/Design
+Severity: Medium
+Description:
+NodeTagMask and NodeHandleTag bit packing are hardcoded for 64-bit handles (shift by 62).
+This breaks portability and causes warnings or incorrect behavior on platforms where size_t is not 64-bit.
+
+Problem 7:
+Title: Error-handle assertion logic is inverted
+Level: Medium
+Severity: High
+Description:
+get_error_id_from_node_handle currently asserts with the opposite condition.
+The function should require an error-tagged handle, but the assertion checks for non-error handles.
+
+Problem 9:
+Title: ActionNode link is not initialized
+Level: Medium
+Severity: Medium
+Description:
+ActionNode.next_action is left uninitialized.
+This may produce accidental chains or random traversal behavior when the next action is not set explicitly.
+
+Problem 10:
+Title: ParserContext has no public error query API
+Level: Low/Design
+Severity: Medium
+Description:
+ParserContext stores parser errors internally but does not expose a public getter for error list/count.
+This makes downstream stages rely on side effects instead of explicit diagnostics flow.
+
+Problem 11:
+Title: Lexer and parser error-node constructors are inconsistent
+Level: Low/Design
+Severity: Low
+Description:
+Some error nodes require token payload in constructor while others rely on default construction and later assignment.
+This inconsistency increases usage mistakes and makes error emission patterns harder to standardize.
