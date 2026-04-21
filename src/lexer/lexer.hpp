@@ -459,6 +459,20 @@ namespace Util {
         };
     };
 
+    class LexerState {
+        public: 
+        ConsumerMode consumer_mode = ConsumerMode::CLua;
+        MetaConsumerMode meta_consumer_mode = MetaConsumerMode::None;
+        size_t cursor_index = 0;
+        
+        LexerState(LexerContext& lexer_context)
+        {
+            consumer_mode = lexer_context.see_current_consumer_mode();
+            meta_consumer_mode = lexer_context.see_current_meta_consumer_mode();
+            cursor_index = lexer_context.source.index;
+        };  
+    };
+
     class Lexer
     {
         private:
@@ -474,13 +488,25 @@ namespace Util {
 
         private:
         TokenGeneric get_next_token();
-        
-        inline void rollback_cursor()
+    
+        public:
+
+        LexerState record_cursor()
         {
-            lexer_context.source.set_index(last_peeked_token.offset);
+            return LexerState(lexer_context);
         };
 
-        public:
+        void set_cursor(LexerState lexer_state)
+        {
+            LAssert(
+                lexer_state.cursor_index < lexer_context.source.source_size,
+                "cursor_index exceeds legal value"
+            );
+
+            lexer_context.switch_consumer_mode(lexer_state.consumer_mode);
+            lexer_context.switch_meta_consumer_mode(lexer_state.meta_consumer_mode);
+            lexer_context.source.set_index(lexer_state.cursor_index);
+        };
         
         LexerContext& get_lexer_context()
         {

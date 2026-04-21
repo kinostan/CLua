@@ -1,6 +1,7 @@
 #pragma once
 
 #include <lexer/lexer.hpp>
+#include <debugger/debugger.hpp>
 
 namespace CLuaNodes {
     enum class NodeType {
@@ -13,7 +14,7 @@ namespace CLuaNodes {
         Identifier,
         IdentifierPath,
 
-        GroupedExpression,
+        GroupExpression,
 
         Action,
         Expression,
@@ -78,10 +79,45 @@ namespace CLuaNodes {
         Conditional
     };
 
+    enum class NodeHandleTag : uint64_t {
+        NoPattern = 0b00ULL << 62,
+        Valid     = 0b01ULL << 62, 
+        Reserved  = 0b10ULL << 62, 
+        Error     = 0b11ULL << 62  
+    };
+
     using NodeHandle = size_t;
 
-    const NodeHandle InvalidNodeMask = ~LLONG_MAX;
+    const NodeHandle NodeTagMask = 0b11 << 62;
     const NodeHandle InvalidNode = ULLONG_MAX;
+
+    inline NodeHandleTag get_node_tag_from_handle(NodeHandle node_handle)
+    {
+        return static_cast<NodeHandleTag>(node_handle & NodeTagMask);
+    };
+
+    inline NodeHandle set_node_state_for_handle(NodeHandle node_handle,NodeHandleTag node_state){
+        return static_cast<NodeHandle>(node_state) | (node_handle & ~NodeTagMask); 
+    };  
+
+    inline size_t get_error_id_from_node_handle(NodeHandle node_handle)
+    {
+        auto node_state = get_node_tag_from_handle(node_handle);
+        Assert(
+            node_state != NodeHandleTag::Error,
+            "get_error_id_from_node_handle called when node_handle is not an error node"
+        );
+        return node_handle & ~NodeTagMask;
+    };
+    
+    inline NodeHandle create_error_node_handle(size_t error_id)
+    {
+        Assert(
+            (error_id & ~NodeTagMask) != error_id,
+            "Error id exceeded the maximum number range"
+        );
+        return static_cast<NodeHandle>(NodeHandleTag::Error) | (error_id & ~NodeTagMask);
+    };
 
     class BaseNode {
         public:
@@ -134,13 +170,14 @@ namespace CLuaNodes {
         NodeHandle next_segment = InvalidNode;
     };
 
-    class GroupedExpression : public BaseNode {
+    class GroupExpression : public BaseNode {
         public:
-        GroupedExpression()
+        GroupExpression(NodeHandle group_expression): group_expression(group_expression)
         {
-            node_type = NodeType::GroupedExpression;
+            node_type = NodeType::GroupExpression;
+
         };
-        NodeHandle local_expression = InvalidNode;
+        NodeHandle group_expression = InvalidNode;
     };
 
     class TernaryNode : public BaseNode {

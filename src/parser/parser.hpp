@@ -15,9 +15,6 @@ namespace ASTParser{
     using NodeType = CLuaNodes::NodeType;
     using NodeHandle = CLuaNodes::NodeHandle;
     using BaseNode = CLuaNodes::BaseNode;
-    const auto InvalidNode = CLuaNodes::InvalidNode;
-    const auto InvalidNodeMask = CLuaNodes::InvalidNodeMask;
-
     //AST-concept-1 should only parse math expressions and evaluate them immedieatly i
     class ParserError {
         public:
@@ -56,24 +53,9 @@ namespace ASTParser{
 
         ParserContext(Util::Source& source): 
         lexer(source), node_manager(source.source_size / 3)
-        {
-            
-        };
+        {};
 
-        bool is_error_node(NodeHandle node_handle)
-        {   
-            return node_handle & InvalidNodeMask;
-        };
 
-        size_t get_error_id_from_node_handle(NodeHandle node_handle)
-        {
-            PAssert(
-                !is_error_node(node_handle),
-                "get_error_id_from_node_handle called when node_handle is a valid node"
-            );
-
-            return node_handle & ~InvalidNodeMask;
-        };
         template <typename Node>
         requires (std::derived_from<Node,BaseNode>)
         inline bool is_node_type(NodeHandle node_handle,NodeType expected_node_type)
@@ -167,13 +149,7 @@ namespace ASTParser{
         {
             return lexer.get_current_keyword();
         };
-    
-        //****Nodes****//
-        NodeHandle create_error_handle(size_t error_id)
-        {
-            return InvalidNodeMask | error_id;
-        };
-        
+
         NodeHandle emit_error(ParserError& parser_error)
         {
             //due to error spans, then it means that
@@ -181,7 +157,7 @@ namespace ASTParser{
             //it should keep track of error spans to monitor overlaps and report
             //if they happen in the code
             auto error_id = error_list.size();
-            auto error_handle = create_error_handle(error_id);
+            auto error_handle = CLuaNodes::create_error_node_handle(error_id);
 
             error_list.push_back(parser_error);
 
