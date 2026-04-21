@@ -248,8 +248,8 @@ namespace ASTParser{
                 }
                 break;
             }
-            case NodeType::GroupedExpression: {
-                std::cout << "GroupedExpression is not handled yet" << std::endl;
+            case NodeType::GroupExpression: {
+                std::cout << "GroupExpression is not handled yet" << std::endl;
                 break;
             }
             case NodeType::Action: {

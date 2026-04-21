@@ -35,17 +35,46 @@ namespace ASTParser{
             auto expression_node = expect_group_expression(parser_context);
             auto node_tag = get_node_tag_from_handle(expression_node);
 
+            auto return_node = InvalidNode;
+
             if (node_tag == NodeHandleTag::Valid) [[likely]] {
                 auto group_node = parser_context.create_node<GroupExpression>(expression_node);
-                return group_node;
+                return_node = group_node;
+
+                current_token = parser_context.see_current_token();
+
+                if (current_token.token_type == TokenType::Symbol && parser_context.get_current_symbol() == SymbolKind::RParen)
+                {
+                    parser_context.get_next_token();
+                    return group_node;
+                } else {
+                    /*
+                    Unclosed group expression error
+                    */
+                    ParserError parser_error = ParserError();
+                    parser_error.error_node_type = NodeType::Error;
+                    parser_error.node_handle = InvalidNode;
+
+                    return parser_context.emit_error(parser_error);
+                };
             } else if(node_tag == NodeHandleTag::Error) {
                 return expression_node;
             } else {
                 PAssert(false, 
-                 "unexpected node tag being returned, this function either returns Valid/Error"
+                 "unexpected node tag being returned, this function either returns Valid/Error node tag handle"
                 );
-                return InvalidNode;
+                return return_node;
             };
+        };
+
+        NodeHandle expect_identifier(ParserContext& parser_context)
+        {
+            
+        };
+
+        NodeHandle expect_identifier_path(ParserContext& parser_context)
+        {
+            
         };
 
         NodeHandle get_atom(ParserContext& parser_context)

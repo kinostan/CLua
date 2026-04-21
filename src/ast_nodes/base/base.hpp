@@ -21,7 +21,9 @@ namespace CLuaNodes {
 
         UnaryExpression,
         BinaryExpression,
-        TernaryExpression
+        TernaryExpression,
+
+        Error
     };
 
     enum class IdentifierPathSeparator {
