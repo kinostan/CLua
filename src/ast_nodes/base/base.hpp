@@ -23,7 +23,16 @@ namespace CLuaNodes {
         BinaryExpression,
         TernaryExpression,
 
-        Error
+        //Error Codes
+        UnclosedBlockError,
+        UnclosedGroupError,
+        LexerError,
+        UnexpectedEOFError,
+        UnexpectedTokenError,
+        MissingTokenError,
+        InvalidIdentifierError,
+        InvalidExpressionError,
+        IdentifierExpectedError
     };
 
     enum class IdentifierPathSeparator {
@@ -90,7 +99,7 @@ namespace CLuaNodes {
 
     using NodeHandle = size_t;
 
-    const NodeHandle NodeTagMask = 0b11 << 62;
+    const NodeHandle NodeTagMask = 0b11ULL << 62;
     const NodeHandle InvalidNode = ULLONG_MAX;
 
     inline NodeHandleTag get_node_tag_from_handle(NodeHandle node_handle)
@@ -127,11 +136,20 @@ namespace CLuaNodes {
     };
 
     class CharLiteral: public BaseNode {
+        public:
+        CharLiteral(char char_value): value(char_value) {
+            node_type = NodeType::CharLiteral;
+        };
         char value;
     };
 
     class StringLiteral: public BaseNode {
-        char* string; //should be changed to memory region
+        public:
+        StringLiteral(Util::StringToken string_token): string_token(string_token)
+        {
+            node_type = NodeType::StringLiteral;
+        };
+        Util::StringToken string_token;
     };
 
     class NumberNode : public BaseNode {
@@ -155,7 +173,7 @@ namespace CLuaNodes {
 
     class Identifier: public BaseNode {
         public:
-        Identifier()
+        Identifier(Util::IdentifierToken identifier_token): identifier_token(identifier_token)
         {
             node_type = NodeType::Identifier;
         };
@@ -177,7 +195,6 @@ namespace CLuaNodes {
         GroupExpression(NodeHandle group_expression): group_expression(group_expression)
         {
             node_type = NodeType::GroupExpression;
-
         };
         NodeHandle group_expression = InvalidNode;
     };

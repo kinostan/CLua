@@ -113,11 +113,14 @@ namespace Util {
       unsigned int length = 0;
       long double integer_value = 0;
 
+      unsigned base_divisor = 1;
+
       while (char_type == CharacterType::Numeric)
       {
          integer_value *= 10;
          integer_value += (current_char - (unsigned char)'0');
          length++;
+         base_divisor *= 10;
       
          lexer_context.source.consume();
          current_char = lexer_context.source.see_current();
@@ -129,7 +132,7 @@ namespace Util {
          return 0;
       };
 
-      return integer_value / length;
+      return integer_value / base_divisor;
    };
 
    inline void test_char_type(unsigned char index_char, CharacterType expected_type)
@@ -218,7 +221,7 @@ namespace Util {
          current_char = lexer_context.source.see_current();
       }
 
-      if (!TypeClassificator::is_number_compapitable_char_type(character_map[current_char]))
+      if (!TypeClassificator::is_number_compitable_char_type(character_map[current_char]))
       {
          return lexer_context.record_error(ErrorCode::MalformedNumber);
       };
@@ -228,7 +231,7 @@ namespace Util {
          return lexer_context.record_error(ErrorCode::TruncatedNumberSequence);
       };
 
-      return lexer_context.record_number(NumberBase::Hexdecimal,NumberType::Integer,number_integer);
+      return lexer_context.record_number(NumberBase::Hexadecimal,NumberType::Integer,number_integer);
    };
 
    void consume_bin_numeric_token(LexerContext& lexer_context)
@@ -263,7 +266,7 @@ namespace Util {
          current_char = lexer_context.source.see_current();
       }
 
-      if (!TypeClassificator::is_number_compapitable_char_type(character_map[current_char]))
+      if (!TypeClassificator::is_number_compitable_char_type(character_map[current_char]))
       {
          return lexer_context.record_error(ErrorCode::MalformedNumber);
       };
@@ -312,7 +315,7 @@ namespace Util {
          //[numbers](consume_index).
          lexer_context.source.consume();
          number_fraction = consume_and_eval_fraction(lexer_context);
-      } else if (TypeClassificator::is_number_compapitable_char_type(middle_char_type)) [[likely]]
+      } else if (TypeClassificator::is_number_compitable_char_type(middle_char_type)) [[likely]]
       {
          //[numbers]
          return lexer_context.record_number(NumberBase::Decimal,NumberType::Integer,number_integer);
@@ -324,7 +327,7 @@ namespace Util {
       auto end_char = lexer_context.source.see_current();
       auto end_char_type = character_map[end_char];
 
-      if (TypeClassificator::is_number_compapitable_char_type(end_char_type)) [[likely]] 
+      if (TypeClassificator::is_number_compitable_char_type(end_char_type)) [[likely]] 
       {
          //[numbers].[numbers]
          //[numbers].

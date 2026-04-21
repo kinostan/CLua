@@ -1,5 +1,4 @@
 #include "parser.hpp"
-#include "index.cpp"
 
 namespace ASTParser{
     template <typename T, typename... Ts>
@@ -26,24 +25,21 @@ namespace ASTParser{
             auto current_token = parser_context.see_current_token();
 
             PAssert(
-                current_token.token_type == TokenType::Symbol && 
-                parser_context.get_current_symbol() == SymbolKind::LParen,  
+                parser_context.is_symbol(SymbolKind::LParen),  
                 "guessed token type doesn't fit the requirements '(' expected"
             );
 
             parser_context.get_next_token();
-            auto expression_node = expect_group_expression(parser_context);
+            auto expression_node = Expression::expect_expression(parser_context);
             auto node_tag = get_node_tag_from_handle(expression_node);
 
             auto return_node = InvalidNode;
 
             if (node_tag == NodeHandleTag::Valid) [[likely]] {
                 auto group_node = parser_context.create_node<GroupExpression>(expression_node);
-                return_node = group_node;
+                auto next_token = parser_context.see_current_token();
 
-                current_token = parser_context.see_current_token();
-
-                if (current_token.token_type == TokenType::Symbol && parser_context.get_current_symbol() == SymbolKind::RParen)
+                if (parser_context.is_symbol(SymbolKind::RParen))
                 {
                     parser_context.get_next_token();
                     return group_node;
@@ -51,9 +47,9 @@ namespace ASTParser{
                     /*
                     Unclosed group expression error
                     */
-                    ParserError parser_error = ParserError();
-                    parser_error.error_node_type = NodeType::Error;
-                    parser_error.node_handle = InvalidNode;
+                    
+                    ParserError parser_error = ParserError(current_token,next_token);
+                    parser_error.node_handle = parser_context.create_node<UnclosedBlockError>();
 
                     return parser_context.emit_error(parser_error);
                 };
@@ -69,12 +65,36 @@ namespace ASTParser{
 
         NodeHandle expect_identifier(ParserContext& parser_context)
         {
-            
+            auto current_token = parser_context.see_current_token();
+            parser_context.get_next_token(); 
+
+            if (parser_context.is_identifier())
+            {
+                return parser_context.create_node<Identifier>(
+                    current_token.as<Util::IdentifierToken>()
+                );
+            } else {
+                auto parser_error = ParserError(current_token);
+                parser_error.node_handle = parser_context.create_node<UnexpectedTokenError>(
+                    current_token
+                );    
+                auto unexpected_token = parser_context.emit_error(parser_error);
+
+                return unexpected_token;
+            };
         };
 
-        NodeHandle expect_identifier_path(ParserContext& parser_context)
+        NodeHandle get_scoped_identifier(ParserContext& parser_context)
         {
-            
+            while (!parser_context.has_reached_end())
+            {
+                
+            }
+        };
+
+        NodeHandle get_literal_node(ParserContext& parser_context)
+        {
+
         };
 
         NodeHandle get_atom(ParserContext& parser_context)
@@ -82,7 +102,14 @@ namespace ASTParser{
             
         };
     };
-            
+       
+    namespace Expression {
+        NodeHandle expect_expression(ParserContext& parser_context)
+        {
+
+        };
+    };
+
     void Parser::print_node_tree(NodeHandle node_handle,size_t current_depth){
         NodeHandleTag node_tag = get_node_tag_from_handle(node_handle);
 
@@ -102,6 +129,8 @@ namespace ASTParser{
     };
 
     NodeHandle Parser::generate_AST(){
-        
+        auto expression = Expression::expect_expression(parser_context);
+        print_node_tree(expression);
+        return expression;
     }
 }

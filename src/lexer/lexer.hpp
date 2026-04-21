@@ -64,7 +64,7 @@ namespace Util {
     };
 
     enum class NumberBase: uint8_t  {
-        Hexdecimal,
+        Hexadecimal,
         Decimal,
         Binary,
         None,
@@ -324,6 +324,15 @@ namespace Util {
         size_t brace_balance = 0; //Brace balance is how many "{" braces are against "}"
         bool met_first_brace = false;
     };
+
+    class TokenSpan {
+        public:
+        TokenGeneric start;
+        TokenGeneric end;
+        
+        TokenSpan(TokenGeneric start,TokenGeneric end): start(start), end(end)
+        {};
+    };
     
     class LexerContext {
         private:
@@ -581,7 +590,7 @@ namespace Util {
          }
       };
 
-      inline bool is_number_compapitable_char_type(CharacterType char_type)
+      inline bool is_number_compitable_char_type(CharacterType char_type)
       {
          switch (char_type)
          {

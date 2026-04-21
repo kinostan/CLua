@@ -12,15 +12,30 @@
 
 namespace ASTParser{
 
+    using CLuaNodes::get_node_tag_from_handle;
+
     using NodeType = CLuaNodes::NodeType;
+    using NodeHandleTag = CLuaNodes::NodeHandleTag;
     using NodeHandle = CLuaNodes::NodeHandle;
     using BaseNode = CLuaNodes::BaseNode;
+
+    using TokenGeneric = Util::TokenGeneric;
+    using TokenSpan = Util::TokenSpan;
+    using TokenType = Util::TokenType;
+    
+    const auto InvalidNode = CLuaNodes::InvalidNode;
+    
     //AST-concept-1 should only parse math expressions and evaluate them immedieatly i
     class ParserError {
         public:
-        NodeType error_node_type = NodeType::Invalid;
+
+        ParserError(TokenGeneric start, TokenGeneric end): token_span(TokenSpan(start,end))
+        {};
+        ParserError(TokenGeneric only_token): token_span(TokenSpan(only_token,only_token))
+        {};
+
+        TokenSpan token_span;
         NodeHandle node_handle = InvalidNode;
-        //TokenSpan error_span;
     };
 
     class ParserContext{
@@ -34,6 +49,14 @@ namespace ASTParser{
 
         std::vector<ParserError> error_list;
 
+        void emit_lexer_error_for_token(const Util::TokenGeneric& error_token)
+        {
+            ParserError parser_error = ParserError(error_token,error_token);
+            auto lexer_error = get_current_error();
+            parser_error.node_handle = create_node<CLuaNodes::LexerErrorNode>(error_token, lexer_error.error_code);
+            emit_error(parser_error);
+        }
+
         Util::TokenGeneric get_next_non_neutral_token()
         {
             Util::TokenGeneric token;
@@ -41,6 +64,18 @@ namespace ASTParser{
             do
             {
                 token = lexer.process_next_token();
+
+                if (token.token_type == Util::TokenType::Error)
+                {
+                    emit_lexer_error_for_token(token);
+                    continue;
+                }
+
+                if (token.token_type == Util::TokenType::EndOfFile)
+                {
+                    has_reached_eof = true;
+                    return token;
+                }
             }
             while (token.token_type == Util::TokenType::Comment ||
                 token.token_type == Util::TokenType::NewLine ||
@@ -70,14 +105,14 @@ namespace ASTParser{
         requires (std::derived_from<Node,BaseNode> && std::is_constructible_v<Node, Args...>)
         inline NodeHandle create_node(Args&&... args)
         {
-            return node_manager.create_node<Node>(std::forward(args)...);
+            return node_manager.create_node<Node>(std::forward<Args>(args)...);
         };
 
         template<typename Node>
         requires (std::derived_from<Node,BaseNode>) 
         inline Node* get_node_pointer_from_handle(NodeHandle node_handle){
             PAssert(
-                !is_error_node(node_handle),
+                get_node_tag_from_handle(node_handle) == NodeHandleTag::Valid,
                 "node handle must be valid to be casted from node handle to node pointer"
             )
             return node_manager.get_node_pointer_from_handle<Node>(node_handle);
@@ -88,7 +123,7 @@ namespace ASTParser{
         inline Node& get_node_from_handle(NodeHandle node_handle)
         {
             PAssert(
-                !is_error_node(node_handle),
+                get_node_tag_from_handle(node_handle) == NodeHandleTag::Valid,
                 "node handle must be valid for function to be able to return a reference of a node"
             )
             return *get_node_pointer_from_handle<Node>(node_handle);
@@ -162,6 +197,17 @@ namespace ASTParser{
             error_list.push_back(parser_error);
 
             return error_handle;
+        };
+    
+        inline bool is_symbol(SymbolClassifier::SymbolKind expected_symbol)
+        {
+            return current_token.token_type == TokenType::Symbol && get_current_symbol() == expected_symbol;
+        };
+
+        inline bool is_identifier()
+        {
+            return current_token.token_type == TokenType::Identifier && 
+            get_current_keyword() == KeywordClassifier::Keyword::Unknown;
         };
     };
 
