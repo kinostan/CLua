@@ -84,26 +84,124 @@ namespace ASTParser{
 
                 return unexpected_token;
             };
-
             return InvalidNode;
         };
 
         NodeHandle get_scoped_identifier(ParserContext& parser_context)
         {
+            auto optional_global_scope = parser_context.consume_symbol(SymbolKind::DoubleColon); 
+            auto identifier_token = parser_context.see_current_token();
+
+            if (identifier_token.token_type != TokenType::Identifier)
+            {
+                return set_node_state_for_handle(0,NodeHandleTag::NoPattern);
+            };
+
+            auto identifier_path_head = parser_context.create_node<IdentifierPathNode>(identifier_token,optional_global_scope);
+            auto& node_reference = parser_context.get_node_from_handle<IdentifierPathNode>(identifier_path_head);
+
+            auto previous_node_handle = identifier_path_head;
+
             while (!parser_context.has_reached_end())
             {
+                auto local_scope = parser_context.consume_symbol(SymbolKind::DoubleColon);
+                if (!local_scope)
+                {
+                    break;
+                };
+                identifier_token = parser_context.see_current_token();
                 
+                if (identifier_token.token_type == TokenType::Identifier) [[unlikely]]
+                {
+                    auto unexpected_token = parser_context.create_node<UnexpectedTokenError>(identifier_token);
+                    auto error = ParserError(identifier_token);
+                    error.node_handle = unexpected_token;
+                    return parser_context.emit_error(error);
+                };
+
+                parser_context.get_next_token();
+                auto current_node_handle = parser_context.create_node<IdentifierPathNode>(identifier_token,true);
+
+                auto& current_node_reference = parser_context.get_node_from_handle<IdentifierPathNode>(current_node_handle);
+                auto& previous_node_reference = parser_context.get_node_from_handle<IdentifierPathNode>(previous_node_handle);
+
+                previous_node_reference.next_segment = current_node_handle;
+                previous_node_handle = current_node_handle;
+            };
+        };
+
+        NodeHandle expect_literal_node(ParserContext& parser_context)
+        {
+            auto current_token = parser_context.see_current_token();
+
+            switch (current_token.token_type)
+            {
+                case TokenType::Char:
+                {
+                    auto char_value = parser_context.get_current_char_value();
+                    auto char_node = parser_context.create_node<CharLiteral>(char_value);
+                    return char_node;
+                };
+                case TokenType::String:
+                {
+                    auto string_node = parser_context.create_node<StringLiteral>(
+                        current_token.as<Util::StringToken>()
+                    );
+
+                    return string_node;
+                };
+                case TokenType::Numeric:
+                {
+                    auto number_hint = parser_context.get_current_number_hint();
+                    
+                    PAssert(
+                        number_hint.number_type != NumberType::None,
+                        "unexpected state, where number type has not been set despite"
+                        "token type being a literal numeric"
+                    )
+
+                    auto fraction = parser_context.get_current_fraction();
+                    auto integer = parser_context.get_current_integer();
+
+                    if (number_hint.number_type == NumberType::Float)
+                    {
+                        auto num_val = fraction + integer;
+                        
+                    } else if (number_hint.number_type == NumberType::Integer)
+                    {
+                        auto integer_node = parser_context.create_node<IntegerLiteral>(integer);
+                    };
+                };  
+                default:
+                {
+                    auto unexpected_token = parser_context.create_node<UnexpectedTokenError>(current_token);
+                    auto error = ParserError(current_token);
+                    error.node_handle = unexpected_token;
+                    return parser_context.emit_error(error);
+                }
             }
+
+            return InvalidNode;
         };
 
-        NodeHandle get_literal_node(ParserContext& parser_context)
+        NodeHandle expect_atom(ParserContext& parser_context)
         {
+            auto cursor_record = parser_context.get_lexer().record_cursor();
 
-        };
+            auto scoped_identifier = get_scoped_identifier(parser_context);
+            auto result_tag = get_node_tag_from_handle(scoped_identifier);
 
-        NodeHandle get_atom(ParserContext& parser_context)
-        {
+            if (is_one_of(result_tag,NodeHandleTag::Error,NodeHandleTag::Valid))
+            {
+                return scoped_identifier;
+            };
             
+            parser_context.get_lexer().set_cursor(cursor_record);
+
+            auto& literal = scoped_identifier;
+            literal = expect_literal_node(parser_context);
+
+            return literal;
         };
     };
        

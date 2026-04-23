@@ -37,12 +37,6 @@ namespace CLuaNodes {
         IdentifierExpectedError
     };
 
-    enum class IdentifierPathSeparator {
-        None,
-        Dot,
-        DoubleColon
-    };
-
     enum class UnOperationType{
         None,
         Minus,
@@ -106,6 +100,12 @@ namespace CLuaNodes {
 
     inline NodeHandleTag get_node_tag_from_handle(NodeHandle node_handle)
     {
+        PAssert(
+            static_cast<NodeHandleTag>(node_handle & NodeTagMask) == NodeHandleTag::Reserved,
+            "unexpected behaviour, invalid state of the NodeHandleTag property type (Reserved) is set, possible memory" 
+            " corruption"
+        );
+
         return static_cast<NodeHandleTag>(node_handle & NodeTagMask);
     };
 
@@ -184,11 +184,14 @@ namespace CLuaNodes {
 
     class IdentifierPathNode : public BaseNode {
     public:
-        IdentifierPathNode() {
+        IdentifierPathNode(Util::TokenGeneric identifier_token,bool has_scope_symbol):
+        identifier_token(identifier_token), has_scope_symbol(has_scope_symbol)
+        {
             node_type = NodeType::IdentifierPath;
         }
+
+        bool has_scope_symbol;
         Util::TokenGeneric identifier_token;
-        IdentifierPathSeparator separator_from_previous = IdentifierPathSeparator::None;
         NodeHandle next_segment = InvalidNode;
     };
 

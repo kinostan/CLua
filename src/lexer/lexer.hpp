@@ -354,6 +354,7 @@ namespace Util {
 
         Util::uint64 current_number_integer = 0;
         long double current_number_fraction = 0; //belongs to <0,inf) in any other case it's invalid
+        char current_char_value = 0;
 
         TokenType ultimate_token_type = TokenType::Error;
         TokenType original_token_type = ultimate_token_type; //this variable is strictly for recover if user chooses to do so
@@ -467,6 +468,13 @@ namespace Util {
             original_token_type = ultimate_token_type;
             ultimate_token_type = TokenKind<IdentifierToken>::value;
         };
+
+        inline void record_char(char char_value)
+        {
+            on_emit();
+
+            current_char_value = char_value;
+        };
     };
 
     class LexerState {
@@ -565,6 +573,26 @@ namespace Util {
         const KeywordClassifier::Keyword get_current_keyword()
         {
             return lexer_context.current_keyword;
+        };
+
+        const long double get_current_fraction() 
+        {
+            LAssert(
+                lexer_context.current_number_fraction >= 0,
+                "invalid state"
+            );
+
+            return lexer_context.current_number_fraction;
+        };
+
+        const unsigned long long get_current_integer()
+        {
+            return lexer_context.current_number_integer;
+        };
+
+        const char get_current_char_value()
+        {
+            return lexer_context.current_char_value;
         };
     };
 

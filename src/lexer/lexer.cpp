@@ -545,12 +545,30 @@ namespace Util {
    };
 
    void consume_char_token(LexerContext& lexer_context) {
+      auto get_escape_sequence = [](char selected_char) {
+         switch (selected_char) {
+            case 'n':  return '\n';
+            case 't':  return '\t';
+            case 'r':  return '\r';
+            case '\\': return '\\';
+            case '\'': return '\'';
+            case '\"': return '\"';
+            case 'a':  return '\a';
+            case 'b':  return '\b';
+            case 'f':  return '\f';
+            case 'v':  return '\v';
+            default:   return selected_char;
+         }
+      };
+
       LAssert(
          lexer_context.source.see_current() == '\'',"expected string to begin with \"\'\", got something else instead"s
       )
 
       lexer_context.source.consume(); 
-      auto current_char = lexer_context.source.see_current();
+      char current_char = static_cast<char>(lexer_context.source.see_current());
+
+      char char_value = 0;
 
       Util::uint64 counter = 0;
       while (current_char != '\'')
@@ -559,15 +577,16 @@ namespace Util {
          {
             return lexer_context.record_error(ErrorCode::UnclosedChar);
          };
-
+         char_value = current_char;
          if (current_char == '\\') {
             lexer_context.source.consume(); 
 
-            char next = lexer_context.source.see_current();
+            char next = static_cast<char>(lexer_context.source.see_current());
             if (next == '\0')
             {
                return lexer_context.record_error(ErrorCode::UnclosedChar);
             }
+            char_value = get_escape_sequence(next);
          }  
          lexer_context.source.consume(); 
 
@@ -581,7 +600,7 @@ namespace Util {
       {
          return lexer_context.record_error(ErrorCode::InvalidCharCode);
       } else if (counter == 1){
-         return;
+         return lexer_context.record_char(char_value);
       } else if(counter > 1)
       {
          return lexer_context.record_error(ErrorCode::TooLongChar);
@@ -870,9 +889,6 @@ namespace Util {
          return LuaUTokenType::None;
       };
 
-      /// @brief it also consumes while asserting on the note but I don't know how to call this function then otherwise
-      /// @param lexer_context 
-      /// @return 
       void assert_is_lua_comment(LexerContext &lexer_context)
       {
          LAssert(
@@ -1156,8 +1172,6 @@ namespace Util {
             consume_unexpected_token(lexer_context);
             break;
          };
-
-
       };
    };
 

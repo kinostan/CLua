@@ -5,7 +5,7 @@
 
 #include <lexer/lexer.hpp>
 
-#include <ast_nodes/index.hpp>
+#include <ast_nodes/base/base.hpp>
 #include <ast_nodes/error_nodes.hpp>
 
 #include <iostream>
@@ -106,7 +106,14 @@ namespace ASTParser{
         requires (std::derived_from<Node,BaseNode> && std::is_constructible_v<Node, Args...>)
         inline NodeHandle create_node(Args&&... args)
         {
-            return node_manager.create_node<Node>(std::forward<Args>(args)...);
+            auto node_handle = node_manager.create_node<Node>(std::forward<Args>(args)...);
+
+            PAssert(
+                CLuaNodes::get_node_tag_from_handle(node_handle) ==  CLuaNodes::NodeHandleTag::Valid,
+                "some kind of unexpected behaviour from the code. Most likely cause is memory corruption"
+            );
+
+            return node_handle;
         };
 
         template<typename Node>
@@ -130,17 +137,17 @@ namespace ASTParser{
             return *get_node_pointer_from_handle<Node>(node_handle);
         };
 
-        bool has_reached_end()
+        inline bool has_reached_end()
         {
             return has_reached_eof;
         };
 
-        Util::Lexer& get_lexer()
+        inline Util::Lexer& get_lexer()
         {
             return lexer;
         }
 
-        Util::TokenGeneric get_next_token()
+        inline Util::TokenGeneric get_next_token()
         {
             auto next_token = get_next_non_neutral_token();
             last_token = current_token;
@@ -148,31 +155,31 @@ namespace ASTParser{
             return next_token;
         };
 
-        Util::TokenGeneric see_current_token()
+        inline Util::TokenGeneric see_current_token()
         {
             return current_token;
         };
 
-        Util::TokenGeneric get_last_token() {
+        inline Util::TokenGeneric get_last_token() {
             return last_token;
         };
 
-        Util::TokenGeneric peek_next_token()
+        inline Util::TokenGeneric peek_next_token()
         {
             return lexer.peek_next_token();
         };
 
-        Util::NumberHint get_current_number_hint()
+        inline Util::NumberHint get_current_number_hint()
         {
             return lexer.get_current_number_hint();
         };
 
-        Util::Error get_current_error()
+        inline Util::Error get_current_error()
         {
             return lexer.get_current_error();
         };
 
-        SymbolClassifier::SymbolKind get_current_symbol()
+        inline SymbolClassifier::SymbolKind get_current_symbol()
         {
             if (current_token.token_type != Util::TokenType::Symbol) [[unlikely]]
             {
@@ -181,9 +188,24 @@ namespace ASTParser{
             return lexer.get_current_symbol();
         };
 
-        KeywordClassifier::Keyword get_current_keyword()
+        inline KeywordClassifier::Keyword get_current_keyword()
         {
             return lexer.get_current_keyword();
+        };
+
+        inline char get_current_char_value()
+        {
+            return lexer.get_current_char_value();
+        };
+
+        inline long double get_current_fraction()
+        {
+            return lexer.get_current_fraction();
+        };
+
+        inline unsigned long long get_current_integer()
+        {
+            return lexer.get_current_integer();
         };
 
         NodeHandle emit_error(ParserError& parser_error)
@@ -210,6 +232,18 @@ namespace ASTParser{
             return current_token.token_type == TokenType::Identifier && 
             get_current_keyword() == KeywordClassifier::Keyword::Unknown;
         };
+
+        inline bool consume_symbol(SymbolClassifier::SymbolKind expected_symbol)
+        {
+            auto symbol_valid = is_symbol(expected_symbol);
+
+            if (symbol_valid)
+            {
+                get_next_token();
+            };
+
+            return symbol_valid;
+        };
     };
 
     class Parser{
@@ -234,21 +268,6 @@ namespace ASTParser{
         {
             auto& source = parser_context.get_lexer().get_lexer_context().source;
             return source.slice_string(token.offset, token.length);
-        }
-
-        const char* separator_to_string(CLuaNodes::IdentifierPathSeparator separator)
-        {
-            switch (separator)
-            {
-            case CLuaNodes::IdentifierPathSeparator::None:
-                return "";
-            case CLuaNodes::IdentifierPathSeparator::Dot:
-                return ".";
-            case CLuaNodes::IdentifierPathSeparator::DoubleColon:
-                return "::";
-            default:
-                return "?";
-            }
         }
 
         void print_valid_node(NodeHandle node_handle,Util::uint64 current_depth)
@@ -289,8 +308,7 @@ namespace ASTParser{
                 while (next_segment_handle != InvalidNode)
                 {
                     auto* segment_node = parser_context.get_node_pointer_from_handle<CLuaNodes::IdentifierPathNode>(next_segment_handle);
-                    std::cout << indent << "  " << separator_to_string(segment_node->separator_from_previous)
-                              << " " << get_token_text(segment_node->identifier_token) << std::endl;
+                    std::cout << indent << " :: " << get_token_text(segment_node->identifier_token) << std::endl;
                     next_segment_handle = segment_node->next_segment;
                 }
                 break;
