@@ -85,12 +85,12 @@ namespace Util {
       return character_map;
    }();
 
-   uint64_t consume_and_eval_integer(LexerContext& lexer_context)
+   Util::uint64 consume_and_eval_integer(LexerContext& lexer_context)
    {
       auto current_char = lexer_context.source.see_current();
       auto char_type = character_map[current_char]; 
 
-      uint64_t integer_value = 0;
+      Util::uint64 integer_value = 0;
 
       while (char_type == CharacterType::Numeric)
       {
@@ -169,9 +169,9 @@ namespace Util {
 
       test_char_type(current_char,CharacterType::Letter);
 
-      size_t offset = lexer_context.source.index;
+      Util::uint64 offset = lexer_context.source.index;
       consume_numbers_letters(lexer_context);
-      size_t length = lexer_context.source.index - offset;
+      Util::uint64 length = lexer_context.source.index - offset;
    
       std::string_view identifier_view = std::string_view(reinterpret_cast<char*>(lexer_context.source.get_source_buffer() + offset),length);
 
@@ -207,8 +207,8 @@ namespace Util {
          return lexer_context.record_error(ErrorCode::MalformedNumber);
       };
 
-      size_t length = 0;
-      uint64_t number_integer = 0;
+      Util::uint64 length = 0;
+      Util::uint64 number_integer = 0;
 
       while (TypeClassificator::is_hex_code(current_char))
       {
@@ -252,8 +252,8 @@ namespace Util {
          return lexer_context.record_error(ErrorCode::MalformedNumber);
       };
 
-      size_t length = 0;
-      uint64_t number_integer = 0;
+      Util::uint64 length = 0;
+      Util::uint64 number_integer = 0;
 
       while (TypeClassificator::is_bin_code(current_char))
       {
@@ -284,7 +284,7 @@ namespace Util {
       auto current_char = lexer_context.source.see_current();
       auto first_char = current_char;
 
-      uint64_t number_integer = 0;
+      Util::uint64 number_integer = 0;
       long double number_fraction = 0;
 
       if (current_char == '.')
@@ -552,7 +552,7 @@ namespace Util {
       lexer_context.source.consume(); 
       auto current_char = lexer_context.source.see_current();
 
-      size_t counter = 0;
+      Util::uint64 counter = 0;
       while (current_char != '\'')
       {
          if (current_char == '\0')
@@ -727,7 +727,7 @@ namespace Util {
    };
 
    namespace LuaUCode {
-      bool is_valid_lua_block(LexerContext& lexer_context,size_t peek_offset)
+      bool is_valid_lua_block(LexerContext& lexer_context,Util::uint64 peek_offset)
       {
          auto current_char = lexer_context.source.peek(peek_offset);
 
@@ -786,7 +786,7 @@ namespace Util {
          return;
       };
 
-      enum class LuaUTokenType: uint8_t {
+      enum class LuaUTokenType: Util::uint8 {
          LBracket,
          RBracket,
          String,
@@ -797,7 +797,7 @@ namespace Util {
          None
       };
 
-      enum class LuaUCharType: uint8_t {
+      enum class LuaUCharType: Util::uint8 {
          Symbol,
          Other,
          EndOfFile,
@@ -810,7 +810,7 @@ namespace Util {
       {
          std::array<LuaUCharType,256> luau_char_type_map;
 
-         for (size_t char_code = 0; char_code < 256; char_code++)
+         for (Util::uint64 char_code = 0; char_code < 256; char_code++)
          {
             auto real_char_code = static_cast<char>(char_code);
             
@@ -883,9 +883,9 @@ namespace Util {
          lexer_context.source.consume(2);
       };    
 
-      bool process_end_of_lua_block_token(LexerContext& lexer_context,size_t equal_sign_count)
+      bool process_end_of_lua_block_token(LexerContext& lexer_context,Util::uint64 equal_sign_count)
       {
-         size_t equal_signs_in_row = 0;
+         Util::uint64 equal_signs_in_row = 0;
 
          LAssert(
             lexer_context.source.see_current() == ']',
@@ -912,7 +912,7 @@ namespace Util {
          return equal_signs_in_row == equal_sign_count;
       };
 
-      bool process_is_lua_block(LexerContext& lexer_context,size_t& equal_sign_count)
+      bool process_is_lua_block(LexerContext& lexer_context,Util::uint64& equal_sign_count)
       {  
          if (lexer_context.source.see_current() != '[')
          {
@@ -932,7 +932,7 @@ namespace Util {
          return true;
       };
 
-      void consume_lua_block_token(LexerContext& lexer_context,size_t equal_sign_count)
+      void consume_lua_block_token(LexerContext& lexer_context,Util::uint64 equal_sign_count)
       {
 
          auto current_char = lexer_context.source.see_current();
@@ -990,7 +990,7 @@ namespace Util {
 
       void consume_lua_string_token(LexerContext& lexer_context)
       {
-         size_t equal_sign_count = 0;
+         Util::uint64 equal_sign_count = 0;
          if (process_is_lua_block(lexer_context,equal_sign_count))
          {
             return consume_lua_block_token(lexer_context,equal_sign_count);
@@ -1014,7 +1014,7 @@ namespace Util {
 
       void consume_lua_comment_token(LexerContext& lexer_context)
       {
-         size_t equal_sign_count = 0;
+         Util::uint64 equal_sign_count = 0;
          assert_is_lua_comment(lexer_context);
          if (process_is_lua_block(lexer_context,equal_sign_count))
          {
@@ -1222,7 +1222,7 @@ namespace Util {
    {
       using namespace SymbolClassifier;
       
-      size_t start = lexer_context.source.index;
+      Util::uint64 start = lexer_context.source.index;
       
       switch (lexer_context.see_current_consumer_mode())
       {
@@ -1256,8 +1256,8 @@ namespace Util {
       }
       }
 
-      size_t end = lexer_context.source.index;
-      size_t length = end - start;
+      Util::uint64 end = lexer_context.source.index;
+      Util::uint64 length = end - start;
       TokenGeneric token;
       token.token_type = lexer_context.ultimate_token_type;
       token.offset = start;

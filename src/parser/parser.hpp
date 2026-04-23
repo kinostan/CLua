@@ -1,5 +1,6 @@
 #pragma once
 
+#include <base.hpp>
 #include "node_manager.hpp"
 
 #include <lexer/lexer.hpp>
@@ -222,9 +223,9 @@ namespace ASTParser{
 
         private:
 
-        void print_node_tree(NodeHandle,size_t);
+        void print_node_tree(NodeHandle,Util::uint64);
         
-        void print_error_node(NodeHandle node_handle,size_t current_depth)
+        void print_error_node(NodeHandle node_handle,Util::uint64 current_depth)
         {
             std::cout << "Error Node ID: " << node_handle << std::endl;
         };
@@ -250,7 +251,7 @@ namespace ASTParser{
             }
         }
 
-        void print_valid_node(NodeHandle node_handle,size_t current_depth)
+        void print_valid_node(NodeHandle node_handle,Util::uint64 current_depth)
         {
             using namespace CLuaNodes;
             auto* node_ptr = parser_context.get_node_pointer_from_handle<BaseNode>(node_handle);

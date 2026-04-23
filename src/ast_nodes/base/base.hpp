@@ -1,5 +1,7 @@
 #pragma once
 
+#include <base.hpp>
+
 #include <lexer/lexer.hpp>
 #include <debugger/debugger.hpp>
 
@@ -23,7 +25,7 @@ namespace CLuaNodes {
         BinaryExpression,
         TernaryExpression,
 
-        //Error Codes
+        //Error Node Type
         UnclosedBlockError,
         UnclosedGroupError,
         LexerError,
@@ -90,14 +92,14 @@ namespace CLuaNodes {
         Conditional
     };
 
-    enum class NodeHandleTag : uint64_t {
+    enum class NodeHandleTag : Util::uint64 {
         NoPattern = 0b00ULL << 62,
         Valid     = 0b01ULL << 62, 
         Reserved  = 0b10ULL << 62, 
         Error     = 0b11ULL << 62  
     };
 
-    using NodeHandle = size_t;
+    using NodeHandle = Util::uint64;
 
     const NodeHandle NodeTagMask = 0b11ULL << 62;
     const NodeHandle InvalidNode = ULLONG_MAX;
@@ -111,17 +113,17 @@ namespace CLuaNodes {
         return static_cast<NodeHandle>(node_state) | (node_handle & ~NodeTagMask); 
     };  
 
-    inline size_t get_error_id_from_node_handle(NodeHandle node_handle)
+    inline Util::uint64 get_error_id_from_node_handle(NodeHandle node_handle)
     {
         auto node_state = get_node_tag_from_handle(node_handle);
         Assert(
-            node_state != NodeHandleTag::Error,
+            node_state == NodeHandleTag::Error,
             "get_error_id_from_node_handle called when node_handle is not an error node"
         );
         return node_handle & ~NodeTagMask;
     };
     
-    inline NodeHandle create_error_node_handle(size_t error_id)
+    inline NodeHandle create_error_node_handle(Util::uint64 error_id)
     {
         Assert(
             (error_id & ~NodeTagMask) == error_id,
@@ -237,7 +239,7 @@ namespace CLuaNodes {
         {
             node_type = NodeType::Expression;
         };
-        NodeHandle expression_node_handle;
+        NodeHandle expression_node_handle = InvalidNode;
     };
 
     class ActionNode : public BaseNode {
@@ -246,7 +248,7 @@ namespace CLuaNodes {
         {
             node_type = NodeType::Action;
         };
-        NodeHandle action_description;
-        NodeHandle next_action;
+        NodeHandle action_description = InvalidNode;
+        NodeHandle next_action = InvalidNode;
     };
 }

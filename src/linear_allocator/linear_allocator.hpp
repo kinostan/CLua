@@ -1,22 +1,25 @@
 #pragma once
+
+#include <base.hpp>
+
 #include <cstdint>
 
 namespace Util {
     using Byte = unsigned char;
 
     static_assert(
-        sizeof(Byte*) == sizeof(size_t),
-        "Size of a pointer and size_t differ, it's now unsafe to handle such case for linear allocator"
+        sizeof(Byte*) == sizeof(Util::uint64),
+        "Size of a pointer and Util::uint64 differ, it's now unsafe to handle such case for linear allocator"
     );
 
     class LinearAllocator {
         public:        
         Byte* memory_region_start = nullptr;
-        size_t memory_region_size = 0;
-        size_t memory_top = 0;
+        Util::uint64 memory_region_size = 0;
+        Util::uint64 memory_top = 0;
 
         LinearAllocator() = default;
-        LinearAllocator(size_t initial_size)
+        LinearAllocator(Util::uint64 initial_size)
         {
             memory_region_start = new Byte[initial_size];
             memory_top = 0;
@@ -34,7 +37,7 @@ namespace Util {
             memory_region_size = 0;
         };
         
-        size_t allocate(size_t object_count);
+        Util::uint64 allocate(Util::uint64 object_count);
     };
 };
 

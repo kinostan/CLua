@@ -26,3 +26,29 @@ create_error_node_handle checks error id fit using an inverted assertion express
 Current check allows invalid assumptions and can reject valid ids or accept overflowing ids depending on build mode.
 Explanation: assert(expr & left_sided_mask == expr) was here to check if number limit is not crossed
 but the logic was inverted
+
+Problem 1:
+Title: Unimplemented logic for loop end condition for parser
+Level: Low 
+Severity: Low
+Description: has_reached_eof logic has not been
+implemented properly 
+Explanation: none...
+
+Problem 7:
+Title: Error-handle assertion logic is inverted
+Level: Medium
+Severity: High
+Description:
+get_error_id_from_node_handle currently asserts with the opposite condition.
+The function should require an error-tagged handle, but the assertion checks for non-error handles.
+Explanation: none...
+
+Problem 9:
+Title: ActionNode link is not initialized
+Level: Medium
+Severity: Medium
+Description:
+ActionNode.next_action is left uninitialized.
+This may produce accidental chains or random traversal behavior when the next action is not set explicitly.
+Explanation: none...

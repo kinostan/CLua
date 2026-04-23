@@ -1,10 +1,11 @@
 #pragma once
 
+#include <base.hpp>
+
 #include <debugger/debugger.hpp>
 #include <metadata/symbol_classifier.hpp>
 #include <metadata/keyword_classifier.hpp>
 
-#include <stdint.h>
 #include <vector>
 #include <type_traits>
 #include <concepts>
@@ -13,19 +14,19 @@ namespace Util {
 
     using namespace std::string_literals;
 
-    enum class ConsumerMode: uint8_t  {
+    enum class ConsumerMode: Util::uint8  {
         CLua,
         MetaCLua
     };
 
-    enum class MetaConsumerMode: uint8_t {
+    enum class MetaConsumerMode: Util::uint8 {
         None,        
         Meta,
         LuaCapture,
         LuaEmbed
     };
 
-    enum class ErrorCode: uint8_t {
+    enum class ErrorCode: Util::uint8 {
         None,
         UnknownSymbol,
         UnexpectedCharacter,
@@ -42,7 +43,7 @@ namespace Util {
         UnclosedLuaBlock,
     };
 
-    enum class TokenType: uint8_t {
+    enum class TokenType: Util::uint8 {
         Identifier,
         Numeric,
         Symbol,
@@ -57,13 +58,13 @@ namespace Util {
         None
     };
 
-    enum class NumberType: uint8_t {
+    enum class NumberType: Util::uint8 {
         Integer,
         Float,
         None,
     };
 
-    enum class NumberBase: uint8_t  {
+    enum class NumberBase: Util::uint8  {
         Hexadecimal,
         Decimal,
         Binary,
@@ -72,27 +73,27 @@ namespace Util {
 
     struct SourceView {
         unsigned char* source_buffer;
-        size_t source_size;
+        Util::uint64 source_size;
     };
 
     class Source {
         public:
-        size_t index;
-        size_t source_size;    
+        Util::uint64 index;
+        Util::uint64 source_size;    
         private:   
         unsigned char* source_buffer;
 
         public:
         
         Source() = default;
-        Source(unsigned char* source_buffer, size_t source_size) : source_buffer(source_buffer), source_size(source_size), index(0)
+        Source(unsigned char* source_buffer, Util::uint64 source_size) : source_buffer(source_buffer), source_size(source_size), index(0)
         {
             LAssert(source_buffer,
                 "Source buffer must exist"s
             );
         };
 
-        std::string_view slice_string(size_t string_index, size_t string_length)
+        std::string_view slice_string(Util::uint64 string_index, Util::uint64 string_length)
         {
             return std::string_view(
                 reinterpret_cast<char*>(source_buffer + string_index),
@@ -100,12 +101,12 @@ namespace Util {
             );
         };
 
-        Source slice(size_t start_index,size_t length)
+        Source slice(Util::uint64 start_index,Util::uint64 length)
         {
             LAssert(length > 0,
                 "length must be greater than 0"s
             )
-            size_t end_index = start_index + length;
+            Util::uint64 end_index = start_index + length;
             LAssert(
                 end_index <= source_size,
                 "broken assumption that end_index <= source_size is true"s
@@ -113,7 +114,7 @@ namespace Util {
             return Source(source_buffer + start_index,length);
         };
 
-        Source slice(size_t start_index)
+        Source slice(Util::uint64 start_index)
         {
             LAssert(
                 source_size > start_index,
@@ -128,18 +129,18 @@ namespace Util {
             return source_buffer;
         };
 
-        inline bool can_consume_sentinel(size_t consume_distance = 1)
+        inline bool can_consume_sentinel(Util::uint64 consume_distance = 1)
         {
             //source_size, because the additional character is a null terminator
             return index + consume_distance - 1 < source_size + 1;
         };
 
-        inline bool can_consume(size_t consume_distance = 1)
+        inline bool can_consume(Util::uint64 consume_distance = 1)
         {
             return index + consume_distance - 1 < source_size;
         };
 
-        inline void consume(size_t consume_distance = 1)
+        inline void consume(Util::uint64 consume_distance = 1)
         {
             LAssert(
                 can_consume_sentinel(consume_distance),
@@ -161,17 +162,17 @@ namespace Util {
             return source_buffer[index];
         };
 
-        inline bool can_peek_sentinel(size_t peek_distance) const noexcept
+        inline bool can_peek_sentinel(Util::uint64 peek_distance) const noexcept
         {  
             return (index+peek_distance) < source_size + 1;
         };
 
-        inline bool can_peek(size_t peek_distance = 1) const noexcept
+        inline bool can_peek(Util::uint64 peek_distance = 1) const noexcept
         {
             return (index+peek_distance) < source_size;
         };
 
-        inline unsigned char peek(size_t peek_distance = 1)
+        inline unsigned char peek(Util::uint64 peek_distance = 1)
         {   
             LAssert(
                 can_peek_sentinel(peek_distance),
@@ -184,7 +185,7 @@ namespace Util {
             return source_buffer[index+peek_distance];
         };
     
-        inline void set_index(size_t new_index)
+        inline void set_index(Util::uint64 new_index)
         {
             LAssert(new_index < source_size, 
                 "new_index is stepping outside of source buffer"s
@@ -196,8 +197,8 @@ namespace Util {
     struct TokenBase
     {
         TokenType token_type = TokenType::None;
-        size_t length = 0;
-        size_t offset = 0;
+        Util::uint64 length = 0;
+        Util::uint64 offset = 0;
     };
     template <typename T>
     struct TokenKind {
@@ -316,12 +317,12 @@ namespace Util {
     };
 
     struct LuaUCaptureState {
-        size_t brace_balance = 0; //Brace balance is how many "[" braces are against "]"
+        Util::uint64 brace_balance = 0; //Brace balance is how many "[" braces are against "]"
         bool met_first_brace = false;
     };
 
     struct LuaUCodeState {
-        size_t brace_balance = 0; //Brace balance is how many "{" braces are against "}"
+        Util::uint64 brace_balance = 0; //Brace balance is how many "{" braces are against "}"
         bool met_first_brace = false;
     };
 
@@ -351,7 +352,7 @@ namespace Util {
         SymbolClassifier::SymbolKind current_symbol = SymbolClassifier::SymbolKind::Unknown;  
         KeywordClassifier::Keyword current_keyword = KeywordClassifier::Keyword::Unknown;
 
-        uint64_t current_number_integer = 0;
+        Util::uint64 current_number_integer = 0;
         long double current_number_fraction = 0; //belongs to <0,inf) in any other case it's invalid
 
         TokenType ultimate_token_type = TokenType::Error;
@@ -424,7 +425,7 @@ namespace Util {
             ultimate_token_type = TokenKind<ErrorToken>::value;
         };
 
-        inline void record_number(NumberBase number_base, NumberType number_type, uint64_t number_integer,long double number_fraction = 0)
+        inline void record_number(NumberBase number_base, NumberType number_type, Util::uint64 number_integer,long double number_fraction = 0)
         {
             on_emit();
 
@@ -472,7 +473,7 @@ namespace Util {
         public: 
         ConsumerMode consumer_mode = ConsumerMode::CLua;
         MetaConsumerMode meta_consumer_mode = MetaConsumerMode::None;
-        size_t cursor_index = 0;
+        Util::uint64 cursor_index = 0;
         
         LexerState(LexerContext& lexer_context)
         {
@@ -567,7 +568,7 @@ namespace Util {
         };
     };
 
-    enum class CharacterType : uint8_t {
+    enum class CharacterType : Util::uint8 {
       Letter,
       Unicode,
       Numeric,

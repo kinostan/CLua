@@ -4,18 +4,18 @@
 #include <string>
 #include <cassert>
 
-template<size_t TokenCount>
+template<Util::uint64 TokenCount>
 struct Test {
     const char* name;
     const char* input;
     Util::TokenType expected_types[TokenCount];
-    size_t expected_offsets[TokenCount];
-    size_t expected_lengths[TokenCount];
+    Util::uint64 expected_offsets[TokenCount];
+    Util::uint64 expected_lengths[TokenCount];
     bool expect_error = false;
     Util::ErrorCode expected_error;
 };
 
-template<size_t TokenCount>
+template<Util::uint64 TokenCount>
 void run_test(const Test<TokenCount>& test)
 {
     std::cout << "[TEST] " << test.name << std::endl;
@@ -27,7 +27,7 @@ void run_test(const Test<TokenCount>& test)
 
     Util::Lexer lexer(source);
 
-    for (size_t i = 0; i < TokenCount; ++i)
+    for (Util::uint64 i = 0; i < TokenCount; ++i)
     {
         auto token = lexer.process_next_token();
         bool cond = token.token_type == test.expected_types[i] && token.offset == test.expected_offsets[i] && token.length == test.expected_lengths[i];

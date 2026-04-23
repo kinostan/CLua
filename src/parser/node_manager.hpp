@@ -1,5 +1,7 @@
 #pragma once
 
+#include <base.hpp>
+
 #include <concepts>
 #include <type_traits>
 
@@ -13,7 +15,7 @@ namespace Util{
         private:
         Util::LinearAllocator allocator;
         public:
-        NodeManager(size_t initial_allocated_memory_region): 
+        NodeManager(Util::uint64 initial_allocated_memory_region): 
         allocator(Util::LinearAllocator(initial_allocated_memory_region))
         {};
 
