@@ -331,7 +331,7 @@ namespace ASTParser{
                 std::cout << indent << "IdentifierPath: " << get_token_text(identifier_path_node->identifier_token) << std::endl;
 
                 auto next_segment_handle = identifier_path_node->next_segment;
-                while (next_segment_handle != InvalidNode)
+                while (get_node_tag_from_handle(next_segment_handle) != NodeHandleTag::Error)
                 {
                     auto* segment_node = parser_context.get_node_pointer_from_handle<CLuaNodes::IdentifierPathNode>(next_segment_handle);
                     std::cout << indent << " :: " << get_token_text(segment_node->identifier_token) << std::endl;

@@ -182,8 +182,18 @@ namespace ASTParser{
             return InvalidNode;
         };
 
+        bool temp_flag = false;
+
         NodeHandle expect_atom(ParserContext& parser_context)
         {
+            PAssert(
+                parser_context.see_current_token().token_type == TokenType::None || temp_flag,
+                "anticipated the token type to be none"
+            );
+            temp_flag = true;
+
+            parser_context.get_next_token();
+        
             auto cursor_record = parser_context.record_cursor();
 
             auto scoped_identifier = get_scoped_identifier(parser_context);
