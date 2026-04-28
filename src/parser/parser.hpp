@@ -41,8 +41,8 @@ namespace ASTParser{
 
     struct ParserState {
         bool has_reached_eof = false;     
-        Util::TokenGeneric current_token = static_cast<Util::TokenGeneric>(Util::NoToken()); 
-        Util::TokenGeneric last_token = static_cast<Util::TokenGeneric>(Util::NoToken());
+        Util::TokenGeneric current_token; 
+        Util::TokenGeneric last_token;
         
         Util::LexerState lexer_state;
     };

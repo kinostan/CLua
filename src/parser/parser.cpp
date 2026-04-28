@@ -46,10 +46,6 @@ namespace ASTParser{
                     parser_context.get_next_token();
                     return group_node;
                 } else {
-                    /*
-                    Unclosed group expression error
-                    */
-                    
                     ParserError parser_error = ParserError(current_token,next_token);
                     parser_error.node_handle = parser_context.create_node<UnclosedBlockError>();
 
@@ -234,7 +230,6 @@ namespace ASTParser{
 
     NodeHandle Parser::generate_AST(){
         auto expression = Expression::expect_expression(parser_context);
-        print_node_tree(expression);
         return expression;
     }
 }

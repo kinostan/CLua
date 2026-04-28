@@ -101,7 +101,7 @@ namespace CLuaNodes {
     inline NodeHandleTag get_node_tag_from_handle(NodeHandle node_handle)
     {
         PAssert(
-            static_cast<NodeHandleTag>(node_handle & NodeTagMask) == NodeHandleTag::Reserved,
+            static_cast<NodeHandleTag>(node_handle & NodeTagMask) != NodeHandleTag::Reserved,
             "unexpected behaviour, invalid state of the NodeHandleTag property type (Reserved) is set, possible memory" 
             " corruption"
         );
