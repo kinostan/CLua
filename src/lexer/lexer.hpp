@@ -334,6 +334,24 @@ namespace Util {
         TokenSpan(TokenGeneric start,TokenGeneric end): start(start), end(end)
         {};
     };
+
+    struct LexerState { 
+        ConsumerMode consumer_mode = ConsumerMode::CLua;
+        MetaConsumerMode meta_consumer_mode = MetaConsumerMode::None;
+        Util::uint64 cursor_index = 0;
+
+        LuaUCaptureState luau_capture_state;
+        LuaUCodeState luau_code_state;
+
+        Error current_error;
+        NumberHint current_number;
+        SymbolClassifier::SymbolKind current_symbol = SymbolClassifier::SymbolKind::Unknown;  
+        KeywordClassifier::Keyword current_keyword = KeywordClassifier::Keyword::Unknown;
+
+        Util::uint64 current_number_integer = 0;
+        long double current_number_fraction = 0; 
+        char current_char_value = 0;
+    };
     
     class LexerContext {
         private:
@@ -469,26 +487,54 @@ namespace Util {
             ultimate_token_type = TokenKind<IdentifierToken>::value;
         };
 
-        inline void record_char(char char_value)
+        inline void record_char_value(char char_value)
         {
             on_emit();
 
             current_char_value = char_value;
         };
-    };
 
-    class LexerState {
-        public: 
-        ConsumerMode consumer_mode = ConsumerMode::CLua;
-        MetaConsumerMode meta_consumer_mode = MetaConsumerMode::None;
-        Util::uint64 cursor_index = 0;
-        
-        LexerState(LexerContext& lexer_context)
+        inline void set_cursor(LexerState lexer_state)
         {
-            consumer_mode = lexer_context.see_current_consumer_mode();
-            meta_consumer_mode = lexer_context.see_current_meta_consumer_mode();
-            cursor_index = lexer_context.source.index;
-        };  
+            LAssert(
+                lexer_state.cursor_index < source.source_size,
+                "cursor_index exceeds legal value"
+            );
+
+            switch_consumer_mode(lexer_state.consumer_mode);
+            switch_meta_consumer_mode(lexer_state.meta_consumer_mode);
+            source.set_index(lexer_state.cursor_index);
+
+            luau_capture_state = lexer_state.luau_capture_state;
+            luau_code_state = lexer_state.luau_code_state;
+
+            current_error = lexer_state.current_error;
+            current_number = lexer_state.current_number;
+            current_symbol = lexer_state.current_symbol;  
+            current_keyword = lexer_state.current_keyword;
+
+            current_number_integer = lexer_state.current_number_integer;
+            current_number_fraction = lexer_state.current_number_fraction; 
+            current_char_value = lexer_state.current_char_value;
+        };
+
+        inline LexerState record_cursor()
+        {
+            auto lexer_state = LexerState();
+
+            lexer_state.consumer_mode = see_current_consumer_mode();
+            lexer_state.meta_consumer_mode = see_current_meta_consumer_mode();
+            lexer_state.cursor_index = source.index;
+
+            lexer_state.current_error = current_error;
+            lexer_state.current_keyword = current_keyword;
+            lexer_state.current_number = current_number;
+            lexer_state.current_symbol = current_symbol;
+           
+            lexer_state.current_number_integer = current_number_integer;
+            lexer_state.current_number_fraction = current_number_fraction; 
+            lexer_state.current_char_value = current_char_value;
+        };
     };
 
     class Lexer
@@ -509,21 +555,14 @@ namespace Util {
     
         public:
 
-        LexerState record_cursor()
+        inline LexerState record_cursor()
         {
-            return LexerState(lexer_context);
+            return lexer_context.record_cursor();
         };
 
-        void set_cursor(LexerState lexer_state)
+        inline void set_cursor(LexerState lexer_state)
         {
-            LAssert(
-                lexer_state.cursor_index < lexer_context.source.source_size,
-                "cursor_index exceeds legal value"
-            );
-
-            lexer_context.switch_consumer_mode(lexer_state.consumer_mode);
-            lexer_context.switch_meta_consumer_mode(lexer_state.meta_consumer_mode);
-            lexer_context.source.set_index(lexer_state.cursor_index);
+            lexer_context.set_cursor(lexer_state);
         };
         
         LexerContext& get_lexer_context()

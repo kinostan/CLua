@@ -39,6 +39,14 @@ namespace ASTParser{
         NodeHandle node_handle = InvalidNode;
     };
 
+    struct ParserState {
+        bool has_reached_eof = false;     
+        Util::TokenGeneric current_token = static_cast<Util::TokenGeneric>(Util::NoToken()); 
+        Util::TokenGeneric last_token = static_cast<Util::TokenGeneric>(Util::NoToken());
+        
+        Util::LexerState lexer_state;
+    };
+
     class ParserContext{
         bool has_reached_eof = false;
 
@@ -243,6 +251,24 @@ namespace ASTParser{
             };
 
             return symbol_valid;
+        };
+
+        ParserState record_cursor()
+        { 
+            auto parser_state = ParserState();
+            parser_state.current_token = current_token;
+            parser_state.last_token = last_token;
+            parser_state.has_reached_eof = has_reached_eof;
+            parser_state.lexer_state = lexer.record_cursor();
+            return parser_state;
+        };
+
+        void set_cursor(ParserState parser_state)
+        {
+            current_token = parser_state.current_token;
+            last_token = parser_state.last_token;
+            has_reached_eof = parser_state.has_reached_eof;
+            lexer.set_cursor(parser_state.lexer_state);
         };
     };
 

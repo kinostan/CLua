@@ -165,11 +165,11 @@ namespace CLuaNodes {
 
     class IntegerLiteral: public BaseNode {
         public:
-        IntegerLiteral()
+        IntegerLiteral(Util::uint64 value): value(value)
         {
             node_type = NodeType::IntegerLiteral;
         };
-        long long value = 0;
+        Util::uint64 value = 0;
     };
 
 

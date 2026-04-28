@@ -186,7 +186,7 @@ namespace ASTParser{
 
         NodeHandle expect_atom(ParserContext& parser_context)
         {
-            auto cursor_record = parser_context.get_lexer().record_cursor();
+            auto cursor_record = parser_context.record_cursor();
 
             auto scoped_identifier = get_scoped_identifier(parser_context);
             auto result_tag = get_node_tag_from_handle(scoped_identifier);
@@ -196,7 +196,7 @@ namespace ASTParser{
                 return scoped_identifier;
             };
             
-            parser_context.get_lexer().set_cursor(cursor_record);
+            parser_context.set_cursor(cursor_record);
 
             auto& literal = scoped_identifier;
             literal = expect_literal_node(parser_context);

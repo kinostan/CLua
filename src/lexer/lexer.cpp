@@ -600,7 +600,7 @@ namespace Util {
       {
          return lexer_context.record_error(ErrorCode::InvalidCharCode);
       } else if (counter == 1){
-         return lexer_context.record_char(char_value);
+         return lexer_context.record_char_value(char_value);
       } else if(counter > 1)
       {
          return lexer_context.record_error(ErrorCode::TooLongChar);

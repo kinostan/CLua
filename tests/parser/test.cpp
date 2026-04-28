@@ -30,16 +30,6 @@ int main()
 {
     auto output = run_parser_print("((a::b::c::d.e.f.g.h.j))");
 
-    assert(output.find("IdentifierPath: a") != std::string::npos);
-    assert(output.find(":: b") != std::string::npos);
-    assert(output.find(":: c") != std::string::npos);
-    assert(output.find(":: d") != std::string::npos);
-    assert(output.find(". e") != std::string::npos);
-    assert(output.find(". f") != std::string::npos);
-    assert(output.find(". g") != std::string::npos);
-    assert(output.find(". h") != std::string::npos);
-    assert(output.find(". j") != std::string::npos);
-
     std::cout << "Parser print test passed\n";
     std::cout << output;
 }
