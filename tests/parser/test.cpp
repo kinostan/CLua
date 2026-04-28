@@ -28,7 +28,7 @@ static std::string run_parser_print(const char* input)
 
 int main()
 {
-    auto output = run_parser_print("((a::b::c::d.e.f.g.h.j))");
+    auto output = run_parser_print("((::a::b::c::d.e.f.g.h.j))");
 
     std::cout << "Parser print test passed\n";
     std::cout << output;

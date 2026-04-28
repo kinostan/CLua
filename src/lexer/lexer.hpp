@@ -534,6 +534,7 @@ namespace Util {
             lexer_state.current_number_integer = current_number_integer;
             lexer_state.current_number_fraction = current_number_fraction; 
             lexer_state.current_char_value = current_char_value;
+            return lexer_state;
         };
     };
 

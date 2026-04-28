@@ -128,6 +128,8 @@ namespace ASTParser{
                 previous_node_reference.next_segment = current_node_handle;
                 previous_node_handle = current_node_handle;
             };
+        
+            return identifier_path_head;
         };
 
         NodeHandle expect_literal_node(ParserContext& parser_context)
@@ -208,7 +210,7 @@ namespace ASTParser{
     namespace Expression {
         NodeHandle expect_expression(ParserContext& parser_context)
         {
-
+            return Base::expect_atom(parser_context);
         };
     };
 

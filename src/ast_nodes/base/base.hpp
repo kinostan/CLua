@@ -87,9 +87,9 @@ namespace CLuaNodes {
     };
 
     enum class NodeHandleTag : Util::uint64 {
-        NoPattern = 0b00ULL << 62,
-        Valid     = 0b01ULL << 62, 
-        Reserved  = 0b10ULL << 62, 
+        Valid     = 0b00ULL << 62, 
+        Reserved  = 0b01ULL << 62, 
+        NoPattern = 0b10ULL << 62,
         Error     = 0b11ULL << 62  
     };
 
