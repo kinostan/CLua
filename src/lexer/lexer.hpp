@@ -542,7 +542,6 @@ namespace Util {
     {
         private:
         LexerContext lexer_context;
-        TokenGeneric last_peeked_token = TokenGeneric();
 
         public:
         Lexer() = default;
@@ -573,27 +572,8 @@ namespace Util {
 
         TokenGeneric process_next_token()
         {
-            if (last_peeked_token.token_type != TokenType::None)
-            {
-                auto last_token_copy = last_peeked_token;
-                last_peeked_token.as<NoToken>();
-
-                return last_token_copy;
-            }
-            lexer_context.token_enter();
             return get_next_token();
         };
-
-        TokenGeneric peek_next_token() {
-            LAssert(
-                last_peeked_token.token_type == TokenType::None, 
-                "can't peek next token again after doing it before"s
-            )
-            lexer_context.token_enter();
-            auto token = get_next_token();
-            last_peeked_token = token;            
-            return token;
-        }
 
         const Error get_current_error()
         {

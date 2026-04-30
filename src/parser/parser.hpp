@@ -172,11 +172,6 @@ namespace ASTParser{
             return last_token;
         };
 
-        inline Util::TokenGeneric peek_next_token()
-        {
-            return lexer.peek_next_token();
-        };
-
         inline Util::NumberHint get_current_number_hint()
         {
             return lexer.get_current_number_hint();

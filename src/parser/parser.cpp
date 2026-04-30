@@ -22,14 +22,14 @@ namespace ASTParser{
     };
 
     namespace Base {
-        NodeHandle expect_group_expression(ParserContext& parser_context)
+        NodeHandle get_group_expression(ParserContext& parser_context)
         {
             auto current_token = parser_context.see_current_token();
 
-            PAssert(
-                parser_context.is_symbol(SymbolKind::LParen),  
-                "guessed token type doesn't fit the requirements '(' expected"
-            );
+            if (!parser_context.is_symbol(SymbolKind::LParen))
+            {
+                return set_node_state_for_handle(static_cast<NodeHandle>(0),NodeHandleTag::NoPattern);
+            };
 
             parser_context.get_next_token();
             auto expression_node = Expression::expect_expression(parser_context);
@@ -38,13 +38,12 @@ namespace ASTParser{
             auto return_node = InvalidNode;
 
             if (node_tag == NodeHandleTag::Valid) [[likely]] {
-                auto group_node = parser_context.create_node<GroupExpression>(expression_node);
                 auto next_token = parser_context.see_current_token();
 
                 if (parser_context.is_symbol(SymbolKind::RParen))
                 {
                     parser_context.get_next_token();
-                    return group_node;
+                    return parser_context.create_node<GroupExpression>(expression_node);
                 } else {
                     ParserError parser_error = ParserError(current_token,next_token);
                     parser_error.node_handle = parser_context.create_node<UnclosedBlockError>();
@@ -203,8 +202,16 @@ namespace ASTParser{
             {
                 return scoped_identifier;
             };
-            
+
             parser_context.set_cursor(cursor_record);
+
+            auto group_expression = get_group_expression(parser_context);
+            result_tag = get_node_tag_from_handle(group_expression);
+
+            if (is_one_of(result_tag,NodeHandleTag::Error,NodeHandleTag::Valid))
+            {
+                return group_expression;
+            };
 
             auto& literal = scoped_identifier;
             literal = expect_literal_node(parser_context);
