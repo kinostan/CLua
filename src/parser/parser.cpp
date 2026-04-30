@@ -60,26 +60,17 @@ namespace ASTParser{
             };
         };
 
-        NodeHandle expect_identifier(ParserContext& parser_context)
+        bool consume_identifier(ParserContext& parser_context)
         {
             auto current_token = parser_context.see_current_token();
+            auto is_identifier = parser_context.is_identifier();
 
-            if (parser_context.is_identifier())
+            if (is_identifier)
             {
-                parser_context.get_next_token(); 
-                return parser_context.create_node<Identifier>(
-                    current_token.as<Util::IdentifierToken>()
-                );
-            } else {
-                auto parser_error = ParserError(current_token);
-                parser_error.node_handle = parser_context.create_node<UnexpectedTokenError>(
-                    current_token
-                );    
-                auto unexpected_token = parser_context.emit_error(parser_error);
-
-                return unexpected_token;
+                
             };
-            return InvalidNode;
+
+            return is_identifier;
         };
 
         NodeHandle get_scoped_identifier(ParserContext& parser_context)
@@ -106,7 +97,7 @@ namespace ASTParser{
                 };
                 identifier_token = parser_context.see_current_token();
                 
-                if (identifier_token.token_type == TokenType::Identifier) [[unlikely]]
+                if (identifier_token.token_type != TokenType::Identifier) [[unlikely]]
                 {
                     auto unexpected_token = parser_context.create_node<UnexpectedTokenError>(identifier_token);
                     auto error = ParserError(identifier_token);
@@ -181,18 +172,8 @@ namespace ASTParser{
             return InvalidNode;
         };
 
-        bool temp_flag = false;
-
         NodeHandle expect_atom(ParserContext& parser_context)
         {
-            PAssert(
-                parser_context.see_current_token().token_type == TokenType::None || temp_flag,
-                "anticipated the token type to be none"
-            );
-            temp_flag = true;
-
-            parser_context.get_next_token();
-        
             auto cursor_record = parser_context.record_cursor();
 
             auto scoped_identifier = get_scoped_identifier(parser_context);
@@ -246,6 +227,7 @@ namespace ASTParser{
     };
 
     NodeHandle Parser::generate_AST(){
+        parser_context.get_next_token(); //fetch first token
         auto expression = Expression::expect_expression(parser_context);
         return expression;
     }

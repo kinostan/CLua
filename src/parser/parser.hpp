@@ -121,6 +121,8 @@ namespace ASTParser{
                 "some kind of unexpected behaviour from the code. Most likely cause is memory corruption"
             );
 
+
+
             return node_handle;
         };
 
@@ -326,12 +328,7 @@ namespace ASTParser{
                 std::cout << indent << "IdentifierPath: " << get_token_text(identifier_path_node->identifier_token) << std::endl;
 
                 auto next_segment_handle = identifier_path_node->next_segment;
-                while (get_node_tag_from_handle(next_segment_handle) != NodeHandleTag::Error)
-                {
-                    auto* segment_node = parser_context.get_node_pointer_from_handle<CLuaNodes::IdentifierPathNode>(next_segment_handle);
-                    std::cout << indent << " :: " << get_token_text(segment_node->identifier_token) << std::endl;
-                    next_segment_handle = segment_node->next_segment;
-                }
+                print_node_tree(next_segment_handle,current_depth);
                 break;
             }
             case NodeType::GroupExpression: {
@@ -342,9 +339,7 @@ namespace ASTParser{
                 std::cout << indent << "Action" << std::endl;
                 auto* action_node = static_cast<CLuaNodes::ActionNode*>(node_ptr);
                 print_node_tree(action_node->action_description, current_depth + 1);
-                if (action_node->next_action != InvalidNode) {
-                    print_node_tree(action_node->next_action, current_depth + 1);
-                }
+                print_node_tree(action_node->next_action, current_depth + 1);
                 break;
             }
             case NodeType::Expression: {

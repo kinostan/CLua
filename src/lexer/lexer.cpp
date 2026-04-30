@@ -720,6 +720,8 @@ namespace Util {
       using CLua::guess_token_type;
 
       void get_next_token(LexerContext& lexer_context, TokenType token_type){
+         auto& luau_capture_state = lexer_context.get_luau_capture_state();
+
          switch (token_type)
          {
          case TokenType::Symbol:
@@ -728,12 +730,12 @@ namespace Util {
 
             if (current_symbol == '[')
             {
-               lexer_context.luau_capture_state.met_first_brace = true;
-               lexer_context.luau_capture_state.brace_balance++;
+               luau_capture_state.met_first_brace = true;
+               luau_capture_state.brace_balance++;
             } else if (current_symbol == ']')
             {
-               lexer_context.luau_capture_state.met_first_brace = true;
-               lexer_context.luau_capture_state.brace_balance--;
+               luau_capture_state.met_first_brace = true;
+               luau_capture_state.brace_balance--;
             };
 
             consume_symbol_token(lexer_context);
@@ -1064,7 +1066,7 @@ namespace Util {
             
          )
 
-         auto& brace_balance = lexer_context.luau_code_state.brace_balance;
+         auto& brace_balance = lexer_context.get_luau_code_state().brace_balance;
          brace_balance++;
 
          lexer_context.source.consume();
@@ -1079,8 +1081,8 @@ namespace Util {
             
          )
 
-         auto& brace_balance = lexer_context.luau_code_state.brace_balance;
-         auto& met_first_brace = lexer_context.luau_code_state.met_first_brace;
+         auto& brace_balance = lexer_context.get_luau_code_state().brace_balance;
+         auto& met_first_brace = lexer_context.get_luau_code_state().met_first_brace;
          if (brace_balance <= 0)
          {
             //invalid state, error should be reported
@@ -1092,7 +1094,7 @@ namespace Util {
 
       void consume_lua_block(LexerContext& lexer_context)
       {
-         auto& brace_balance = lexer_context.luau_code_state.brace_balance;
+         auto& brace_balance = lexer_context.get_luau_code_state().brace_balance;
          do {
             auto luau_token_type = guess_luau_token_type(lexer_context);
 
@@ -1194,7 +1196,7 @@ namespace Util {
          MetaCLua::get_next_token(lexer_context,token_type);
 
          if (lexer_context.ultimate_token_type == TokenType::Identifier 
-            && lexer_context.current_keyword == KeywordClassifier::Keyword::LuaEmbed)
+            && lexer_context.get_current_keyword() == KeywordClassifier::Keyword::LuaEmbed)
          {
             lexer_context.switch_meta_consumer_mode(MetaConsumerMode::LuaCapture);
          } else if(lexer_context.ultimate_token_type == TokenType::NewLine)
@@ -1209,7 +1211,7 @@ namespace Util {
          lexer_context.original_token_type = token_type;
          lexer_context.ultimate_token_type = token_type;
          LuaUCapture::get_next_token(lexer_context,token_type);
-         if (lexer_context.luau_capture_state.brace_balance == 0 && lexer_context.luau_capture_state.met_first_brace)
+         if (lexer_context.get_luau_capture_state().brace_balance == 0 && lexer_context.get_luau_capture_state().met_first_brace)
          {
             lexer_context.switch_meta_consumer_mode(MetaConsumerMode::LuaEmbed);
          };
@@ -1246,7 +1248,7 @@ namespace Util {
          lexer_context.original_token_type = token_type;
          lexer_context.ultimate_token_type = token_type;
          CLua::get_next_token(lexer_context,token_type);
-         if (lexer_context.ultimate_token_type == TokenType::Symbol && lexer_context.current_symbol == SymbolKind::AtSign)
+         if (lexer_context.ultimate_token_type == TokenType::Symbol && lexer_context.get_current_symbol() == SymbolKind::AtSign)
          {
             lexer_context.switch_consumer_mode(ConsumerMode::MetaCLua);
          };

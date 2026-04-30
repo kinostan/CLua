@@ -10,27 +10,13 @@
 #include <type_traits>
 #include <concepts>
 
-namespace Util {
-
+namespace LuaU {
     using namespace std::string_literals;
-
-    enum class ConsumerMode: Util::uint8  {
-        CLua,
-        MetaCLua
-    };
-
-    enum class MetaConsumerMode: Util::uint8 {
-        None,        
-        Meta,
-        LuaCapture,
-        LuaEmbed
-    };
 
     enum class ErrorCode: Util::uint8 {
         None,
         UnknownSymbol,
         UnexpectedCharacter,
-        UnexpectedTokenType,
         InvalidByte,
         TruncatedUnicodeSequence,
         TruncatedNumberSequence,
@@ -40,7 +26,6 @@ namespace Util {
         UnclosedChar,
         InvalidCharCode,
         TooLongChar,
-        UnclosedLuaBlock,
     };
 
     enum class TokenType: Util::uint8 {
@@ -51,9 +36,7 @@ namespace Util {
         NewLine,
         Comment,
         String,
-        Char,
         EndOfFile,
-        LuaBlock,
         Error,
         None
     };
