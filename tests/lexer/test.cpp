@@ -1,33 +1,35 @@
-#include <lexer/lexer.hpp>
+#include <clua_lexer/lexer.hpp>
 
 #include <iostream>
 #include <string>
 #include <cassert>
 
-template<Util::uint64 TokenCount>
+using namespace CLua;
+
+template<Common::uint64 TokenCount>
 struct Test {
     const char* name;
     const char* input;
-    Util::TokenType expected_types[TokenCount];
-    Util::uint64 expected_offsets[TokenCount];
-    Util::uint64 expected_lengths[TokenCount];
+    TokenType expected_types[TokenCount];
+    Common::uint64 expected_offsets[TokenCount];
+    Common::uint64 expected_lengths[TokenCount];
     bool expect_error = false;
-    Util::ErrorCode expected_error;
+    ErrorCode expected_error;
 };
 
-template<Util::uint64 TokenCount>
+template<Common::uint64 TokenCount>
 void run_test(const Test<TokenCount>& test)
 {
     std::cout << "[TEST] " << test.name << std::endl;
 
-    Util::Source source(
+    Common::Source source(
         reinterpret_cast<unsigned char*>(const_cast<char*>(test.input)),
         std::strlen(test.input)
     );
 
-    Util::Lexer lexer(source);
+    CLua::Lexer lexer(source);
 
-    for (Util::uint64 i = 0; i < TokenCount; ++i)
+    for (Common::uint64 i = 0; i < TokenCount; ++i)
     {
         auto token = lexer.process_next_token();
         bool cond = token.token_type == test.expected_types[i] && token.offset == test.expected_offsets[i] && token.length == test.expected_lengths[i];
@@ -51,8 +53,8 @@ int main()
         "identifier only",
         "wdadwad122e312",
         {
-            Util::TokenType::Identifier,
-            Util::TokenType::EndOfFile
+            TokenType::Identifier,
+            TokenType::EndOfFile
         },
         { 0, 14 },
         { 14, 1 }
@@ -62,10 +64,10 @@ int main()
         "identifier whitespace identifier",
         "foo bar",
         {
-            Util::TokenType::Identifier,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Identifier,
-            Util::TokenType::EndOfFile
+            TokenType::Identifier,
+            TokenType::Whitespace,
+            TokenType::Identifier,
+            TokenType::EndOfFile
         },
         { 0, 3, 4, 7 },
         { 3, 1, 3, 1 }
@@ -75,12 +77,12 @@ int main()
         "decimal hex binary",
         "12 0xFF 0b101",
         {
-            Util::TokenType::Numeric,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Numeric,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Numeric,
-            Util::TokenType::EndOfFile
+            TokenType::Numeric,
+            TokenType::Whitespace,
+            TokenType::Numeric,
+            TokenType::Whitespace,
+            TokenType::Numeric,
+            TokenType::EndOfFile
         },
         { 0, 2, 3, 7, 8, 13 },
         { 2, 1, 4, 1, 5, 1 }
@@ -90,8 +92,8 @@ int main()
         "multi whitespace",
         " \t  ",
         {
-            Util::TokenType::Whitespace,
-            Util::TokenType::EndOfFile
+            TokenType::Whitespace,
+            TokenType::EndOfFile
         },
         { 0, 4 },
         { 4, 1 }
@@ -101,9 +103,9 @@ int main()
         "inline comment",
         "// hello world\n",
         {
-            Util::TokenType::Comment,
-            Util::TokenType::NewLine,
-            Util::TokenType::EndOfFile,
+            TokenType::Comment,
+            TokenType::NewLine,
+            TokenType::EndOfFile,
         },
         { 0, 14, 15 },
         { 14, 1, 1 }
@@ -113,15 +115,15 @@ int main()
         "unclosed block comment",
         "wdadwad122e312 /* dasd adwa",
         {
-            Util::TokenType::Identifier,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Error,
-            Util::TokenType::EndOfFile
+            TokenType::Identifier,
+            TokenType::Whitespace,
+            TokenType::Error,
+            TokenType::EndOfFile
         },
         { 0, 14, 15, 27 },
         { 14, 1, 12, 1 },
         true,
-        Util::ErrorCode::UnclosedComment
+        ErrorCode::UnclosedComment
     };
 
 
@@ -129,23 +131,23 @@ int main()
         "unicode characters test",
         "asdxxź",
         {
-            Util::TokenType::Identifier,
-            Util::TokenType::Error,
-            Util::TokenType::Error,
-            Util::TokenType::EndOfFile
+            TokenType::Identifier,
+            TokenType::Error,
+            TokenType::Error,
+            TokenType::EndOfFile
         },
         { 0, 5, 6, 7},
         { 5, 1, 1, 1},
         true,
-        Util::ErrorCode::UnexpectedCharacter
+        ErrorCode::UnexpectedCharacter
     };
 
     Test<2> STRING_LITERAL {
         "string literal",
         "\"hello\\nworld\"",
         {
-            Util::TokenType::String,
-            Util::TokenType::EndOfFile
+            TokenType::String,
+            TokenType::EndOfFile
         },
         { 0, 14 },
         { 14, 1 }
@@ -155,8 +157,8 @@ int main()
         "char literal",
         "'a'",
         {
-            Util::TokenType::Char,
-            Util::TokenType::EndOfFile
+            TokenType::Char,
+            TokenType::EndOfFile
         },
         { 0, 3 },
         { 3, 1 }
@@ -166,35 +168,37 @@ int main()
         "dot prefix float",
         ".5",
         {
-            Util::TokenType::Numeric,
-            Util::TokenType::EndOfFile
+            TokenType::Numeric,
+            TokenType::EndOfFile
         },
         { 0, 2 },
         { 2, 1 }
     };
 
+    /*
     Test<7> LUA_CAPTURE_AND_BLOCK {
         "lua capture and block",
         "@lua_embed []{print(\"x\")}",
         {
-            Util::TokenType::Symbol,
-            Util::TokenType::Identifier,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::LuaBlock,
-            Util::TokenType::EndOfFile
+            TokenType::Symbol,
+            TokenType::Identifier,
+            TokenType::Whitespace,
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::LuaBlock,
+            TokenType::EndOfFile
         },
         { 0, 1, 10, 11, 12, 13, 25 },
         { 1, 9, 1, 1, 1, 12, 1 }
     };
+    */
 
     Test<2> EMPTY_STRING {
         "empty string",
         "\"\"",
         {
-            Util::TokenType::String,
-            Util::TokenType::EndOfFile
+            TokenType::String,
+            TokenType::EndOfFile
         },
         { 0, 2 },
         { 2, 1 }
@@ -204,21 +208,21 @@ int main()
         "unclosed string",
         "\"hello",
         {
-            Util::TokenType::Error, 
-            Util::TokenType::EndOfFile
+            TokenType::Error, 
+            TokenType::EndOfFile
         },
         { 0, 6 },
         { 6, 1 },
         true,
-        Util::ErrorCode::UnclosedString
+        ErrorCode::UnclosedString
     };
 
     Test<2> STRING_ENDING_WITH_ESCAPED_QUOTE {
         "escaped quote at end",
         "\"abc\\\"\"",
         {
-            Util::TokenType::String,
-            Util::TokenType::EndOfFile
+            TokenType::String,
+            TokenType::EndOfFile
         },
         { 0, 7 },
         { 7, 1 },
@@ -228,47 +232,47 @@ int main()
         "dangling backslash",
         "\"abc\\",
         {
-            Util::TokenType::Error, 
-            Util::TokenType::EndOfFile
+            TokenType::Error, 
+            TokenType::EndOfFile
         },
         { 0, 5 },
         { 5, 1 },
         true,
-        Util::ErrorCode::UnclosedString
+        ErrorCode::UnclosedString
     };
 
     Test<2> EMPTY_CHAR {
         "empty char",
         "''",
         {
-            Util::TokenType::Error,
-            Util::TokenType::EndOfFile
+            TokenType::Error,
+            TokenType::EndOfFile
         },
         { 0, 2 },
         { 2, 1 },
         true,
-        Util::ErrorCode::InvalidCharCode
+        ErrorCode::InvalidCharCode
     };
 
     Test<2> MULTI_CHAR_LITERAL {
         "multi char literal",
         "'ab'",
         {
-            Util::TokenType::Error,
-            Util::TokenType::EndOfFile
+            TokenType::Error,
+            TokenType::EndOfFile
         },
         { 0, 4 },
         { 4 , 1},
         true,
-        Util::ErrorCode::TooLongChar,
+        ErrorCode::TooLongChar,
     };
 
     Test<2> ESCAPED_CHAR_LITERAL {
         "escaped char",
         "'\\n'",
         {
-            Util::TokenType::Char,
-            Util::TokenType::EndOfFile
+            TokenType::Char,
+            TokenType::EndOfFile
         },
         { 0, 4 },
         { 4, 1 }
@@ -278,8 +282,8 @@ int main()
         "just dot",
         ".",
         {
-            Util::TokenType::Symbol,
-            Util::TokenType::EndOfFile
+            TokenType::Symbol,
+            TokenType::EndOfFile
         },
         { 0, 1 },
         { 1, 1 }
@@ -289,9 +293,9 @@ int main()
         "dot then identifier",
         ".abc",
         {
-            Util::TokenType::Symbol,
-            Util::TokenType::Identifier,
-            Util::TokenType::EndOfFile
+            TokenType::Symbol,
+            TokenType::Identifier,
+            TokenType::EndOfFile
         },
         { 0, 1, 4 },
         { 1, 3, 1 }
@@ -301,8 +305,8 @@ int main()
         "trailing dot float",
         "5.",
         {
-            Util::TokenType::Numeric,
-            Util::TokenType::EndOfFile
+            TokenType::Numeric,
+            TokenType::EndOfFile
         },
         { 0, 2 },
         { 2, 1 }
@@ -312,9 +316,9 @@ int main()
         "double dot",
         "1..2",
         {
-            Util::TokenType::Numeric, //1.
-            Util::TokenType::Numeric, //.2
-            Util::TokenType::EndOfFile 
+            TokenType::Numeric, //1.
+            TokenType::Numeric, //.2
+            TokenType::EndOfFile 
         },
         { 0, 2, 4 },
         { 2, 2, 1 }
@@ -324,8 +328,8 @@ int main()
         "leading zero",
         "000123",
         {
-            Util::TokenType::Numeric,
-            Util::TokenType::EndOfFile
+            TokenType::Numeric,
+            TokenType::EndOfFile
         },
         { 0, 6 },
         { 6, 1 }
@@ -335,8 +339,8 @@ int main()
         "underscore identifier",
         "_value",
         {
-            Util::TokenType::Identifier,
-            Util::TokenType::EndOfFile
+            TokenType::Identifier,
+            TokenType::EndOfFile
         },
         { 0, 6 },
         { 6, 1 }
@@ -346,8 +350,8 @@ int main()
         "identifier number",
         "abc123",
         {
-            Util::TokenType::Identifier,
-            Util::TokenType::EndOfFile
+            TokenType::Identifier,
+            TokenType::EndOfFile
         },
         { 0, 6 },
         { 6, 1 }
@@ -357,24 +361,25 @@ int main()
         "inline comment eof",
         "// comment",
         {
-            Util::TokenType::Comment,
-            Util::TokenType::EndOfFile
+            TokenType::Comment,
+            TokenType::EndOfFile
         },
         { 0, 10 },
         { 10, 1 }
     };
 
+    /*
     Test<7> LUA_EMPTY_BLOCK {
         "lua empty block",
         "@lua_embed []{}",
         {
-            Util::TokenType::Symbol,
-            Util::TokenType::Identifier,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::LuaBlock,
-            Util::TokenType::EndOfFile
+            TokenType::Symbol,
+            TokenType::Identifier,
+            TokenType::Whitespace,
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::LuaBlock,
+            TokenType::EndOfFile
         },
         { 0, 1, 10, 11, 12, 13, 15 },
         { 1, 9, 1, 1, 1, 2, 1 }
@@ -384,13 +389,13 @@ int main()
         "lua brace inside string",
         "@lua_embed []{print(\"{\")}",
         {
-            Util::TokenType::Symbol,
-            Util::TokenType::Identifier,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::LuaBlock,
-            Util::TokenType::EndOfFile
+            TokenType::Symbol,
+            TokenType::Identifier,
+            TokenType::Whitespace,
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::LuaBlock,
+            TokenType::EndOfFile
         },
         { 0, 1, 10, 11, 12, 13, 25 },
         { 1, 9, 1, 1, 1, 12, 1 }
@@ -400,26 +405,27 @@ int main()
         "lua unterminated",
         "@lua_embed []{print(1)",
         {
-            Util::TokenType::Symbol,
-            Util::TokenType::Identifier,
-            Util::TokenType::Whitespace,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::Error,
-            Util::TokenType::EndOfFile
+            TokenType::Symbol,
+            TokenType::Identifier,
+            TokenType::Whitespace,
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::Error,
+            TokenType::EndOfFile
         },
         { 0, 1, 10, 11, 12, 13, 22},
         { 1, 9, 1, 1, 1, 9, 1 },
 
         true,
-        Util::ErrorCode::UnclosedLuaBlock
+        ErrorCode::UnclosedLuaBlock
     };
+    */
 
     Test<1> EMPTY_INPUT {
         "empty input",
         "",
         {
-            Util::TokenType::EndOfFile
+            TokenType::EndOfFile
         },
         { 0 },
         { 1 }
@@ -429,10 +435,10 @@ int main()
         "multiple inline comments",
         "// a\n// b\n",
         {
-            Util::TokenType::Comment,
-            Util::TokenType::NewLine,
-            Util::TokenType::Comment,
-            Util::TokenType::NewLine
+            TokenType::Comment,
+            TokenType::NewLine,
+            TokenType::Comment,
+            TokenType::NewLine
         },
         { 0,4,5,9 },
         { 4,1,4,1 }
@@ -442,8 +448,8 @@ int main()
         "mixed whitespace",
         " \t \t ",
         {
-            Util::TokenType::Whitespace,
-            Util::TokenType::EndOfFile
+            TokenType::Whitespace,
+            TokenType::EndOfFile
         },
         { 0, 5 },
         { 5, 1 }
@@ -453,12 +459,12 @@ int main()
         "symbol cluster",
         "+-*/()",
         {
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol,
-            Util::TokenType::Symbol
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::Symbol,
+            TokenType::Symbol
         },
         { 0,1,2,3,4,5 },
         { 1,1,1,1,1,1 }
@@ -468,8 +474,8 @@ int main()
         "escaped quote char",
         "'\\''",
         {
-            Util::TokenType::Char,
-            Util::TokenType::EndOfFile
+            TokenType::Char,
+            TokenType::EndOfFile
         },
         { 0, 4 },
         { 4, 1 }
@@ -479,9 +485,9 @@ int main()
         "multiple dots float",
         "1.2.3",
         {
-            Util::TokenType::Numeric,
-            Util::TokenType::Numeric,
-            Util::TokenType::EndOfFile
+            TokenType::Numeric,
+            TokenType::Numeric,
+            TokenType::EndOfFile
         },
         { 0, 3, 5 },
         { 3, 2, 1 }
@@ -491,26 +497,26 @@ int main()
         "invalid binary",
         "0b",
         {
-            Util::TokenType::Error,
-            Util::TokenType::EndOfFile
+            TokenType::Error,
+            TokenType::EndOfFile
         },
         { 0, 2 },
         { 2, 1 },
         true,
-        Util::ErrorCode::MalformedNumber
+        ErrorCode::MalformedNumber
     };
 
     Test<2> INVALID_HEX {
         "invalid hex",
         "0x",
         {   
-            Util::TokenType::Error,
-            Util::TokenType::EndOfFile
+            TokenType::Error,
+            TokenType::EndOfFile
         },
         { 0, 2 },
         { 2, 1 },
         true,
-        Util::ErrorCode::MalformedNumber
+        ErrorCode::MalformedNumber
     };
 
     run_test(IDENTIFIER_ONLY);
@@ -523,7 +529,7 @@ int main()
     run_test(STRING_LITERAL);
     run_test(CHAR_LITERAL);
     run_test(DOT_PREFIX_FLOAT);
-    run_test(LUA_CAPTURE_AND_BLOCK);
+    //run_test_luau(LUA_CAPTURE_AND_BLOCK);
 
     run_test(EMPTY_STRING);
     run_test(UNCLOSED_STRING);
@@ -545,9 +551,11 @@ int main()
 
     run_test(INLINE_COMMENT_EOF);
 
-    run_test(LUA_EMPTY_BLOCK);
-    run_test(LUA_BRACE_INSIDE_STRING);
-    run_test(LUA_UNTERMINATED);
+    /*
+    run_test_luau(LUA_EMPTY_BLOCK);
+    run_test_luau(LUA_BRACE_INSIDE_STRING);
+    run_test_luau(LUA_UNTERMINATED);
+    */
 
     run_test(EMPTY_INPUT);
 

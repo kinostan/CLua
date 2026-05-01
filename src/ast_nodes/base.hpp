@@ -1,8 +1,8 @@
 #pragma once
 
-#include <base.hpp>
+#include <common/base.hpp>
+#include <common/clua/tokens.hpp>
 
-#include <lexer/lexer.hpp>
 #include <debugger/debugger.hpp>
 
 namespace CLuaNodes {
@@ -86,14 +86,14 @@ namespace CLuaNodes {
         Conditional
     };
 
-    enum class NodeHandleTag : Util::uint64 {
+    enum class NodeHandleTag : Common::uint64 {
         Valid     = 0b00ULL << 62, 
         Reserved  = 0b01ULL << 62, 
         NoPattern = 0b10ULL << 62,
         Error     = 0b11ULL << 62  
     };
 
-    using NodeHandle = Util::uint64;
+    using NodeHandle = Common::uint64;
 
     const NodeHandle NodeTagMask = 0b11ULL << 62;
     const NodeHandle InvalidNode = ULLONG_MAX;
@@ -113,7 +113,7 @@ namespace CLuaNodes {
         return static_cast<NodeHandle>(node_state) | (node_handle & ~NodeTagMask); 
     };  
 
-    inline Util::uint64 get_error_id_from_node_handle(NodeHandle node_handle)
+    inline Common::uint64 get_error_id_from_node_handle(NodeHandle node_handle)
     {
         auto node_state = get_node_tag_from_handle(node_handle);
         Assert(
@@ -123,7 +123,7 @@ namespace CLuaNodes {
         return node_handle & ~NodeTagMask;
     };
     
-    inline NodeHandle create_error_node_handle(Util::uint64 error_id)
+    inline NodeHandle create_error_node_handle(Common::uint64 error_id)
     {
         Assert(
             (error_id & ~NodeTagMask) == error_id,
@@ -147,11 +147,11 @@ namespace CLuaNodes {
 
     class StringLiteral: public BaseNode {
         public:
-        StringLiteral(Util::StringToken string_token): string_token(string_token)
+        StringLiteral(CLua::StringToken string_token): string_token(string_token)
         {
             node_type = NodeType::StringLiteral;
         };
-        Util::StringToken string_token;
+        CLua::StringToken string_token;
     };
 
     class NumberNode : public BaseNode {
@@ -165,33 +165,33 @@ namespace CLuaNodes {
 
     class IntegerLiteral: public BaseNode {
         public:
-        IntegerLiteral(Util::uint64 value): value(value)
+        IntegerLiteral(Common::uint64 value): value(value)
         {
             node_type = NodeType::IntegerLiteral;
         };
-        Util::uint64 value = 0;
+        Common::uint64 value = 0;
     };
 
 
     class Identifier: public BaseNode {
         public:
-        Identifier(Util::IdentifierToken identifier_token): identifier_token(identifier_token)
+        Identifier(CLua::IdentifierToken identifier_token): identifier_token(identifier_token)
         {
             node_type = NodeType::Identifier;
         };
-        Util::TokenGeneric identifier_token;
+        CLua::TokenGeneric identifier_token;
     };
 
     class IdentifierPathNode : public BaseNode {
     public:
-        IdentifierPathNode(Util::TokenGeneric identifier_token,bool has_scope_symbol):
+        IdentifierPathNode(CLua::TokenGeneric identifier_token,bool has_scope_symbol):
         identifier_token(identifier_token), has_scope_symbol(has_scope_symbol)
         {
             node_type = NodeType::IdentifierPath;
         }
 
         bool has_scope_symbol;
-        Util::TokenGeneric identifier_token;
+        CLua::TokenGeneric identifier_token;
         NodeHandle next_segment = InvalidNode;
     };
 

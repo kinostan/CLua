@@ -1,2 +1,2 @@
 #include "test.cpp"
-#include <lexer/lexer.cpp>
+#include <clua_lexer/lexer.cpp>

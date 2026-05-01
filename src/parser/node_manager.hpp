@@ -1,22 +1,22 @@
 #pragma once
 
-#include <base.hpp>
+#include <common/base.hpp>
 
 #include <concepts>
 #include <type_traits>
 
 #include <linear_allocator/linear_allocator.hpp>
-#include <ast_nodes/base/base.hpp>
+#include <ast_nodes/base.hpp>
 
-namespace Util{ 
+namespace CLuaNodes{ 
     class NodeManager {
-        using NodeHandle = CLuaNodes::NodeHandle;
-        using BaseNode = CLuaNodes::BaseNode;
+        using NodeHandle = NodeHandle;
+        using BaseNode = BaseNode;
         private:
-        Util::LinearAllocator allocator;
+        Common::LinearAllocator allocator;
         public:
-        NodeManager(Util::uint64 initial_allocated_memory_region): 
-        allocator(Util::LinearAllocator(initial_allocated_memory_region))
+        NodeManager(Common::uint64 initial_allocated_memory_region): 
+        allocator(Common::LinearAllocator(initial_allocated_memory_region))
         {};
 
         template<typename Node, typename... Args>

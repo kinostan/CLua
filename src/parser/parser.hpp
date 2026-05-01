@@ -1,11 +1,11 @@
 #pragma once
 
-#include <base.hpp>
+#include <common/base.hpp>
 #include "node_manager.hpp"
 
-#include <lexer/lexer.hpp>
+#include <luau_lexer/lexer.hpp>
 
-#include <ast_nodes/base/base.hpp>
+#include <ast_nodes/base.hpp>
 #include <ast_nodes/error_nodes.hpp>
 
 #include <iostream>
@@ -20,9 +20,9 @@ namespace ASTParser{
     using NodeHandle = CLuaNodes::NodeHandle;
     using BaseNode = CLuaNodes::BaseNode;
 
-    using TokenGeneric = Util::TokenGeneric;
-    using TokenSpan = Util::TokenSpan;
-    using TokenType = Util::TokenType;
+    using TokenGeneric = CLua::TokenGeneric;
+    using TokenSpan = CLua::TokenSpan;
+    using TokenType = CLua::TokenType;
     
     const auto InvalidNode = CLuaNodes::InvalidNode;
     
@@ -41,24 +41,24 @@ namespace ASTParser{
 
     struct ParserState {
         bool has_reached_eof = false;     
-        Util::TokenGeneric current_token; 
-        Util::TokenGeneric last_token;
+        CLua::TokenGeneric current_token; 
+        CLua::TokenGeneric last_token;
         
-        Util::LexerState lexer_state;
+        CLua::LexerState lexer_state;
     };
 
     class ParserContext{
         bool has_reached_eof = false;
 
-        Util::Lexer lexer;
-        Util::NodeManager node_manager;
+        CLua::Lexer lexer;
+        CLuaNodes::NodeManager node_manager;
         
-        Util::TokenGeneric current_token = static_cast<Util::TokenGeneric>(Util::NoToken()); //last acquired token really, but it points to current token in a way
-        Util::TokenGeneric last_token = static_cast<Util::TokenGeneric>(Util::NoToken()); //last acquired token really, but it points to current token in a way
+        CLua::TokenGeneric current_token = static_cast<CLua::TokenGeneric>(CLua::NoToken()); //last acquired token really, but it points to current token in a way
+        CLua::TokenGeneric last_token = static_cast<CLua::TokenGeneric>(CLua::NoToken()); //last acquired token really, but it points to current token in a way
 
         std::vector<ParserError> error_list;
 
-        void emit_lexer_error_for_token(const Util::TokenGeneric& error_token)
+        void emit_lexer_error_for_token(const CLua::TokenGeneric& error_token)
         {
             ParserError parser_error = ParserError(error_token,error_token);
             auto lexer_error = get_current_error();
@@ -66,36 +66,36 @@ namespace ASTParser{
             emit_error(parser_error);
         }
 
-        Util::TokenGeneric get_next_non_neutral_token()
+        CLua::TokenGeneric get_next_non_neutral_token()
         {
-            Util::TokenGeneric token;
+            CLua::TokenGeneric token;
 
             do
             {
                 token = lexer.process_next_token();
 
-                if (token.token_type == Util::TokenType::Error)
+                if (token.token_type == CLua::TokenType::Error)
                 {
                     emit_lexer_error_for_token(token);
                     continue;
                 }
 
-                if (token.token_type == Util::TokenType::EndOfFile)
+                if (token.token_type == CLua::TokenType::EndOfFile)
                 {
                     has_reached_eof = true;
                     return token;
                 }
             }
-            while (token.token_type == Util::TokenType::Comment ||
-                token.token_type == Util::TokenType::NewLine ||
-                token.token_type == Util::TokenType::Whitespace);
+            while (token.token_type == CLua::TokenType::Comment ||
+                token.token_type == CLua::TokenType::NewLine ||
+                token.token_type == CLua::TokenType::Whitespace);
                 
             return token;
         }
 
         public:
 
-        ParserContext(Util::Source& source): 
+        ParserContext(Common::Source& source): 
         lexer(source), node_manager(source.source_size / 3)
         {};
 
@@ -152,12 +152,12 @@ namespace ASTParser{
             return has_reached_eof;
         };
 
-        inline Util::Lexer& get_lexer()
+        inline CLua::Lexer& get_lexer()
         {
             return lexer;
         }
 
-        inline Util::TokenGeneric get_next_token()
+        inline CLua::TokenGeneric get_next_token()
         {
             auto next_token = get_next_non_neutral_token();
             last_token = current_token;
@@ -165,35 +165,35 @@ namespace ASTParser{
             return next_token;
         };
 
-        inline Util::TokenGeneric see_current_token()
+        inline CLua::TokenGeneric see_current_token()
         {
             return current_token;
         };
 
-        inline Util::TokenGeneric get_last_token() {
+        inline CLua::TokenGeneric get_last_token() {
             return last_token;
         };
 
-        inline Util::NumberHint get_current_number_hint()
+        inline CLua::NumberHint get_current_number_hint()
         {
             return lexer.get_current_number_hint();
         };
 
-        inline Util::Error get_current_error()
+        inline CLua::Error get_current_error()
         {
             return lexer.get_current_error();
         };
 
-        inline SymbolClassifier::SymbolKind get_current_symbol()
+        inline CLua::SymbolKind get_current_symbol()
         {
-            if (current_token.token_type != Util::TokenType::Symbol) [[unlikely]]
+            if (current_token.token_type != CLua::TokenType::Symbol) [[unlikely]]
             {
-                return SymbolClassifier::SymbolKind::Unknown;
+                return CLua::SymbolKind::Unknown;
             };
             return lexer.get_current_symbol();
         };
 
-        inline KeywordClassifier::Keyword get_current_keyword()
+        inline CLua::Keyword get_current_keyword()
         {
             return lexer.get_current_keyword();
         };
@@ -227,7 +227,7 @@ namespace ASTParser{
             return error_handle;
         };
     
-        inline bool is_symbol(SymbolClassifier::SymbolKind expected_symbol)
+        inline bool is_symbol(CLua::SymbolKind expected_symbol)
         {
             return current_token.token_type == TokenType::Symbol && get_current_symbol() == expected_symbol;
         };
@@ -235,10 +235,10 @@ namespace ASTParser{
         inline bool is_identifier()
         {
             return current_token.token_type == TokenType::Identifier && 
-            get_current_keyword() == KeywordClassifier::Keyword::Unknown;
+            get_current_keyword() == CLua::Keyword::Unknown;
         };
 
-        inline bool consume_symbol(SymbolClassifier::SymbolKind expected_symbol)
+        inline bool consume_symbol(CLua::SymbolKind expected_symbol)
         {
             auto symbol_valid = is_symbol(expected_symbol);
 
@@ -273,27 +273,27 @@ namespace ASTParser{
         ParserContext parser_context;
         public:
 
-        Parser(Util::Source& source): parser_context(source)
+        Parser(Common::Source& source): parser_context(source)
         {};        
 
         NodeHandle generate_AST();
 
         private:
 
-        void print_node_tree(NodeHandle,Util::uint64);
+        void print_node_tree(NodeHandle,Common::uint64);
         
-        void print_error_node(NodeHandle node_handle,Util::uint64 current_depth)
+        void print_error_node(NodeHandle node_handle,Common::uint64 current_depth)
         {
             std::cout << "Error Node ID: " << node_handle << std::endl;
         };
 
-        std::string_view get_token_text(const Util::TokenGeneric& token)
+        std::string_view get_token_text(const CLua::TokenGeneric& token)
         {
             auto& source = parser_context.get_lexer().get_lexer_context().source;
             return source.slice_string(token.offset, token.length);
         }
 
-        void print_valid_node(NodeHandle node_handle,Util::uint64 current_depth)
+        void print_valid_node(NodeHandle node_handle,Common::uint64 current_depth)
         {
             using namespace CLuaNodes;
             auto* node_ptr = parser_context.get_node_pointer_from_handle<BaseNode>(node_handle);

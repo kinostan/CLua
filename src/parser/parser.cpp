@@ -1,6 +1,6 @@
 #include "parser.hpp"
 
-#include <base.hpp>
+#include <common/base.hpp>
 
 namespace ASTParser{
     template <typename T, typename... Ts>
@@ -208,7 +208,7 @@ namespace ASTParser{
         };
     };
 
-    void Parser::print_node_tree(NodeHandle node_handle,Util::uint64 current_depth){
+    void Parser::print_node_tree(NodeHandle node_handle,Common::uint64 current_depth){
         NodeHandleTag node_tag = get_node_tag_from_handle(node_handle);
 
         PAssert(

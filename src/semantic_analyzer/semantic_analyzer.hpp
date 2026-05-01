@@ -1,6 +1,6 @@
 #pragma once
 
-#include <base.hpp>
+#include <common/base.hpp>
 
 namespace CLua {
     class SemanticAnalyzer {

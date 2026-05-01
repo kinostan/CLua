@@ -1,6 +1,6 @@
 #pragma once
 
-#include <base.hpp>
+#include <common/base.hpp>
 
 #include <string>
 #include <cstring>
@@ -52,7 +52,7 @@
     Keyword(StaticCast,"static_cast")\
     Keyword(ReinterpretCast,"reinterpret_cast")\
 
-namespace KeywordClassifier {
+namespace CLua {
     enum class Keyword {
         #define Keyword(KeywordValue,KeywordString)\
             KeywordValue,    

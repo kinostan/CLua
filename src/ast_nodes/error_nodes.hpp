@@ -1,13 +1,14 @@
 #pragma once
 
-#include <base.hpp>
+#include <common/base.hpp>
+#include <common/clua/tokens.hpp>
 
-#include "base/base.hpp"
+#include "base.hpp"
 
 namespace CLuaNodes {
     class UnclosedBlockError : public BaseNode {
         public:
-        Util::TokenGeneric opening_token;
+        CLua::TokenGeneric opening_token;
 
         UnclosedBlockError()
         {
@@ -17,7 +18,7 @@ namespace CLuaNodes {
 
     class UnclosedGroupError : public BaseNode {
         public:
-        Util::TokenGeneric opening_token;
+        CLua::TokenGeneric opening_token;
 
         UnclosedGroupError()
         {
@@ -27,7 +28,7 @@ namespace CLuaNodes {
 
     class UnexpectedEOFError : public BaseNode {
         public:
-        Util::TokenGeneric token;
+        CLua::TokenGeneric token;
 
         UnexpectedEOFError()
         {
@@ -37,15 +38,15 @@ namespace CLuaNodes {
 
     class LexerErrorNode : public BaseNode {
         public:
-        Util::TokenGeneric token;
-        Util::ErrorCode error_code = Util::ErrorCode::None;
+        CLua::TokenGeneric token;
+        CLua::ErrorCode error_code = CLua::ErrorCode::None;
 
         LexerErrorNode()
         {
             node_type = NodeType::LexerError;
         };
 
-        LexerErrorNode(Util::TokenGeneric token, Util::ErrorCode error_code):
+        LexerErrorNode(CLua::TokenGeneric token, CLua::ErrorCode error_code):
             token(token), error_code(error_code)
         {
             node_type = NodeType::LexerError;
@@ -54,9 +55,9 @@ namespace CLuaNodes {
 
     class UnexpectedTokenError: public BaseNode {
         public:
-        Util::TokenGeneric token;
+        CLua::TokenGeneric token;
 
-        UnexpectedTokenError(Util::TokenGeneric token): token(token)
+        UnexpectedTokenError(CLua::TokenGeneric token): token(token)
         {
             node_type = NodeType::UnexpectedTokenError;
         };
@@ -64,8 +65,8 @@ namespace CLuaNodes {
 
     class MissingTokenError : public BaseNode {
         public:
-        Util::TokenGeneric token;
-        Util::TokenType expected_token_type = Util::TokenType::None;
+        CLua::TokenGeneric token;
+        CLua::TokenType expected_token_type = CLua::TokenType::None;
 
         MissingTokenError()
         {
@@ -75,7 +76,7 @@ namespace CLuaNodes {
 
     class InvalidIdentifierError : public BaseNode {
         public:
-        Util::TokenGeneric token;
+        CLua::TokenGeneric token;
 
         InvalidIdentifierError()
         {
@@ -85,7 +86,7 @@ namespace CLuaNodes {
 
     class InvalidExpressionError : public BaseNode {
         public:
-        Util::TokenGeneric token;
+        CLua::TokenGeneric token;
 
         InvalidExpressionError()
         {
@@ -95,9 +96,9 @@ namespace CLuaNodes {
 
     class IdentifierExpected : public BaseNode {
         public: 
-        Util::TokenGeneric got_token;
+        CLua::TokenGeneric got_token;
 
-        IdentifierExpected(Util::TokenGeneric got_token): got_token(got_token)
+        IdentifierExpected(CLua::TokenGeneric got_token): got_token(got_token)
         {
             node_type = NodeType::IdentifierExpectedError;
         };

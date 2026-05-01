@@ -2,18 +2,18 @@
 #include <cstdlib>
 #include <memory>
 
-namespace Util {
-    Util::uint64 align(Util::uint64 size, Util::uint64 top_position)
+namespace Common {
+    Common::uint64 align(Common::uint64 size, Common::uint64 top_position)
     {
-        Util::uint64 alignment = std::bit_ceil(size);
+        Common::uint64 alignment = std::bit_ceil(size);
         
-        Util::uint64 mask = alignment - 1;
-        Util::uint64 aligned_address = (top_position + mask) & ~mask;
+        Common::uint64 mask = alignment - 1;
+        Common::uint64 aligned_address = (top_position + mask) & ~mask;
         
         return aligned_address;
     };
 
-    Util::uint64 LinearAllocator::allocate(Util::uint64 size)
+    Common::uint64 LinearAllocator::allocate(Common::uint64 size)
     {
         auto new_element_address = align(size,memory_top);
         auto new_top = new_element_address + size;
@@ -21,7 +21,7 @@ namespace Util {
 
         if (memory_region_size < new_top)
         {
-            auto new_size = static_cast<Util::uint64>(new_top * 1.5);
+            auto new_size = static_cast<Common::uint64>(new_top * 1.5);
 
             auto new_region = new Byte[new_size];
 
