@@ -1,0 +1,40 @@
+TopUID: 11
+
+Problem 4: 
+Title: Handling of string literal data
+Level: Low/Design
+Severity: Low
+Description: Class StringLiteral is currently faulty and could cause issues in the future. It's preferable 
+if StringLiteral would rather have a weak token view inside of the source buffer for string types.
+
+Problem 5:
+Title: Current allocator is unsufficient for the future features
+Level: High/Design
+Severity: Low
+Description: 
+Current linear allocator will not be able to handle removal parts of the memory and would force the remove the entire model
+instead only it's fragment to refit.
+
+Problem 6:
+Title: Node handle tag mask assumes 64-bit Common::uint64
+Level: High/Design
+Severity: Medium
+Description:
+NodeTagMask and NodeHandleTag bit packing are hardcoded for 64-bit handles (shift by 62).
+This breaks portability and causes warnings or incorrect behavior on platforms where Common::uint64 is not 64-bit.
+
+Problem 10:
+Title: ParserContext has no public error query API
+Level: Low/Design
+Severity: Medium
+Description:
+ParserContext stores parser errors internally but does not expose a public getter for error list/count.
+This makes downstream stages rely on side effects instead of explicit diagnostics flow.
+
+Problem 11:
+Title: Lexer and parser error-node constructors are inconsistent
+Level: Low/Design
+Severity: Low
+Description:
+Some error nodes require token payload in constructor while others rely on default construction and later assignment.
+This inconsistency increases usage mistakes and makes error emission patterns harder to standardize.

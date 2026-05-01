@@ -1,12 +1,14 @@
 #pragma once
 
+#include <common/base.hpp>
+
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <stdint.h>
 
-namespace SymbolClassifier {
-    enum class SymbolKind : uint8_t {
+namespace CLua {
+    enum class SymbolKind : Common::uint8 {
         Plus,
         DoublePlus,
         PlusEqual,
@@ -34,6 +36,7 @@ namespace SymbolClassifier {
         Comma,
         Semicolon,
         Colon,
+        DoubleColon,
         Arrow,
         LParen,
         RParen,
@@ -90,10 +93,10 @@ namespace SymbolClassifier {
         {"{", SymbolKind::LBrace}, {"}", SymbolKind::RBrace},
         {"[", SymbolKind::LBracket}, {"]", SymbolKind::RBracket},
         {"?", SymbolKind::Question}, {"?=", SymbolKind::TernaryAssign},
-        {"@", SymbolKind::AtSign}
+        {"@", SymbolKind::AtSign}, {"::", SymbolKind::DoubleColon},
     };
 
-    inline SymbolKind get_symbol_from_buffer(const char* buffer, size_t length) {
+    inline SymbolKind get_symbol_from_buffer(const char* buffer, Common::uint64 length) {
         if (!buffer || length == 0) return SymbolKind::Unknown;
 
         // Construct a view to search the map directly

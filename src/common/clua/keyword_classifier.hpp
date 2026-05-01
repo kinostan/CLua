@@ -1,5 +1,7 @@
 #pragma once
 
+#include <common/base.hpp>
+
 #include <string>
 #include <cstring>
 
@@ -46,9 +48,11 @@
     Keyword(Sizeof, "sizeof")   \
     Keyword(LuaEmbed,"lua_embed") \
     Keyword(Import,"import")\
-    Keyword(Export,"export")
+    Keyword(Export,"export")\
+    Keyword(StaticCast,"static_cast")\
+    Keyword(ReinterpretCast,"reinterpret_cast")\
 
-namespace KeywordClassifier {
+namespace CLua {
     enum class Keyword {
         #define Keyword(KeywordValue,KeywordString)\
             KeywordValue,    

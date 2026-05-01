@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Lexer Tester",
+            "name": "Lexer Test",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/tests/lexer/test.exe",
@@ -25,9 +25,8 @@
             "preLaunchTask": "build-lexer-test",
             "miDebuggerPath": "gdb"
         },
-
         {
-            "name": "Debug Lexer",
+            "name": "Lexer",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/lexer_debug.exe",
@@ -48,10 +47,10 @@
             "miDebuggerPath": "gdb"
         },
         {
-            "name": "Debug Parser",
+            "name": "Parser Test",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/parser_debug.exe",
+            "program": "${workspaceFolder}/tests/parser/test.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -65,7 +64,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build-parser",
+            "preLaunchTask": "build-parser-test",
             "miDebuggerPath": "gdb"
         },
     ]
