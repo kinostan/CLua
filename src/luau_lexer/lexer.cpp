@@ -1,9 +1,9 @@
-#include <lexer/lexer.hpp>
+#include <luau_lexer/lexer.hpp>
 
 #include <string>
 #include <array>
 
-namespace CLua { 
+namespace LuaU { 
    unsigned char get_binary_char_code_value(unsigned char bin_char)
    {
       if (bin_char >= '0' && bin_char <= '1')
@@ -102,13 +102,13 @@ namespace CLua {
       return integer_value;
    };
 
-   long double consume_and_eval_fraction(LexerContext& lexer_context)
+   Common::f64 consume_and_eval_fraction(LexerContext& lexer_context)
    {
       auto current_char = lexer_context.source.see_current();
       auto char_type = character_map[current_char]; 
 
       unsigned int length = 0;
-      long double integer_value = 0;
+      Common::f64 integer_value = 0;
 
       unsigned base_divisor = 1;
 
@@ -283,7 +283,7 @@ namespace CLua {
       auto first_char = current_char;
 
       Common::uint64 number_integer = 0;
-      long double number_fraction = 0;
+      Common::f64 number_fraction = 0;
 
       if (current_char == '.')
       {

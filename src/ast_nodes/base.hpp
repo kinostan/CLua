@@ -160,7 +160,7 @@ namespace CLuaNodes {
         {
             node_type = NodeType::NumberLiteral;
         };
-        long double value = 0;
+        Common::f64 value = 0;
     };
 
     class IntegerLiteral: public BaseNode {

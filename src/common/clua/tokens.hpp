@@ -2,7 +2,11 @@
 #include <common/base.hpp>
 #include <common/metacpp.hpp>
 
+#include <debugger/debugger.hpp>
+
 namespace CLua {
+    using namespace LexerDebug;
+
     enum class TokenType: Common::uint8 {
         Identifier,
         Numeric,

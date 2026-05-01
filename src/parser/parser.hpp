@@ -3,7 +3,7 @@
 #include <common/base.hpp>
 #include "node_manager.hpp"
 
-#include <luau_lexer/lexer.hpp>
+#include <clua_lexer/lexer.hpp>
 
 #include <ast_nodes/base.hpp>
 #include <ast_nodes/error_nodes.hpp>
@@ -121,8 +121,6 @@ namespace ASTParser{
                 "some kind of unexpected behaviour from the code. Most likely cause is memory corruption"
             );
 
-
-
             return node_handle;
         };
 
@@ -203,7 +201,7 @@ namespace ASTParser{
             return lexer.get_current_char_value();
         };
 
-        inline long double get_current_fraction()
+        inline Common::f64 get_current_fraction()
         {
             return lexer.get_current_fraction();
         };

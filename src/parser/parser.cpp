@@ -1,5 +1,6 @@
 #include "parser.hpp"
 
+#include <common/clua/tokens.hpp>
 #include <common/base.hpp>
 
 namespace ASTParser{
@@ -10,12 +11,16 @@ namespace ASTParser{
     }
 
     using namespace CLuaNodes;
-    using namespace SymbolClassifier;
 
-    using TokenType = Util::TokenType;
-    using NumberBase = Util::NumberBase;
-    using NumberType = Util::NumberType;
-    using Source = Util::Source;
+    using SymbolKind = CLua::SymbolKind;
+
+
+    using TokenType = CLua::TokenType;
+    using NumberBase = CLua::NumberBase;
+    using NumberType = CLua::NumberType;
+    using Source = CLua::Source;
+
+
 
     namespace Expression {
         NodeHandle expect_expression(ParserContext& parser_context);
@@ -133,7 +138,7 @@ namespace ASTParser{
                 case TokenType::String:
                 {
                     auto string_node = parser_context.create_node<StringLiteral>(
-                        current_token.as<Util::StringToken>()
+                        current_token.as<CLua::StringToken>()
                     );
 
                     return string_node;

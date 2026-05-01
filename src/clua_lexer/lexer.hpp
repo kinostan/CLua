@@ -61,16 +61,16 @@ namespace CLua {
     };
 
     struct LexerState { 
+        union {
+            Common::uint64 current_number_integer = 0;
+            Common::f64 current_number_fraction; 
+            char current_char_value;
+            SymbolKind current_symbol;  
+            Keyword current_keyword;
+            Error current_error;
+        };
         Common::uint64 cursor_index = 0;
-
-        Error current_error;
-        NumberHint current_number;
-        SymbolKind current_symbol = SymbolKind::Unknown;  
-        Keyword current_keyword = Keyword::Unknown;
-
-        Common::uint64 current_number_integer = 0;
-        long double current_number_fraction = 0; 
-        char current_char_value = 0;
+        NumberHint current_number = NumberHint();
     };
     
     class LexerContext {
@@ -123,12 +123,12 @@ namespace CLua {
             ultimate_token_type = TokenKind<ErrorToken>::value;
         };
 
-        inline void record_number(NumberBase number_base, NumberType number_type, Common::uint64 number_integer,long double number_fraction = 0)
+        inline void record_number(NumberBase number_base, NumberType number_type, Common::uint64 number_integer,Common::f64 number_fraction = 0)
         {
             on_emit();
 
             LAssert(
-                lexer_state.current_number_fraction >= 0,
+                number_fraction >= 0,
                 "lexer can't consume unary minus operator"
             );
 
@@ -193,7 +193,7 @@ namespace CLua {
             return lexer_state.current_keyword;
         };
 
-        const long double get_current_fraction() 
+        const Common::f64 get_current_fraction() 
         {
             LAssert(
                 lexer_state.current_number_fraction >= 0,
@@ -288,7 +288,7 @@ namespace CLua {
             return lexer_context.get_current_keyword();
         };
 
-        const long double get_current_fraction() 
+        const Common::f64 get_current_fraction() 
         {
             return lexer_context.get_current_fraction();
         };

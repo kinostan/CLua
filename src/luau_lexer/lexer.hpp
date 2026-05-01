@@ -10,7 +10,7 @@
 
 #include <debugger/debugger.hpp>
 
-namespace CLua {
+namespace LuaU {
     using Source = Common::Source;
 
     enum class ErrorCode: Common::uint8 {
@@ -69,7 +69,7 @@ namespace CLua {
         Keyword current_keyword = Keyword::Unknown;
 
         Common::uint64 current_number_integer = 0;
-        long double current_number_fraction = 0; 
+        Common::f64 current_number_fraction = 0; 
         char current_char_value = 0;
     };
     
@@ -123,7 +123,7 @@ namespace CLua {
             ultimate_token_type = TokenKind<ErrorToken>::value;
         };
 
-        inline void record_number(NumberBase number_base, NumberType number_type, Common::uint64 number_integer,long double number_fraction = 0)
+        inline void record_number(NumberBase number_base, NumberType number_type, Common::uint64 number_integer,Common::f64 number_fraction = 0)
         {
             on_emit();
 
@@ -193,7 +193,7 @@ namespace CLua {
             return lexer_state.current_keyword;
         };
 
-        const long double get_current_fraction() 
+        const Common::f64 get_current_fraction() 
         {
             LAssert(
                 lexer_state.current_number_fraction >= 0,
@@ -288,7 +288,7 @@ namespace CLua {
             return lexer_context.get_current_keyword();
         };
 
-        const long double get_current_fraction() 
+        const Common::f64 get_current_fraction() 
         {
             return lexer_context.get_current_fraction();
         };
