@@ -39,14 +39,14 @@ namespace CLuaNodes {
     class LexerErrorNode : public BaseNode {
         public:
         CLua::TokenGeneric token;
-        CLua::ErrorCode error_code = CLua::ErrorCode::None;
+        CLua::Error error_code = CLua::Error::None;
 
         LexerErrorNode()
         {
             node_type = NodeType::LexerError;
         };
 
-        LexerErrorNode(CLua::TokenGeneric token, CLua::ErrorCode error_code):
+        LexerErrorNode(CLua::TokenGeneric token, CLua::Error error_code):
             token(token), error_code(error_code)
         {
             node_type = NodeType::LexerError;

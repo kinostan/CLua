@@ -13,8 +13,6 @@
 
 namespace ASTParser{
 
-    using CLuaNodes::get_node_tag_from_handle;
-
     using NodeType = CLuaNodes::NodeType;
     using NodeHandleTag = CLuaNodes::NodeHandleTag;
     using NodeHandle = CLuaNodes::NodeHandle;
@@ -62,7 +60,7 @@ namespace ASTParser{
         {
             ParserError parser_error = ParserError(error_token,error_token);
             auto lexer_error = get_current_error();
-            parser_error.node_handle = create_node<CLuaNodes::LexerErrorNode>(error_token, lexer_error.error_code);
+            parser_error.node_handle = create_node<CLuaNodes::LexerErrorNode>(error_token, lexer_error);
             emit_error(parser_error);
         }
 
@@ -114,10 +112,10 @@ namespace ASTParser{
         requires (std::derived_from<Node,BaseNode> && std::is_constructible_v<Node, Args...>)
         inline NodeHandle create_node(Args&&... args)
         {
-            auto node_handle = node_manager.create_node<Node>(std::forward<Args>(args)...);
+            NodeHandle node_handle = node_manager.create_node<Node>(std::forward<Args>(args)...);
 
             PAssert(
-                CLuaNodes::get_node_tag_from_handle(node_handle) ==  CLuaNodes::NodeHandleTag::Valid,
+                node_handle.node_tag == CLuaNodes::NodeHandleTag::Valid,
                 "some kind of unexpected behaviour from the code. Most likely cause is memory corruption"
             );
 
@@ -128,7 +126,7 @@ namespace ASTParser{
         requires (std::derived_from<Node,BaseNode>) 
         inline Node* get_node_pointer_from_handle(NodeHandle node_handle){
             PAssert(
-                get_node_tag_from_handle(node_handle) == NodeHandleTag::Valid,
+                node_handle.node_tag == NodeHandleTag::Valid,
                 "node handle must be valid to be casted from node handle to node pointer"
             )
             return node_manager.get_node_pointer_from_handle<Node>(node_handle);
@@ -139,7 +137,7 @@ namespace ASTParser{
         inline Node& get_node_from_handle(NodeHandle node_handle)
         {
             PAssert(
-                get_node_tag_from_handle(node_handle) == NodeHandleTag::Valid,
+                node_handle.node_tag == NodeHandleTag::Valid,
                 "node handle must be valid for function to be able to return a reference of a node"
             )
             return *get_node_pointer_from_handle<Node>(node_handle);
@@ -165,6 +163,10 @@ namespace ASTParser{
 
         inline CLua::TokenGeneric see_current_token()
         {
+            PAssert(
+                current_token.token_type != TokenType::None,
+                "unexpected behaviour from the see_current_token function"
+            );
             return current_token;
         };
 
@@ -218,7 +220,10 @@ namespace ASTParser{
             //it should keep track of error spans to monitor overlaps and report
             //if they happen in the code
             auto error_id = error_list.size();
-            auto error_handle = CLuaNodes::create_error_node_handle(error_id);
+            auto error_handle = NodeHandle(
+                NodeHandleTag::Error,
+                error_id
+            );
 
             error_list.push_back(parser_error);
 
@@ -236,16 +241,15 @@ namespace ASTParser{
             get_current_keyword() == CLua::Keyword::Unknown;
         };
 
-        inline bool consume_symbol(CLua::SymbolKind expected_symbol)
+        inline bool is_literal()
         {
-            auto symbol_valid = is_symbol(expected_symbol);
-
-            if (symbol_valid)
+            switch (current_token.token_type)
             {
-                get_next_token();
+                case TokenType::Char: case TokenType::String: case TokenType::Numeric:
+                    return true;
+                default:
+                    return false;
             };
-
-            return symbol_valid;
         };
 
         ParserState record_cursor()
@@ -282,7 +286,7 @@ namespace ASTParser{
         
         void print_error_node(NodeHandle node_handle,Common::uint64 current_depth)
         {
-            std::cout << "Error Node ID: " << node_handle << std::endl;
+            std::cout << "Error Node ID: " << static_cast<const char*>(node_handle) << std::endl;
         };
 
         std::string_view get_token_text(const CLua::TokenGeneric& token)
@@ -297,6 +301,7 @@ namespace ASTParser{
             auto* node_ptr = parser_context.get_node_pointer_from_handle<BaseNode>(node_handle);
             auto node_type = node_ptr->node_type;
             std::string indent(current_depth * 2, ' ');
+            current_depth++;
             
             switch (node_type)
             {
@@ -323,14 +328,25 @@ namespace ASTParser{
             }
             case NodeType::IdentifierPath: {
                 auto* identifier_path_node = static_cast<CLuaNodes::IdentifierPathNode*>(node_ptr);
-                std::cout << indent << "IdentifierPath: " << get_token_text(identifier_path_node->identifier_token) << std::endl;
+                std::cout << indent << "IdentifierPath: " << std::endl;
+                print_node_tree(identifier_path_node->identifier, current_depth);
+
 
                 auto next_segment_handle = identifier_path_node->next_segment;
+
+                if(next_segment_handle.node_tag != NodeHandleTag::Valid)
+                {
+                    return;
+                };
                 print_node_tree(next_segment_handle,current_depth);
                 break;
             }
             case NodeType::GroupExpression: {
-                std::cout << "GroupExpression is not handled yet" << std::endl;
+                std::cout << indent << "GroupExpression:" << std::endl;
+
+                auto group_expression = static_cast<CLuaNodes::GroupExpression*>(node_ptr);
+                print_node_tree(group_expression->group_expression,current_depth);
+
                 break;
             }
             case NodeType::Action: {

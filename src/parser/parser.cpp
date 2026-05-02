@@ -14,35 +14,69 @@ namespace ASTParser{
 
     using SymbolKind = CLua::SymbolKind;
 
-
     using TokenType = CLua::TokenType;
     using NumberBase = CLua::NumberBase;
     using NumberType = CLua::NumberType;
     using Source = CLua::Source;
-
-
 
     namespace Expression {
         NodeHandle expect_expression(ParserContext& parser_context);
     };
 
     namespace Base {
-        NodeHandle get_group_expression(ParserContext& parser_context)
+        bool consume_symbol(ParserContext& parser_context, CLua::SymbolKind expected_symbol)
+        {
+            auto current_token = parser_context.see_current_token();
+
+            auto can_be_consumed = current_token.token_type == TokenType::Symbol && parser_context.get_current_symbol() == expected_symbol;
+        
+            if (!can_be_consumed) [[unlikely]]
+            {
+                return false;
+            };
+
+            parser_context.get_next_token();
+
+            return true;
+        };
+
+        NodeHandle expect_identifier(ParserContext& parser_context)
+        {
+            auto current_token = parser_context.see_current_token();
+            auto is_identifier = parser_context.is_identifier();
+
+            if (!is_identifier) [[unlikely]]
+            {
+                auto error_node = parser_context.create_node<UnexpectedTokenError>(
+                    current_token
+                );
+                ParserError error = ParserError(current_token);
+                return parser_context.emit_error(error);
+            };
+
+            parser_context.get_next_token();
+            auto identifier_node = parser_context.create_node<Identifier>(
+                current_token.as<CLua::IdentifierToken>()
+            );
+
+            return identifier_node;
+        };
+
+        NodeHandle expect_group_expression(ParserContext& parser_context)
         {
             auto current_token = parser_context.see_current_token();
 
             if (!parser_context.is_symbol(SymbolKind::LParen))
             {
-                return set_node_state_for_handle(static_cast<NodeHandle>(0),NodeHandleTag::NoPattern);
+                return NoPatternNode;
             };
 
             parser_context.get_next_token();
             auto expression_node = Expression::expect_expression(parser_context);
-            auto node_tag = get_node_tag_from_handle(expression_node);
 
             auto return_node = InvalidNode;
 
-            if (node_tag == NodeHandleTag::Valid) [[likely]] {
+            if (expression_node.node_tag == NodeHandleTag::Valid) [[likely]] {
                 auto next_token = parser_context.see_current_token();
 
                 if (parser_context.is_symbol(SymbolKind::RParen))
@@ -55,7 +89,7 @@ namespace ASTParser{
 
                     return parser_context.emit_error(parser_error);
                 };
-            } else if(node_tag == NodeHandleTag::Error) {
+            } else if(expression_node.node_tag == NodeHandleTag::Error) {
                 return expression_node;
             } else {
                 PAssert(false, 
@@ -65,62 +99,52 @@ namespace ASTParser{
             };
         };
 
-        bool consume_identifier(ParserContext& parser_context)
+        NodeHandle expect_scoped_identifier(ParserContext& parser_context)
         {
-            auto current_token = parser_context.see_current_token();
-            auto is_identifier = parser_context.is_identifier();
+            auto optional_global_scope = consume_symbol(parser_context,SymbolKind::DoubleColon); 
+            auto identifier = expect_identifier(parser_context);
 
-            if (is_identifier)
+            if (identifier.node_tag != NodeHandleTag::Valid)
             {
-                
+                return identifier;
             };
+    
+            auto scoped_identifier_head = parser_context.create_node<IdentifierPathNode>(
+                identifier,
+                optional_global_scope
+            );
 
-            return is_identifier;
-        };
-
-        NodeHandle get_scoped_identifier(ParserContext& parser_context)
-        {
-            auto optional_global_scope = parser_context.consume_symbol(SymbolKind::DoubleColon); 
-            auto identifier_token = parser_context.see_current_token();
-
-            if (identifier_token.token_type != TokenType::Identifier)
-            {
-                return set_node_state_for_handle(0,NodeHandleTag::NoPattern);
-            };
-
-            auto identifier_path_head = parser_context.create_node<IdentifierPathNode>(identifier_token,optional_global_scope);
-            auto& node_reference = parser_context.get_node_from_handle<IdentifierPathNode>(identifier_path_head);
-
-            auto previous_node_handle = identifier_path_head;
+            auto last_path_node = scoped_identifier_head;
 
             while (!parser_context.has_reached_end())
             {
-                auto local_scope = parser_context.consume_symbol(SymbolKind::DoubleColon);
-                if (!local_scope)
+                auto scope_enabled = consume_symbol(parser_context, SymbolKind::DoubleColon);
+
+                if (!scope_enabled)
                 {
                     break;
-                };
-                identifier_token = parser_context.see_current_token();
+                }
                 
-                if (identifier_token.token_type != TokenType::Identifier) [[unlikely]]
+                auto next_identifier = expect_identifier(parser_context);
+
+                if (next_identifier.node_tag != NodeHandleTag::Valid)
                 {
-                    auto unexpected_token = parser_context.create_node<UnexpectedTokenError>(identifier_token);
-                    auto error = ParserError(identifier_token);
-                    error.node_handle = unexpected_token;
-                    return parser_context.emit_error(error);
+                    return next_identifier;
                 };
 
-                parser_context.get_next_token();
-                auto current_node_handle = parser_context.create_node<IdentifierPathNode>(identifier_token,true);
+                auto scoped_identifier = parser_context.create_node<IdentifierPathNode>(
+                    next_identifier,
+                    true
+                );
 
-                auto& current_node_reference = parser_context.get_node_from_handle<IdentifierPathNode>(current_node_handle);
-                auto& previous_node_reference = parser_context.get_node_from_handle<IdentifierPathNode>(previous_node_handle);
+                auto& last_path_node_reference = parser_context.get_node_from_handle<IdentifierPathNode>(last_path_node);
+                auto& current_scoped_identifier = parser_context.get_node_from_handle<IdentifierPathNode>(scoped_identifier);
 
-                previous_node_reference.next_segment = current_node_handle;
-                previous_node_handle = current_node_handle;
+                last_path_node_reference.next_segment = scoped_identifier;
+                last_path_node = scoped_identifier;
             };
-        
-            return identifier_path_head;
+
+            return scoped_identifier_head;
         };
 
         NodeHandle expect_literal_node(ParserContext& parser_context)
@@ -179,42 +203,40 @@ namespace ASTParser{
 
         NodeHandle expect_atom(ParserContext& parser_context)
         {
-            auto cursor_record = parser_context.record_cursor();
-
-            auto scoped_identifier = get_scoped_identifier(parser_context);
-            auto result_tag = get_node_tag_from_handle(scoped_identifier);
-
-            if (is_one_of(result_tag,NodeHandleTag::Error,NodeHandleTag::Valid))
+            if (parser_context.is_literal())
             {
-                return scoped_identifier;
+                return expect_literal_node(parser_context);
+            } else if(parser_context.is_symbol(SymbolKind::LParen)) {
+                return expect_group_expression(parser_context);
+            }
+            else
+            {
+                return expect_scoped_identifier(parser_context);
             };
 
-            parser_context.set_cursor(cursor_record);
-
-            auto group_expression = get_group_expression(parser_context);
-            result_tag = get_node_tag_from_handle(group_expression);
-
-            if (is_one_of(result_tag,NodeHandleTag::Error,NodeHandleTag::Valid))
-            {
-                return group_expression;
-            };
-
-            auto& literal = scoped_identifier;
-            literal = expect_literal_node(parser_context);
-
-            return literal;
+            return InvalidNode;
         };
     };
        
     namespace Expression {
-        NodeHandle expect_expression(ParserContext& parser_context)
+        bool is_prefix_unary(ParserContext& parser_context)
+        {
+            
+        };
+
+        NodeHandle expect_unary_expression(ParserContext& parser_context)
         {
             return Base::expect_atom(parser_context);
+        };
+
+        NodeHandle expect_expression(ParserContext& parser_context)
+        {
+            return expect_unary_expression(parser_context);
         };
     };
 
     void Parser::print_node_tree(NodeHandle node_handle,Common::uint64 current_depth){
-        NodeHandleTag node_tag = get_node_tag_from_handle(node_handle);
+        NodeHandleTag node_tag = node_handle.node_tag;
 
         PAssert(
             node_tag == NodeHandleTag::Error || node_tag == NodeHandleTag::Valid,

@@ -14,7 +14,7 @@ struct Test {
     Common::uint64 expected_offsets[TokenCount];
     Common::uint64 expected_lengths[TokenCount];
     bool expect_error = false;
-    ErrorCode expected_error;
+    Error expected_error;
 };
 
 template<Common::uint64 TokenCount>
@@ -41,7 +41,7 @@ void run_test(const Test<TokenCount>& test)
 
     if (test.expect_error)
     {
-        assert(lexer.get_current_error().error_code == test.expected_error);
+        assert(lexer.get_current_error() == test.expected_error);
     }
 
     std::cout << "  OK\n";
@@ -123,7 +123,7 @@ int main()
         { 0, 14, 15, 27 },
         { 14, 1, 12, 1 },
         true,
-        ErrorCode::UnclosedComment
+        Error::UnclosedComment
     };
 
 
@@ -139,7 +139,7 @@ int main()
         { 0, 5, 6, 7},
         { 5, 1, 1, 1},
         true,
-        ErrorCode::UnexpectedCharacter
+        Error::UnexpectedCharacter
     };
 
     Test<2> STRING_LITERAL {
@@ -214,7 +214,7 @@ int main()
         { 0, 6 },
         { 6, 1 },
         true,
-        ErrorCode::UnclosedString
+        Error::UnclosedString
     };
 
     Test<2> STRING_ENDING_WITH_ESCAPED_QUOTE {
@@ -238,7 +238,7 @@ int main()
         { 0, 5 },
         { 5, 1 },
         true,
-        ErrorCode::UnclosedString
+        Error::UnclosedString
     };
 
     Test<2> EMPTY_CHAR {
@@ -251,7 +251,7 @@ int main()
         { 0, 2 },
         { 2, 1 },
         true,
-        ErrorCode::InvalidCharCode
+        Error::InvalidCharCode
     };
 
     Test<2> MULTI_CHAR_LITERAL {
@@ -264,7 +264,7 @@ int main()
         { 0, 4 },
         { 4 , 1},
         true,
-        ErrorCode::TooLongChar,
+        Error::TooLongChar,
     };
 
     Test<2> ESCAPED_CHAR_LITERAL {
@@ -417,7 +417,7 @@ int main()
         { 1, 9, 1, 1, 1, 9, 1 },
 
         true,
-        ErrorCode::UnclosedLuaBlock
+        Error::UnclosedLuaBlock
     };
     */
 
@@ -503,7 +503,7 @@ int main()
         { 0, 2 },
         { 2, 1 },
         true,
-        ErrorCode::MalformedNumber
+        Error::MalformedNumber
     };
 
     Test<2> INVALID_HEX {
@@ -516,7 +516,7 @@ int main()
         { 0, 2 },
         { 2, 1 },
         true,
-        ErrorCode::MalformedNumber
+        Error::MalformedNumber
     };
 
     run_test(IDENTIFIER_ONLY);

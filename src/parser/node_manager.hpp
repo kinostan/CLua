@@ -23,23 +23,32 @@ namespace CLuaNodes{
         requires (std::derived_from<Node,BaseNode>) && std::is_constructible_v<Node, Args...>
         inline NodeHandle create_node(Args&&... args)
         {
-            auto node_handle = allocator.allocate(sizeof(Node));
-            new (get_node_pointer_from_handle<Node>(node_handle)) Node(std::forward<Args>(args)...);
-            return node_handle;
+            auto offset = allocator.allocate(sizeof(Node));
+            auto node = NodeHandle(NodeHandleTag::Valid,offset);
+            new (get_node_pointer_from_handle<Node>(node)) Node(std::forward<Args>(args)...);
+            return node;
         };
 
         template<typename Node>
         requires (std::derived_from<Node,BaseNode>)
         inline Node& get_node_from_handle(NodeHandle node_handle)
         {
-            return *(reinterpret_cast<Node*>(allocator.memory_region_start + node_handle));
+            Assert(
+                node_handle.node_tag == NodeHandleTag::Valid,
+                "in order to get a reference of a node, the node handle must be valid"
+            )
+            return *(reinterpret_cast<Node*>(allocator.memory_region_start + node_handle.node_value));
         };
 
         template<typename Node, typename... Args>
         requires (std::derived_from<Node,BaseNode>) 
         inline Node* get_node_pointer_from_handle(NodeHandle node_handle)
         {
-            return reinterpret_cast<Node*>(allocator.memory_region_start + node_handle);
+            Assert(
+                node_handle.node_tag == NodeHandleTag::Valid,
+                "in order to get a pointer of a node, the node handle must be valid"
+            )
+            return reinterpret_cast<Node*>(allocator.memory_region_start + node_handle.node_value);
         };
     };
 };
