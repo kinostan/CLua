@@ -201,7 +201,7 @@ namespace CLua {
 
       if (!TypeClassificator::is_hex_code(current_char))
       {
-         return lexer_context.record_error(ErrorCode::MalformedNumber);
+         return lexer_context.record_error(Error::MalformedNumber);
       };
 
       Common::uint64 length = 0;
@@ -220,12 +220,12 @@ namespace CLua {
 
       if (!TypeClassificator::is_number_compitable_char_type(character_map[current_char]))
       {
-         return lexer_context.record_error(ErrorCode::MalformedNumber);
+         return lexer_context.record_error(Error::MalformedNumber);
       };
 
       if (length == 0)
       {
-         return lexer_context.record_error(ErrorCode::TruncatedNumberSequence);
+         return lexer_context.record_error(Error::TruncatedNumberSequence);
       };
 
       return lexer_context.record_number(NumberBase::Hexadecimal,NumberType::Integer,number_integer);
@@ -247,7 +247,7 @@ namespace CLua {
 
       if(!TypeClassificator::is_bin_code(current_char))
       {
-         return lexer_context.record_error(ErrorCode::MalformedNumber);
+         return lexer_context.record_error(Error::MalformedNumber);
       };
 
       Common::uint64 length = 0;
@@ -266,12 +266,12 @@ namespace CLua {
 
       if (!TypeClassificator::is_number_compitable_char_type(character_map[current_char]))
       {
-         return lexer_context.record_error(ErrorCode::MalformedNumber);
+         return lexer_context.record_error(Error::MalformedNumber);
       };
 
       if (length == 0)
       {
-         return lexer_context.record_error(ErrorCode::TruncatedNumberSequence);
+         return lexer_context.record_error(Error::TruncatedNumberSequence);
       };
 
       return lexer_context.record_number(NumberBase::Binary, NumberType::Integer,number_integer);
@@ -319,7 +319,7 @@ namespace CLua {
          return lexer_context.record_number(NumberBase::Decimal,NumberType::Integer,number_integer);
       } 
       else {
-         return lexer_context.record_error(ErrorCode::MalformedNumber);
+         return lexer_context.record_error(Error::MalformedNumber);
       };
 
       auto end_char = lexer_context.source.see_current();
@@ -331,7 +331,7 @@ namespace CLua {
          //[numbers].
          return lexer_context.record_number(NumberBase::Decimal,NumberType::Float,number_integer,number_fraction);
       } else {
-         return lexer_context.record_error(ErrorCode::MalformedNumber);
+         return lexer_context.record_error(Error::MalformedNumber);
       }; 
    }
 
@@ -365,7 +365,7 @@ namespace CLua {
 
    void consume_error_token(LexerContext& lexer_context)
    {
-      lexer_context.record_error(ErrorCode::UnexpectedCharacter);
+      lexer_context.record_error(Error::UnexpectedCharacter);
       lexer_context.source.consume(); 
    };
 
@@ -399,7 +399,7 @@ namespace CLua {
 
       if (symbol_kind == SymbolKind::Unknown)
       {
-         return lexer_context.record_error(ErrorCode::UnknownSymbol);
+         return lexer_context.record_error(Error::UnknownSymbol);
       }
 
       return lexer_context.record_symbol(symbol_kind);
@@ -442,7 +442,7 @@ namespace CLua {
       /*
          if (character_map[inline_char] == CharacterType::EndOfFile)
          {
-            return lexer_context.record_error(ErrorCode::UnclosedComment);
+            return lexer_context.record_error(Error::UnclosedComment);
          };
       */
 
@@ -479,7 +479,7 @@ namespace CLua {
          inline_char = lexer_context.source.see_current();
       };
 
-      return lexer_context.record_error(ErrorCode::UnclosedComment);
+      return lexer_context.record_error(Error::UnclosedComment);
    };
 
    void consume_comment_token(LexerContext& lexer_context)
@@ -525,14 +525,14 @@ namespace CLua {
          current_char = lexer_context.source.see_current();
          char_type = character_map[current_char];if (char_type == CharacterType::EndOfFile) [[unlikely]]
          {
-            return lexer_context.record_error(ErrorCode::UnclosedString);
+            return lexer_context.record_error(Error::UnclosedString);
          } else if (current_char == '\\') 
          {
             lexer_context.source.consume(); // skip '\' unless nullptr
             auto next_char = lexer_context.source.see_current();
             if (character_map[next_char] == CharacterType::EndOfFile)
             {
-               return lexer_context.record_error(ErrorCode::UnclosedString);
+               return lexer_context.record_error(Error::UnclosedString);
             };
             continue;
          }
@@ -574,7 +574,7 @@ namespace CLua {
       {
          if (current_char == '\0')
          {
-            return lexer_context.record_error(ErrorCode::UnclosedChar);
+            return lexer_context.record_error(Error::UnclosedChar);
          };
          char_value = current_char;
          if (current_char == '\\') {
@@ -583,7 +583,7 @@ namespace CLua {
             char next = static_cast<char>(lexer_context.source.see_current());
             if (next == '\0')
             {
-               return lexer_context.record_error(ErrorCode::UnclosedChar);
+               return lexer_context.record_error(Error::UnclosedChar);
             }
             char_value = get_escape_sequence(next);
          }  
@@ -597,12 +597,12 @@ namespace CLua {
 
       if (counter == 0)
       {
-         return lexer_context.record_error(ErrorCode::InvalidCharCode);
+         return lexer_context.record_error(Error::InvalidCharCode);
       } else if (counter == 1){
          return lexer_context.record_char_value(char_value);
       } else if(counter > 1)
       {
-         return lexer_context.record_error(ErrorCode::TooLongChar);
+         return lexer_context.record_error(Error::TooLongChar);
       };
       
       return;

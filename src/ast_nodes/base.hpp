@@ -86,51 +86,52 @@ namespace CLuaNodes {
         Conditional
     };
 
-    enum class NodeHandleTag : Common::uint64 {
-        Valid     = 0b00ULL << 62, 
-        Reserved  = 0b01ULL << 62, 
-        NoPattern = 0b10ULL << 62,
-        Error     = 0b11ULL << 62  
+    enum class NodeHandleTag : Common::uint8 {
+        Valid     = 0b00, 
+        Reserved  = 0b01, 
+        NoPattern = 0b10,
+        Error     = 0b11  
     };
 
-    using NodeHandle = Common::uint64;
+    struct NodeHandle {
+        NodeHandleTag node_tag: 2 = NodeHandleTag::Error;
+        Common::uint64 node_value: 62 = 0;
 
-    const NodeHandle NodeTagMask = 0b11ULL << 62;
-    const NodeHandle InvalidNode = ULLONG_MAX;
+        NodeHandle(NodeHandle& node_handle) = default;
+        NodeHandle(const NodeHandle& node_handle) = default;
+        NodeHandle() = default; 
 
-    inline NodeHandleTag get_node_tag_from_handle(NodeHandle node_handle)
-    {
-        PAssert(
-            static_cast<NodeHandleTag>(node_handle & NodeTagMask) != NodeHandleTag::Reserved,
-            "unexpected behaviour, invalid state of the NodeHandleTag property type (Reserved) is set, possible memory" 
-            " corruption"
-        );
+        NodeHandle(NodeHandleTag node_tag,Common::uint64 node_value): node_tag(node_tag), node_value(node_value)
+        {
+            Assert(
+                static_cast<unsigned int>(node_tag) < 4 && node_value <= (ULLONG_MAX >> 2) - 1,
+                "the field sizes can't be exceeded or sth" 
+            );
+            Assert(
+                node_tag != NodeHandleTag::Reserved,
+                "invalid stat3e for node tag is being set"
+            );
 
-        return static_cast<NodeHandleTag>(node_handle & NodeTagMask);
+        };
+
+        NodeHandle& operator=(NodeHandle& node) = default;
+        NodeHandle& operator=(const NodeHandle& node) = default;
+
+        operator const char*()
+        {
+            return "Node Handle Instance";
+        };
     };
 
-    inline NodeHandle set_node_state_for_handle(NodeHandle node_handle,NodeHandleTag node_state){
-        return static_cast<NodeHandle>(node_state) | (node_handle & ~NodeTagMask); 
-    };  
+    const NodeHandle InvalidNode = NodeHandle(
+        NodeHandleTag::Error,
+        (ULLONG_MAX >> 2) - 1
+    );
 
-    inline Common::uint64 get_error_id_from_node_handle(NodeHandle node_handle)
-    {
-        auto node_state = get_node_tag_from_handle(node_handle);
-        Assert(
-            node_state == NodeHandleTag::Error,
-            "get_error_id_from_node_handle called when node_handle is not an error node"
-        );
-        return node_handle & ~NodeTagMask;
-    };
-    
-    inline NodeHandle create_error_node_handle(Common::uint64 error_id)
-    {
-        Assert(
-            (error_id & ~NodeTagMask) == error_id,
-            "Error id exceeded the maximum number range"
-        );
-        return static_cast<NodeHandle>(NodeHandleTag::Error) | (error_id & ~NodeTagMask);
-    };
+    const NodeHandle NoPatternNode = NodeHandle(    
+        NodeHandleTag::NoPattern,
+        0
+    );
 
     class BaseNode {
         public:
@@ -184,14 +185,14 @@ namespace CLuaNodes {
 
     class IdentifierPathNode : public BaseNode {
     public:
-        IdentifierPathNode(CLua::TokenGeneric identifier_token,bool has_scope_symbol):
-        identifier_token(identifier_token), has_scope_symbol(has_scope_symbol)
+        IdentifierPathNode(NodeHandle identifier,bool has_scope_symbol):
+        identifier(identifier), has_scope_symbol(has_scope_symbol)
         {
             node_type = NodeType::IdentifierPath;
         }
 
         bool has_scope_symbol;
-        CLua::TokenGeneric identifier_token;
+        NodeHandle identifier;
         NodeHandle next_segment = InvalidNode;
     };
 

@@ -28,8 +28,7 @@ static std::string run_parser_print(const char* input)
 
 int main()
 {
-    auto output = run_parser_print("'23423452'");
+    auto output = run_parser_print("(a::b::c::d::e::f)");
 
-    std::cout << "Parser print test passed\n";
     std::cout << output;
 }

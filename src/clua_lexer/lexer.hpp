@@ -13,7 +13,7 @@
 namespace CLua {
     using Source = Common::Source;
 
-    enum class ErrorCode: Common::uint8 {
+    enum class Error: Common::uint8 {
         None,
         UnknownSymbol,
         UnexpectedCharacter,
@@ -40,10 +40,6 @@ namespace CLua {
         Decimal,
         Binary,
         None,
-    };
-
-    struct Error {
-        ErrorCode error_code;
     };
 
     struct NumberHint {
@@ -111,12 +107,10 @@ namespace CLua {
             return emitted;
         };
 
-        inline void record_error(ErrorCode error_code)
+        inline void record_error(Error error)
         {
             on_emit();
 
-            Error error;
-            error.error_code = error_code;
             lexer_state.current_error = error;
 
             original_token_type = ultimate_token_type;
