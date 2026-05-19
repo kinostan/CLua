@@ -1,6 +1,6 @@
 import {
     NumberType, Type, 
-    FieldTypeToSizeMap, FieldSize
+    FieldSize, FieldTypeToSizeMap
 } from "./types";
 
 class EnumClassDescription {

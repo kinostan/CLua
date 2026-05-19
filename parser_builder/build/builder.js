@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.builderEntrypoint = void 0;
+require("./clua/types");
+require("./clua/descriptions");
+require("./clua/pattern");
+require("./pattern");
+require("./nodes");
+require("./emitter");
+exports.builderEntrypoint = true;

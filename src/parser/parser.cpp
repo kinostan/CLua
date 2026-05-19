@@ -66,6 +66,14 @@ namespace ASTParser{
         {
             auto current_token = parser_context.see_current_token();
 
+            if (current_token.token_type == TokenType::Error)
+            {
+                ParserError parser_error = ParserError(current_token,current_token);
+                auto lexer_error = parser_context.get_current_error();
+                parser_error.node_handle = parser_context.create_node<CLuaNodes::LexerErrorNode>(current_token, lexer_error);
+                return parser_context.emit_error(parser_error);
+            };
+
             if (!parser_context.is_symbol(SymbolKind::LParen))
             {
                 return NoPatternNode;
@@ -218,7 +226,7 @@ namespace ASTParser{
             return InvalidNode;
         };
     };
-       
+    
     namespace Expression {
         bool is_prefix_unary(ParserContext& parser_context)
         {

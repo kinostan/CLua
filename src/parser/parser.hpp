@@ -71,12 +71,6 @@ namespace ASTParser{
             {
                 token = lexer.process_next_token();
 
-                if (token.token_type == CLua::TokenType::Error)
-                {
-                    emit_lexer_error_for_token(token);
-                    continue;
-                }
-
                 if (token.token_type == CLua::TokenType::EndOfFile)
                 {
                     has_reached_eof = true;
@@ -95,17 +89,6 @@ namespace ASTParser{
         ParserContext(Common::Source& source): 
         lexer(source), node_manager(source.source_size / 3)
         {};
-
-
-        template <typename Node>
-        requires (std::derived_from<Node,BaseNode>)
-        inline bool is_node_type(NodeHandle node_handle,NodeType expected_node_type)
-        {
-            //function is redundant and should not exist in the future or it's use should be
-            //turned down
-            auto& node = get_node_from_handle<Node>(node_handle);
-            return node.node_type == expected_node_type;
-        };
 
         template<typename Node, typename... Args>
         requires (std::derived_from<Node,BaseNode> && std::is_constructible_v<Node, Args...>)
