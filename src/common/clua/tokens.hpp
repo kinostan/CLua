@@ -126,4 +126,13 @@ namespace CLua {
             return reinterpret_cast<T&>(*this);
         }
     };
+
+    class TokenSpan {
+        public:
+        TokenGeneric start;
+        TokenGeneric end;
+        
+        TokenSpan(TokenGeneric start,TokenGeneric end): start(start), end(end)
+        {};
+    };
 }

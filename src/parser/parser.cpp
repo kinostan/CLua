@@ -85,7 +85,8 @@ namespace ASTParser{
                     return parser_context.create_node<GroupExpression>(expression_node);
                 } else {
                     ParserError parser_error = ParserError(current_token,next_token);
-                    parser_error.node_handle = parser_context.create_node<UnclosedBlockError>();
+                    TokenSpan fake_span = TokenSpan(next_token,next_token);
+                    parser_error.node_handle = parser_context.create_node<UnclosedBlockError>(fake_span);
 
                     return parser_context.emit_error(parser_error);
                 };
@@ -177,16 +178,16 @@ namespace ASTParser{
                         "token type being a literal numeric"
                     )
 
-                    auto fraction = parser_context.get_current_fraction();
                     auto integer = parser_context.get_current_integer();
 
                     if (number_hint.number_type == NumberType::Float)
                     {
-                        auto num_val = fraction + integer;
+                        auto fraction = parser_context.get_current_fraction();
+                        return parser_context.create_node<NumberNode>(fraction + integer);
                         
                     } else if (number_hint.number_type == NumberType::Integer)
                     {
-                        auto integer_node = parser_context.create_node<IntegerLiteral>(integer);
+                        return parser_context.create_node<IntegerLiteral>(integer);
                     };
                 };  
                 default:

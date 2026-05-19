@@ -1,0 +1,5 @@
+
+
+namespace ErrorReporter::CLua {
+
+}

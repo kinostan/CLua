@@ -46,25 +46,15 @@ namespace CLua {
         NumberType number_type = NumberType::None;
         NumberBase number_base = NumberBase::None;
     };
-
-    class TokenSpan {
-        public:
-        TokenGeneric start;
-        TokenGeneric end;
-        
-        TokenSpan(TokenGeneric start,TokenGeneric end): start(start), end(end)
-        {};
-    };
-
     struct LexerState { 
         union {
             Common::uint64 current_number_integer = 0;
-            Common::f64 current_number_fraction; 
             char current_char_value;
             SymbolKind current_symbol;  
             Keyword current_keyword;
             Error current_error;
         };
+        Common::f64 current_number_fraction; 
         Common::uint64 cursor_index = 0;
         NumberHint current_number = NumberHint();
     };

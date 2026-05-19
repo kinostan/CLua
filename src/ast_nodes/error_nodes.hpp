@@ -6,21 +6,17 @@
 #include "base.hpp"
 
 namespace CLuaNodes {
-    class UnclosedBlockError : public BaseNode {
+    class UnclosedBlockError : public BaseErrorNode {
         public:
-        CLua::TokenGeneric opening_token;
-
-        UnclosedBlockError()
+        UnclosedBlockError(CLua::TokenSpan& token_span): BaseErrorNode(token_span)
         {
             node_type = NodeType::UnclosedBlockError;
         };
     };
 
-    class UnclosedGroupError : public BaseNode {
+    class UnclosedGroupError : public BaseErrorNode {
         public:
-        CLua::TokenGeneric opening_token;
-
-        UnclosedGroupError()
+        UnclosedGroupError(CLua::TokenSpan& token_span): BaseErrorNode(token_span)
         {
             node_type = NodeType::UnclosedGroupError;
         };
