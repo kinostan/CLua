@@ -18,5 +18,5 @@
     "noEmitOnError": true
   }
   ,
-  "files": ["./src/builder.ts"]
+  "files": ["./src/main.ts"]
 }

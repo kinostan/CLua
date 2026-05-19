@@ -31,6 +31,7 @@ type CLuaNamespace = "CLua";
 type RawCLuaTypes = "NodeHandle" | "TokenGeneric" | "TokenSpan";
 export type CLuaTypes = `${CLuaNamespace}::${RawCLuaTypes}`;
 
+export type TypeStrict = NumberType | CLuaTypes;
 export type Type = NumberType | CLuaTypes | string;
 
 export const FieldTypeToSizeMap: Map<Type,FieldSize> = new Map<Type,FieldSize>();

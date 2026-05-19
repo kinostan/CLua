@@ -39,9 +39,17 @@ class EnumClassDescription {
 exports.EnumClassDescription = EnumClassDescription;
 ;
 class ClassDescription {
-    constructor() {
+    constructor(class_name, inherited_class, fields_input = []) {
         this.class_name = "";
         this.fields = new Map();
+        this.class_name = class_name;
+        if (inherited_class) {
+            this.inherited_class = inherited_class;
+        }
+        // Populate the Map with the provided field definitions
+        for (const [field_name, field_type] of fields_input) {
+            this.fields.set(field_name, field_type);
+        }
     }
     get_sorted_fields() {
         const fields_array = Array.from(this.fields.entries()).map(([name, type]) => {
@@ -56,6 +64,7 @@ class ClassDescription {
         fields_array.sort((field_a, field_b) => field_b.size - field_a.size);
         return fields_array;
     }
+    ;
 }
 exports.ClassDescription = ClassDescription;
 ;

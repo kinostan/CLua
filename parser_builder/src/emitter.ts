@@ -1,7 +1,7 @@
 import { EnumClassDescription, ClassDescription } from "./clua/descriptions"
 import { set_field_type } from "./clua/types"
 
-class BaseEmitter {
+export class BaseEmitter {
     code: string = "";
     indent: number = 0;
     indent_base_unit: string = "    "; // 4 spaces

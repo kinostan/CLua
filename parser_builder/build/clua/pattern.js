@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuantityPattern = exports.Pattern = exports.KeywordListPattern = exports.KeywordPattern = exports.SymbolMapPattern = exports.BasePattern = exports.ErrorMessagePattern = exports.NormalizedSymbols = void 0;
+exports.QuantityPattern = exports.Pattern = exports.KeywordListPattern = exports.KeywordPattern = exports.SymbolMapPattern = exports.BasePattern = exports.NormalizedSymbols = void 0;
 exports.NormalizedSymbols = new Map([
     ["++", "SymbolKind::DoublePlus"], ["+=", "SymbolKind::PlusEqual"],
     ["--", "SymbolKind::DoubleMinus"], ["-=", "SymbolKind::MinusEqual"],
@@ -27,13 +27,14 @@ exports.NormalizedSymbols = new Map([
     ["?", "SymbolKind::Question"], ["?=", "SymbolKind::TernaryAssign"],
     ["@", "SymbolKind::AtSign"], ["::", "SymbolKind::DoubleColon"]
 ]);
-class ErrorMessagePattern {
-}
-exports.ErrorMessagePattern = ErrorMessagePattern;
-;
 class BasePattern {
     constructor(error_emitter_message_id) {
+        this.node_template_id = -1;
         this.error_emitter_message_id = error_emitter_message_id;
+    }
+    ;
+    set_node_template_id(id) {
+        this.node_template_id = id;
     }
     ;
 }

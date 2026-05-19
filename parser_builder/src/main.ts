@@ -1,1 +1,3 @@
-import {  } from "./builder";
+import { build_parser } from "./builder";
+
+build_parser();
