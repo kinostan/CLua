@@ -52,7 +52,6 @@ namespace ASTParser{
         CLuaNodes::NodeManager node_manager;
         
         CLua::TokenGeneric current_token = static_cast<CLua::TokenGeneric>(CLua::NoToken()); //last acquired token really, but it points to current token in a way
-        CLua::TokenGeneric last_token = static_cast<CLua::TokenGeneric>(CLua::NoToken()); //last acquired token really, but it points to current token in a way
 
         std::vector<ParserError> error_list;
 
@@ -156,7 +155,6 @@ namespace ASTParser{
         inline CLua::TokenGeneric get_next_token()
         {
             auto next_token = get_next_non_neutral_token();
-            last_token = current_token;
             current_token = next_token;
             return next_token;
         };
@@ -168,10 +166,6 @@ namespace ASTParser{
                 "unexpected behaviour from the see_current_token function"
             );
             return current_token;
-        };
-
-        inline CLua::TokenGeneric get_last_token() {
-            return last_token;
         };
 
         inline CLua::NumberHint get_current_number_hint()
@@ -256,7 +250,6 @@ namespace ASTParser{
         { 
             auto parser_state = ParserState();
             parser_state.current_token = current_token;
-            parser_state.last_token = last_token;
             parser_state.has_reached_eof = has_reached_eof;
             parser_state.lexer_state = lexer.record_cursor();
             return parser_state;
@@ -265,7 +258,6 @@ namespace ASTParser{
         void set_cursor(ParserState parser_state)
         {
             current_token = parser_state.current_token;
-            last_token = parser_state.last_token;
             has_reached_eof = parser_state.has_reached_eof;
             lexer.set_cursor(parser_state.lexer_state);
         };
