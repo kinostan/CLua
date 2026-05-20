@@ -3,7 +3,7 @@ import {
     FieldSize, FieldTypeToSizeMap
 } from "./types";
 
-class EnumClassDescription {
+export class EnumClassDescription {
     enum_name: string = "";
     enum_list: Array<string> = [];
 
@@ -40,7 +40,7 @@ class EnumClassDescription {
     };
 };
 
-class ClassDescription {
+export class ClassDescription {
     class_name: string = "";
     inherited_class?: string;
 
@@ -77,7 +77,15 @@ class ClassDescription {
     };
 };
 
-export {
-    EnumClassDescription,
-    ClassDescription
+export class NamespaceDescription{
+    name: string = "";
+    constructor(name: string)
+    {
+        if (!name)
+        {
+            throw new Error("namespace must be not empty in name");
+        };
+
+        this.name = name;
+    };
 };

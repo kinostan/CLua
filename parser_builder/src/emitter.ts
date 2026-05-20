@@ -1,14 +1,31 @@
-import { EnumClassDescription, ClassDescription } from "./clua/descriptions"
+import { EnumClassDescription, ClassDescription, NamespaceDescription } from "./clua/descriptions"
 import { set_field_type } from "./clua/types"
 
 export class BaseEmitter {
     code: string = "";
     indent: number = 0;
-    indent_base_unit: string = "    "; // 4 spaces
+    indent_base_unit: string = "    "; 
     indent_text: string = "";
 
     constructor() {
         this.code = "";
+    }
+
+    emit(emit_code: string) {
+        this.code += this.indent_text + emit_code + '\n';
+    }
+
+        step_indent() {
+        this.indent++;
+        this.indent_text = this.indent_base_unit.repeat(this.indent);
+    }
+
+    step_dedent() {
+        this.indent--;
+        if (this.indent < 0) {
+            throw new Error("indent is less than 0, which is illegal I guess...");
+        }
+        this.indent_text = this.indent_base_unit.repeat(this.indent);
     }
 
     emit_class(class_object: ClassDescription) {
@@ -43,8 +60,7 @@ export class BaseEmitter {
         this.step_dedent();
         this.emit(`};`);
     }
-    
-    // Executes an isolated lexical block wrapper that guarantees proper structural indentation
+
     emit_scope(lambda: () => void) {
         this.emit("{");
         this.step_indent();
@@ -53,22 +69,13 @@ export class BaseEmitter {
         this.emit("}");
     }
 
-    emit(emit_code: string) {
-        this.code += this.indent_text + emit_code + '\n';
-    }
-
-    step_indent() {
-        this.indent++;
-        this.indent_text = this.indent_base_unit.repeat(this.indent);
-    }
-
-    step_dedent() {
-        this.indent--;
-        if (this.indent < 0) {
-            throw new Error("indent is less than 0, which is illegal I guess...");
-        }
-        // FIXED: Replaced " " with this.indent_base_unit to keep formatting unified
-        this.indent_text = this.indent_base_unit.repeat(this.indent);
+    emit_namespace(namespace_object: NamespaceDescription, lambda: () => void)
+    {
+        this.emit(`namespace ${namespace_object.name} {`);
+        this.step_indent();
+        lambda();
+        this.step_dedent();
+        this.emit(`}`);
     }
 
     // =========================================================================
