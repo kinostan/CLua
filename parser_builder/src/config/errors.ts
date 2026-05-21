@@ -1,5 +1,7 @@
 import * as CLuaTypes from "../clua/types";
 
-class ErrorNode {
+
+
+export class ErrorNode {
 
 };

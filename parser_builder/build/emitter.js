@@ -1,14 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseEmitter = void 0;
+exports.ParserEmitter = exports.BaseEmitter = void 0;
 const types_1 = require("./clua/types");
 class BaseEmitter {
     constructor() {
         this.code = "";
         this.indent = 0;
-        this.indent_base_unit = "    "; // 4 spaces
+        this.indent_base_unit = "    ";
         this.indent_text = "";
         this.code = "";
+    }
+    emit(emit_code) {
+        this.code += this.indent_text + emit_code + '\n';
+    }
+    step_indent() {
+        this.indent++;
+        this.indent_text = this.indent_base_unit.repeat(this.indent);
+    }
+    step_dedent() {
+        this.indent--;
+        if (this.indent < 0) {
+            throw new Error("indent is less than 0, which is illegal I guess...");
+        }
+        this.indent_text = this.indent_base_unit.repeat(this.indent);
     }
     emit_class(class_object) {
         let inheritance = class_object.inherited_class ? `: public ${class_object.inherited_class}` : ``;
@@ -35,7 +49,6 @@ class BaseEmitter {
         this.step_dedent();
         this.emit(`};`);
     }
-    // Executes an isolated lexical block wrapper that guarantees proper structural indentation
     emit_scope(lambda) {
         this.emit("{");
         this.step_indent();
@@ -43,20 +56,20 @@ class BaseEmitter {
         this.step_dedent();
         this.emit("}");
     }
-    emit(emit_code) {
-        this.code += this.indent_text + emit_code + '\n';
+    emit_namespace(namespace_object, lambda) {
+        this.emit(`namespace ${namespace_object.name} {`);
+        this.step_indent();
+        lambda();
+        this.step_dedent();
+        this.emit(`}`);
     }
-    step_indent() {
-        this.indent++;
-        this.indent_text = this.indent_base_unit.repeat(this.indent);
-    }
-    step_dedent() {
-        this.indent--;
-        if (this.indent < 0) {
-            throw new Error("indent is less than 0, which is illegal I guess...");
-        }
-        // FIXED: Replaced " " with this.indent_base_unit to keep formatting unified
-        this.indent_text = this.indent_base_unit.repeat(this.indent);
+    emit_function(return_type, function_name, arg_list, lambda) {
+        const formatted_args = arg_list.map(([type, name]) => `${type} ${name}`).join(", ");
+        this.emit(`${return_type} ${function_name}(${formatted_args}) {`);
+        this.step_indent();
+        lambda();
+        this.step_dedent();
+        this.emit(`}`);
     }
     // =========================================================================
     // ParserContext Mirror API & Stylers (Operating on your ParserContext signature)
@@ -120,5 +133,48 @@ class BaseEmitter {
         this.emit(`parser_error.node_handle = ${this.create_node(error_node_type, "fake_span")};`);
         this.emit(`return parser_context.emit_error(parser_error);`);
     }
+    // -------------------------------------------------------------------------
+    // Small building-block emitters (compose these to craft larger functions)
+    // -------------------------------------------------------------------------
+    /** Emit an if that checks a symbol and emits the provided body. */
+    emit_if_symbol(symbol_kind, body) {
+        this.emit(`if (${this.is_symbol(symbol_kind)}) `);
+        this.emit_scope(body);
+    }
+    /** Emit an if that checks identifier predicate and emits body. */
+    emit_if_identifier(body) {
+        this.emit(`if (${this.is_identifier()}) `);
+        this.emit_scope(body);
+    }
+    /** Emit assignment that creates a node and stores it in a local var. */
+    emit_create_node_assign(var_name, node_type, ...args) {
+        const call = `${this.create_node(node_type, ...args)}`;
+        this.emit(`auto ${var_name} = ${call};`);
+    }
+    /** Emit a simple return statement. */
+    emit_return(var_name) {
+        if (var_name)
+            this.emit(`return ${var_name};`);
+        else
+            this.emit(`return;`);
+    }
+    /** Emit a commented list of node field descriptions for later consumption. */
+    emit_node_field_list(node_defs) {
+        this.emit_section_header("node_field_list");
+        for (const node of node_defs) {
+            this.emit(`// Node: ${node.name}`);
+            for (const f of node.fields) {
+                this.emit(`//   - ${f.name} : ${f.type}`);
+            }
+            this.emit(``);
+        }
+    }
+    emit_parser_function(function_name, body_lambda) {
+        this.emit_function("NodeHandle", function_name, [["ParserContext&", "parser_context"]], body_lambda);
+    }
+    ;
 }
 exports.BaseEmitter = BaseEmitter;
+class ParserEmitter extends BaseEmitter {
+}
+exports.ParserEmitter = ParserEmitter;

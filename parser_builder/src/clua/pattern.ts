@@ -1,6 +1,6 @@
 import { ValidSymbol, SymbolKindType  } from "./types";
 
-type PatternType = QuantityPattern | SymbolMapPattern | KeywordListPattern | Pattern;
+export type PatternType = QuantityPattern | SymbolMapPattern | KeywordListPattern | Pattern | OrPattern | StringPattern | NumberPattern | CharPattern;
 
 export const NormalizedSymbols: Map<ValidSymbol, SymbolKindType> = new Map([
     ["++", "SymbolKind::DoublePlus"],   ["+=", "SymbolKind::PlusEqual"],
@@ -87,6 +87,37 @@ export class KeywordListPattern<T extends string = string> extends BasePattern{
     };
 };
 
+export class PrimitivePattern extends BasePattern {
+    primitive_pattern_name: string = "";
+
+    constructor(error_emitter_message_id: number, primitive_pattern_name: string)
+    {
+        super(error_emitter_message_id);
+        this.primitive_pattern_name = primitive_pattern_name;
+    };
+};
+
+export class StringPattern extends PrimitivePattern {
+    constructor(error_emitter_message_id: number)
+    {
+        super(error_emitter_message_id, "string");
+    };
+};
+
+export class NumberPattern extends PrimitivePattern {
+    constructor(error_emitter_message_id: number)
+    {
+        super(error_emitter_message_id, "number");
+    };
+};
+
+export class CharPattern extends PrimitivePattern {
+    constructor(error_emitter_message_id: number)
+    {
+        super(error_emitter_message_id, "char");
+    };
+};
+
 export class Pattern extends BasePattern {    
     pattern_name: string = "";
     pattern_list: Array<PatternType> = new Array<PatternType>();
@@ -95,6 +126,22 @@ export class Pattern extends BasePattern {
     {
         super(error_emitter_message_id);
         this.pattern_name = pattern_name;
+    };
+};
+
+export class OrPattern extends BasePattern {
+    or_pattern_name: string = "";
+    accepted_patterns: Array<PatternType> = new Array<PatternType>();
+
+    constructor(error_emitter_message_id: number, pattern_name: string)
+    {
+        super(error_emitter_message_id);
+        this.or_pattern_name = pattern_name;
+    };
+
+    add_pattern(pattern: PatternType)
+    {
+        this.accepted_patterns.push(pattern);
     };
 };
 

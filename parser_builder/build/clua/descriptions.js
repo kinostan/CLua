@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClassDescription = exports.EnumClassDescription = void 0;
+exports.NamespaceDescription = exports.ClassDescription = exports.EnumClassDescription = void 0;
 const types_1 = require("./types");
 class EnumClassDescription {
     constructor(enum_name) {
@@ -67,4 +67,17 @@ class ClassDescription {
     ;
 }
 exports.ClassDescription = ClassDescription;
+;
+class NamespaceDescription {
+    constructor(name) {
+        this.name = "";
+        if (!name) {
+            throw new Error("namespace must be not empty in name");
+        }
+        ;
+        this.name = name;
+    }
+    ;
+}
+exports.NamespaceDescription = NamespaceDescription;
 ;

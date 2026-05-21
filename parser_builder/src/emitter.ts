@@ -1,5 +1,5 @@
 import { EnumClassDescription, ClassDescription, NamespaceDescription } from "./clua/descriptions"
-import { set_field_type } from "./clua/types"
+import { set_field_type, Type } from "./clua/types"
 
 export class BaseEmitter {
     code: string = "";
@@ -78,6 +78,17 @@ export class BaseEmitter {
         this.emit(`}`);
     }
 
+    emit_function(return_type: string, function_name: string, arg_list: [Type, string][], lambda: () => void) {
+        const formatted_args = arg_list.map(([type, name]) => `${type} ${name}`).join(", ");
+
+        this.emit(`${return_type} ${function_name}(${formatted_args}) {`);
+        this.step_indent();
+        lambda();
+        this.step_dedent();
+        
+        this.emit(`}`); 
+    }
+
     // =========================================================================
     // ParserContext Mirror API & Stylers (Operating on your ParserContext signature)
     // =========================================================================
@@ -153,4 +164,52 @@ export class BaseEmitter {
         this.emit(`parser_error.node_handle = ${this.create_node(error_node_type, "fake_span")};`);
         this.emit(`return parser_context.emit_error(parser_error);`);
     }
+
+    // -------------------------------------------------------------------------
+    // Small building-block emitters (compose these to craft larger functions)
+    // -------------------------------------------------------------------------
+
+    /** Emit an if that checks a symbol and emits the provided body. */
+    emit_if_symbol(symbol_kind: string, body: () => void) {
+        this.emit(`if (${this.is_symbol(symbol_kind)}) `);
+        this.emit_scope(body);
+    }
+
+    /** Emit an if that checks identifier predicate and emits body. */
+    emit_if_identifier(body: () => void) {
+        this.emit(`if (${this.is_identifier()}) `);
+        this.emit_scope(body);
+    }
+
+    /** Emit assignment that creates a node and stores it in a local var. */
+    emit_create_node_assign(var_name: string, node_type: string, ...args: string[]) {
+        const call = `${this.create_node(node_type, ...args)}`;
+        this.emit(`auto ${var_name} = ${call};`);
+    }
+
+    /** Emit a simple return statement. */
+    emit_return(var_name?: string) {
+        if (var_name) this.emit(`return ${var_name};`);
+        else this.emit(`return;`);
+    }
+
+    /** Emit a commented list of node field descriptions for later consumption. */
+    emit_node_field_list(node_defs: Array<{ name: string; fields: Array<{ name: string; type: string }> }>) {
+        this.emit_section_header("node_field_list");
+        for (const node of node_defs) {
+            this.emit(`// Node: ${node.name}`);
+            for (const f of node.fields) {
+                this.emit(`//   - ${f.name} : ${f.type}`);
+            }
+            this.emit(``);
+        }
+    }
+
+    emit_parser_function(function_name: string, body_lambda: () => void) {
+        this.emit_function("NodeHandle", function_name, [["ParserContext&", "parser_context"]], body_lambda);
+    };
+}
+
+export class ParserEmitter extends BaseEmitter {
+   
 }
