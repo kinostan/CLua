@@ -19,4 +19,3 @@ let StringPattern = set_pattern("string", new BasicPatterns.StringPattern(
 let CharPattern = set_pattern("char", new BasicPatterns.CharPattern(
     Errors.CharPatternMessageId)
 );
- 
