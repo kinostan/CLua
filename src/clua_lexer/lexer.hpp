@@ -46,6 +46,7 @@ namespace CLua {
         NumberType number_type = NumberType::None;
         NumberBase number_base = NumberBase::None;
     };
+    
     struct LexerState { 
         union {
             Common::uint64 current_number_integer = 0;

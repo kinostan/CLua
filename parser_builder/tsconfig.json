@@ -1,12 +1,17 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     "target": "es2020",
-    "module": "node16",
-    "moduleResolution": "node16",
-    "rootDir": "./src",
+    "module": "commonjs",
+    "rootDir": "src", // Note: If adding paths outside ./src, you may need to adjust or remove rootDir
     "outDir": "build",
     "types": [],
+
+    "paths": {
+      "#root/*": ["./src/*"],
+      "#config/*": ["./src/config/*"],
+      "#clua/*": ["./src/clua/*"],
+      "#common/*": ["./src/common/*"]
+    },
 
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -16,7 +21,9 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
     "noEmitOnError": true
-  }
-  ,
-  "files": ["./src/main.ts"]
+  },
+  
+  "include": [
+    "src/**/*"
+  ]
 }

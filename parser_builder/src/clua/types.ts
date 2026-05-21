@@ -1,6 +1,5 @@
-export type FieldSize = 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128;
 
-type CLuaSymbolNamespace = "SymbolKind";
+const CLuaSymbolNamespace = "SymbolKind";
 
 export type ValidSymbol = "+=" | "++" | "--" | "-=" | "*=" | "/=" | "%=" | "==" | "!=" | "<=" | ">=" | "&&" | "||" | "->" | "&" | "|" | "^" | "~" | "<<" | ">>" | "&=" | "|=" | "^=" | "<<=" | ">>=" | "+" | "-" | "*" | "/" | "%" | "=" | "<" | ">" | "!" | "," | "." | ";" | ":" | "(" | ")" | "{" | "}" | "[" | "]" | "?" | "?=" | "@" | "::"
 
@@ -18,40 +17,142 @@ type RawSymbolKind =
     | "LBrace"           | "RBrace"          | "LBracket"         | "RBracket"
     | "Question"         | "TernaryAssign"   | "AtSign"           | "DoubleColon";
 
-export type SymbolKindType = `${CLuaSymbolNamespace}::${RawSymbolKind}`;
+export type SymbolKindType = `${typeof CLuaSymbolNamespace}::${RawSymbolKind}`;
 
-type CommonTypeNamespace = "Common";
-type RawNumberType = "uint8" | "uint16" 
-| "uint32" | "uint64" 
-| "f32" | "f64";
-export type NumberType = `${CommonTypeNamespace}::${RawNumberType}`; 
+const symbol_to_raw_map: Record<ValidSymbol, RawSymbolKind> = {
+    "+=": "PlusEqual",
+    "++": "DoublePlus",
+    "--": "DoubleMinus",
+    "-=": "MinusEqual",
+    "*=": "StarEqual",
+    "/=": "SlashEqual",
+    "%=": "PercentEqual",
+    "==": "EqualEqual",
+    "!=": "NotEqual",
+    "<=": "LessEqual",
+    ">=": "GreaterEqual",
+    "&&": "LogicalAnd",
+    "||": "LogicalOr",
+    "->": "Arrow",
+    "&": "BitAnd",
+    "|": "BitOr",
+    "^": "BitXor",
+    "~": "BitNot",
+    "<<": "BitLShift",
+    ">>": "BitRShift",
+    "&=": "BitAndEqual",
+    "|=": "BitOrEqual",
+    "^=": "BitXorEqual",
+    "<<=": "BitLShiftEqual",
+    ">>=" : "BitRShiftEqual",
+    "+": "Plus",
+    "-": "Minus",
+    "*": "Star",
+    "/": "Slash",
+    "%": "Percent",
+    "=": "Equal",
+    "<": "Less",
+    ">": "Greater",
+    "!": "Bang",
+    ",": "Comma",
+    ".": "Dot",
+    ";": "Semicolon",
+    ":": "Colon",
+    "(": "LParen",
+    ")": "RParen",
+    "{": "LBrace",
+    "}": "RBrace",
+    "[": "LBracket",
+    "]": "RBracket",
+    "?": "Question",
+    "?=": "TernaryAssign",
+    "@": "AtSign",
+    "::": "DoubleColon",
+};
 
-type CLuaNamespace = "CLua";
+export function symbol_to_raw(symbol: ValidSymbol): SymbolKindType
+{
+    return `${CLuaSymbolNamespace}::${symbol_to_raw_map[symbol]}`;
+};
 
-type RawCLuaTypes = "NodeHandle" | "TokenGeneric" | "TokenSpan";
-export type CLuaTypes = `${CLuaNamespace}::${RawCLuaTypes}`;
+export function is_symbol(symbol: string): boolean {
+    return symbol in symbol_to_raw_map;
+};
 
-export type TypeStrict = NumberType | CLuaTypes;
-export type Type = NumberType | CLuaTypes | string;
+const CLuaKeywordNamespace = "KeywordKind";
 
-export const FieldTypeToSizeMap: Map<Type,FieldSize> = new Map<Type,FieldSize>();
+export type ValidKeyword =
+    | "if" | "else" | "for" | "while" | "do" | "switch" | "case" | "default"
+    | "break" | "continue" | "return" | "const" | "static" | "template" | "class" | "struct"
+    | "enum" | "union" | "public" | "private" | "protected" | "virtual" | "inline" | "using"
+    | "namespace" | "volatile" | "mutable" | "extern" | "friend" | "new" | "delete"
+    | "true" | "false" | "nullptr" | "typedef" | "auto" | "decltype" | "comptime"
+    | "static_assert" | "sizeof" | "lua_embed" | "import" | "export"
+    | "static_cast" | "reinterpret_cast";
 
-FieldTypeToSizeMap.set("CLua::TokenSpan",32);
-FieldTypeToSizeMap.set("CLua::TokenGeneric",16);
-FieldTypeToSizeMap.set("CLua::NodeHandle",8);
+type RawKeyword =
+    | "If" | "Else" | "For" | "While" | "Do" | "Switch" | "Case" | "Default"
+    | "Break" | "Continue" | "Return" | "Const" | "Static" | "Template" | "Class" | "Struct"
+    | "Enum" | "Union" | "Public" | "Private" | "Protected" | "Virtual" | "Inline" | "Using"
+    | "Namespace" | "Volatile" | "Mutable" | "Extern" | "Friend" | "New" | "Delete"
+    | "True" | "False" | "Nil" | "Typedef" | "Auto" | "Decltype" | "Comptime"
+    | "StaticAssert" | "Sizeof" | "LuaEmbed" | "Import" | "Export" | "StaticCast" | "ReinterpretCast";
 
-FieldTypeToSizeMap.set("Common::f64",8);
-FieldTypeToSizeMap.set("Common::f32",4);
+export type KeywordKindType = `${typeof CLuaKeywordNamespace}::${RawKeyword}`;
 
-FieldTypeToSizeMap.set("Common::uint64",8);
-FieldTypeToSizeMap.set("Common::uint32",4);
-FieldTypeToSizeMap.set("Common::uint16",2);
-FieldTypeToSizeMap.set("Common::uint8",1);
+const keyword_to_raw_map: Record<ValidKeyword, RawKeyword> = {
+    "if": "If",
+    "else": "Else",
+    "for": "For",
+    "while": "While",
+    "do": "Do",
+    "switch": "Switch",
+    "case": "Case",
+    "default": "Default",
+    "break": "Break",
+    "continue": "Continue",
+    "return": "Return",
+    "const": "Const",
+    "static": "Static",
+    "template": "Template",
+    "class": "Class",
+    "struct": "Struct",
+    "enum": "Enum",
+    "union": "Union",
+    "public": "Public",
+    "private": "Private",
+    "protected": "Protected",
+    "virtual": "Virtual",
+    "inline": "Inline",
+    "using": "Using",
+    "namespace": "Namespace",
+    "volatile": "Volatile",
+    "mutable": "Mutable",
+    "extern": "Extern",
+    "friend": "Friend",
+    "new": "New",
+    "delete": "Delete",
+    "true": "True",
+    "false": "False",
+    "nullptr": "Nil",
+    "typedef": "Typedef",
+    "auto": "Auto",
+    "decltype": "Decltype",
+    "comptime": "Comptime",
+    "static_assert": "StaticAssert",
+    "sizeof": "Sizeof",
+    "lua_embed": "LuaEmbed",
+    "import": "Import",
+    "export": "Export",
+    "static_cast": "StaticCast",
+    "reinterpret_cast": "ReinterpretCast",
+};
 
-export function set_field_type(field_type: Type, size: FieldSize) {
-    if (FieldTypeToSizeMap.has(field_type))
-    {
-        throw new Error(`trying to set the size of the same field twice ${field_type}`);
-    };
-    FieldTypeToSizeMap.set(field_type,size);
+export function keyword_to_raw(keyword: ValidKeyword): KeywordKindType
+{
+    return `${CLuaKeywordNamespace}::${keyword_to_raw_map[keyword]}`; //tbh I am impressed that typescript has this advanced reasoning
+};
+
+export function is_keyword(keyword: string): boolean {
+    return keyword in keyword_to_raw_map;
 };

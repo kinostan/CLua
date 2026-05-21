@@ -27,6 +27,7 @@ namespace CLua {
         Common::uint64 length = 0;
         Common::uint64 offset = 0;
     };
+    
     template <typename T>
     struct TokenKind {
         inline static constexpr TokenType value = TokenType::None;

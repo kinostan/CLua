@@ -1,4 +1,4 @@
-import * as BasicPatterns from "../clua/pattern";
+import * as BasicPatterns from "../common/pattern";
 import * as Errors from "../config/errors";
 
 export let clua_pattern_map: Map<string, BasicPatterns.PatternType> = new Map();
@@ -8,8 +8,7 @@ function set_pattern(name: string, pattern: BasicPatterns.PatternType): BasicPat
     return pattern;
 }
 
-let NumberPattern = set_pattern("number", new BasicPatterns.NumberPattern(
-    Errors.NumberPatternMessageId)
+let NumberPattern = set_pattern("number", new BasicPatterns.NumberPattern(Errors.NumberPatternMessageId)
 );
 
 let StringPattern = set_pattern("string", new BasicPatterns.StringPattern(
@@ -17,5 +16,5 @@ let StringPattern = set_pattern("string", new BasicPatterns.StringPattern(
 );
 
 let CharPattern = set_pattern("char", new BasicPatterns.CharPattern(
-    Errors.CharPatternMessageId)
+    Errors.CharPatternMessageId).set_node_template_id(0)
 );

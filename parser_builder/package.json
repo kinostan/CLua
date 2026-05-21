@@ -1,0 +1,16 @@
+{
+  "name": "parser_builder",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "imports": {
+    "#root/*": "./build/*.js",
+    "#config/*": "./build/config/*.js",
+    "#clua/*": "./build/clua/*.js",
+    "#common/*": "./build/common/*.js"
+  },
+  "main": "./build/main.js",
+  "exports": {
+    ".": "./build/main.js",
+    "./build/*": "./build/*.js"
+  }
+}

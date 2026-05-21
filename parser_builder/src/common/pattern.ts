@@ -1,33 +1,6 @@
-import { ValidSymbol, SymbolKindType  } from "./types";
+import { ValidSymbol, ValidKeyword, keyword_to_raw, symbol_to_raw, is_symbol } from "#clua/types";
 
 export type PatternType = QuantityPattern | SymbolMapPattern | KeywordListPattern | Pattern | OrPattern | StringPattern | NumberPattern | CharPattern;
-
-export const NormalizedSymbols: Map<ValidSymbol, SymbolKindType> = new Map([
-    ["++", "SymbolKind::DoublePlus"],   ["+=", "SymbolKind::PlusEqual"],
-    ["--", "SymbolKind::DoubleMinus"],  ["-=", "SymbolKind::MinusEqual"],
-    ["*=", "SymbolKind::StarEqual"],   ["/=", "SymbolKind::SlashEqual"],
-    ["%=", "SymbolKind::PercentEqual"],  ["==", "SymbolKind::EqualEqual"],
-    ["!=", "SymbolKind::NotEqual"],    ["<=", "SymbolKind::LessEqual"],
-    [">=", "SymbolKind::GreaterEqual"], ["&&", "SymbolKind::LogicalAnd"],
-    ["||", "SymbolKind::LogicalOr"],   ["->", "SymbolKind::Arrow"],
-    ["&", "SymbolKind::BitAnd"],       ["|", "SymbolKind::BitOr"],
-    ["^", "SymbolKind::BitXor"],       ["~", "SymbolKind::BitNot"],
-    ["<<", "SymbolKind::BitLShift"],   [">>", "SymbolKind::BitRShift"],
-    ["&=", "SymbolKind::BitAndEqual"],  ["|=", "SymbolKind::BitOrEqual"],
-    ["^=", "SymbolKind::BitXorEqual"],  ["<<=", "SymbolKind::BitLShiftEqual"],
-    [">>=", "SymbolKind::BitRShiftEqual"], ["+", "SymbolKind::Plus"],
-    ["-", "SymbolKind::Minus"],        ["*", "SymbolKind::Star"],
-    ["/", "SymbolKind::Slash"],        ["%", "SymbolKind::Percent"],
-    ["=", "SymbolKind::Equal"],        ["<", "SymbolKind::Less"],
-    [">", "SymbolKind::Greater"],      ["!", "SymbolKind::Bang"],
-    [".", "SymbolKind::Dot"],          [",", "SymbolKind::Comma"],
-    [";", "SymbolKind::Semicolon"],    [":", "SymbolKind::Colon"],
-    ["(", "SymbolKind::LParen"],       [")", "SymbolKind::RParen"],
-    ["{", "SymbolKind::LBrace"],       ["}", "SymbolKind::RBrace"],
-    ["[", "SymbolKind::LBracket"],     ["]", "SymbolKind::RBracket"],
-    ["?", "SymbolKind::Question"],     ["?=", "SymbolKind::TernaryAssign"],
-    ["@", "SymbolKind::AtSign"],       ["::", "SymbolKind::DoubleColon"]
-]);
 
 export class BasePattern {
     error_emitter_message_id: number;
@@ -39,6 +12,7 @@ export class BasePattern {
 
     set_node_template_id(id: number) {
         this.node_template_id = id;
+        return this;
     };
 };
 
@@ -49,7 +23,7 @@ export class SymbolMapPattern extends BasePattern {
         super(error_emitter_message_id);
         for (const symbol of symbol_list) {
             
-            if (!NormalizedSymbols.has(symbol))
+            if (!is_symbol(symbol))
             {
                 throw new Error(`invalid clua symbol: ${symbol}`);
             };
@@ -84,6 +58,7 @@ export class KeywordListPattern<T extends string = string> extends BasePattern{
     insert_keyword(keyword: T)
     {
         this.keyword_list.set(keyword,true);
+        return this;
     };
 };
 
@@ -142,6 +117,7 @@ export class OrPattern extends BasePattern {
     add_pattern(pattern: PatternType)
     {
         this.accepted_patterns.push(pattern);
+        return this;
     };
 };
 
@@ -157,3 +133,5 @@ export class QuantityPattern
         this.maximum = maximum;
     };
 };
+
+console.log(symbol_to_raw("!="));

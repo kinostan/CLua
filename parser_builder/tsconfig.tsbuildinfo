@@ -1,1 +1,1 @@
-{"root":["./src/main.ts"],"version":"6.0.3"}
+{"root":["./src/builder.ts","./src/main.ts","./src/clua/types.ts","./src/common/descriptions.ts","./src/common/emitter.ts","./src/common/parser-types.ts","./src/common/pattern.ts","./src/config/errors.ts","./src/config/nodes.ts","./src/config/pattern.ts"],"version":"5.9.3"}

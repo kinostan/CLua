@@ -1,7 +1,7 @@
 import {
     NumberType, Type, 
     FieldSize, FieldTypeToSizeMap
-} from "./types";
+} from "#common/parser-types";
 
 export class EnumClassDescription {
     enum_name: string = "";
