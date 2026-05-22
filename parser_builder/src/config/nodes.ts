@@ -1,3 +1,9 @@
+import * as Types from "#root/common/parser-types";
+
+class BaseNode {
+    
+};
+
 class ASTNode {
     
 };

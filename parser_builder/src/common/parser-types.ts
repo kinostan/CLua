@@ -1,6 +1,5 @@
 export type FieldSize = 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128;
 
-
 type CommonTypeNamespace = "Common";
 type RawNumberType = "uint8" | "uint16" 
 | "uint32" | "uint64" 

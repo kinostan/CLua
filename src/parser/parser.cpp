@@ -3,7 +3,7 @@
 #include <common/clua/tokens.hpp>
 #include <common/base.hpp>
 
-namespace ASTParser{
+namespace CLuaASTParser{
     using namespace CLuaNodes;
 
     using SymbolKind = CLua::SymbolKind;
