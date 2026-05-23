@@ -1,4 +1,4 @@
-import * as CLuaTypes from "../clua/types";
+import * as CLuaTypes from "../common/clua_types";
 
 let UID = -1;
 

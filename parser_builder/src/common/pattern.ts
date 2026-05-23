@@ -1,6 +1,11 @@
-import { ValidSymbol, ValidKeyword, keyword_to_raw, symbol_to_raw, is_symbol } from "#clua/types";
+import { ValidSymbol, ValidKeyword, keyword_to_raw, symbol_to_raw, is_symbol } from "#root/common/clua_types";
+import {BaseEmitter} from "#common/emitter";
 
-export type PatternType = QuantityPattern | SymbolMapPattern | KeywordListPattern | Pattern | OrPattern | StringPattern | NumberPattern | CharPattern;
+type ActionCallback = (base_emitter: BaseEmitter,node_reference_variable_name: string) => void;
+
+export type PatternType = 
+QuantityPattern | SymbolMapPattern | KeywordPattern | Pattern | OrPattern | 
+StringPattern | NumberPattern | CharPattern | ActionPattern;
 
 export class BasePattern {
     error_emitter_message_id: number;
@@ -10,7 +15,7 @@ export class BasePattern {
         this.error_emitter_message_id = error_emitter_message_id;
     };
 
-    set_node_template_id(id: number) {
+    set_node_template_id(id: number): this {
         this.node_template_id = id;
         return this;
     };
@@ -37,59 +42,14 @@ export class SymbolMapPattern extends BasePattern {
     };
 };
 
-export class KeywordPattern<T extends string = string> extends BasePattern{
-    keyword: T;
-    constructor(error_emitter_message_id: number, keyword: T)
+export class ActionPattern extends BasePattern{
+    action_name: string = "";
+    action_callback: ActionCallback = () => {};
+    constructor(action_name: string,action_callback: ActionCallback)
     {
-        super(error_emitter_message_id);
-        this.keyword = keyword;
-    };
-};
-
-export class KeywordListPattern<T extends string = string> extends BasePattern{
-    keyword_pattern_name: string = "";
-    keyword_list: Map<string,boolean> = new Map<string,boolean>();
-
-    constructor(error_emitter_message_id: number, name: string) { 
-        super(error_emitter_message_id);
-        this.keyword_pattern_name = name;
-    };
-
-    insert_keyword(keyword: T)
-    {
-        this.keyword_list.set(keyword,true);
-        return this;
-    };
-};
-
-export class PrimitivePattern extends BasePattern {
-    primitive_pattern_name: string = "";
-
-    constructor(error_emitter_message_id: number, primitive_pattern_name: string)
-    {
-        super(error_emitter_message_id);
-        this.primitive_pattern_name = primitive_pattern_name;
-    };
-};
-
-export class StringPattern extends PrimitivePattern {
-    constructor(error_emitter_message_id: number)
-    {
-        super(error_emitter_message_id, "string");
-    };
-};
-
-export class NumberPattern extends PrimitivePattern {
-    constructor(error_emitter_message_id: number)
-    {
-        super(error_emitter_message_id, "number");
-    };
-};
-
-export class CharPattern extends PrimitivePattern {
-    constructor(error_emitter_message_id: number)
-    {
-        super(error_emitter_message_id, "char");
+        super(0);
+        this.action_name = action_name;
+        this.action_callback = action_callback;
     };
 };
 
@@ -101,6 +61,75 @@ export class Pattern extends BasePattern {
     {
         super(error_emitter_message_id);
         this.pattern_name = pattern_name;
+    };
+
+    insert_pattern(pattern: PatternType): this
+    {
+        this.pattern_list.push(pattern);
+
+        return this;
+    };
+};
+
+export class KeywordPattern<T extends string = string> extends Pattern{
+    keyword: T;
+    constructor(error_emitter_message_id: number, keyword: T)
+    {
+        super(error_emitter_message_id,"keyword");
+        this.keyword = keyword;
+    };
+};
+
+export class IdentifierPattern extends Pattern{
+    constructor(error_emitter_message_id: number)
+    {
+        super(error_emitter_message_id,"identifier");
+        this.insert_pattern(
+            new ActionPattern("create identifier token variable",(emitter: BaseEmitter,identifier_node_reference: string) => {
+                emitter.emit(
+                    `${identifier_node_reference}.identifier_token = see_current_token()`
+                )
+            })
+        )    
+    };
+};
+
+export class StringPattern extends Pattern {
+    constructor(error_emitter_message_id: number)
+    {
+        super(error_emitter_message_id, "string");
+        this.insert_pattern(
+            new ActionPattern("set string",(emitter: BaseEmitter,node_reference_variable_name: string) => {
+                emitter.emit(
+                    `${node_reference_variable_name}.string_token = parser_context.see_current_token();`
+                );
+            })
+        )
+    };
+};
+
+export class NumberPattern extends Pattern {
+    constructor(error_emitter_message_id: number)
+    {
+        super(error_emitter_message_id, "number");
+        this.insert_pattern(
+            new ActionPattern("set number",(emitter: BaseEmitter,node_reference_variable_name: string) => {
+                emitter.emit(`${node_reference_variable_name}.fraction = parser_context.get_current_fraction();`);
+                emitter.emit(`${node_reference_variable_name}.integer = parser_context.get_current_integer();`);
+            })
+        );
+    };
+};
+
+export class CharPattern extends Pattern {
+    constructor(error_emitter_message_id: number)
+    {
+        super(error_emitter_message_id, "char");
+        this.insert_pattern(
+            new ActionPattern("set char value",(emitter: BaseEmitter, node_reference_variable_name: string) => {
+                emitter.emit(`${node_reference_variable_name}.char_value = parser_context.get_current_char_value();`);
+            })
+        );
     };
 };
 
@@ -121,17 +150,17 @@ export class OrPattern extends BasePattern {
     };
 };
 
-export class QuantityPattern 
+export class QuantityPattern extends BasePattern
 {
     pattern: PatternType;
     minimum = 0;
     maximum = -1;
+
     constructor(pattern: PatternType,minimum: number, maximum: number)
     {
+        super(0);
         this.pattern = pattern;
         this.minimum = minimum;
         this.maximum = maximum;
     };
 };
-
-console.log(symbol_to_raw("!="));

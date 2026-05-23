@@ -123,8 +123,9 @@ class OrPattern extends BasePattern {
 }
 exports.OrPattern = OrPattern;
 ;
-class QuantityPattern {
+class QuantityPattern extends BasePattern {
     constructor(pattern, minimum, maximum) {
+        super(0);
         this.minimum = 0;
         this.maximum = -1;
         this.pattern = pattern;

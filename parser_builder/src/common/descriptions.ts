@@ -3,6 +3,19 @@ import {
     FieldSize, FieldTypeToSizeMap
 } from "#common/parser-types";
 
+export class Field {
+    type: Type = "Common::uint8";
+    field_name: string = "";
+    default_expression: string = "";
+
+    constructor(type: Type,field_name: string,default_expression: string)
+    {
+        this.type = type;
+        this.field_name = field_name;
+        this.default_expression = default_expression;
+    };
+};
+
 export class EnumClassDescription {
     enum_name: string = "";
     enum_list: Array<string> = [];
@@ -44,29 +57,31 @@ export class ClassDescription {
     class_name: string = "";
     inherited_class?: string;
 
-    fields: Map<string,Type> = new Map<string,Type>();
+    fields: Map<string,Field> = new Map<string,Field>();
 
-    constructor(class_name: string, inherited_class: string | null, fields_input: [string, Type][] = []) {
+    constructor(class_name: string, inherited_class: string | null) {
         this.class_name = class_name;
 
         if (inherited_class)
         {
             this.inherited_class = inherited_class;
         }
-        
-        // Populate the Map with the provided field definitions
-        for (const [field_name, field_type] of fields_input) {
-            this.fields.set(field_name, field_type);
-        }
     }
 
+    insert_field(field: Field)
+    {
+        this.fields.set(
+            field.field_name,
+            field
+        );
+    };
+
     get_sorted_fields() {
-        const fields_array = Array.from(this.fields.entries()).map(([name, type]) => {
+        const fields_array = Array.from(this.fields.entries()).map(([name, field]) => {
             return {
-                name: name,
-                type: type,
-                size: FieldTypeToSizeMap.get(type) ?? (()=>{
-                    throw new Error(`[Generator Error] Undefined field type: "${type}" on field "${name}"`)
+                field: field,
+                size: FieldTypeToSizeMap.get(field.type) ?? (()=>{
+                    throw new Error(`[Generator Error] Undefined field type: "${field.type}" on field "${name}"`)
                 })()
             };
         });

@@ -5,7 +5,6 @@
   "imports": {
     "#root/*": "./build/*.js",
     "#config/*": "./build/config/*.js",
-    "#clua/*": "./build/clua/*.js",
     "#common/*": "./build/common/*.js"
   },
   "main": "./build/main.js",

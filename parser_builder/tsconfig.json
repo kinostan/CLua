@@ -9,7 +9,6 @@
     "paths": {
       "#root/*": ["./src/*"],
       "#config/*": ["./src/config/*"],
-      "#clua/*": ["./src/clua/*"],
       "#common/*": ["./src/common/*"]
     },
 

@@ -1,5 +1,7 @@
 export type FieldSize = 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128;
 
+type CPPBase = "char" | "char&";
+
 type CommonTypeNamespace = "Common";
 type RawNumberType = "uint8" | "uint16" 
 | "uint32" | "uint64" 
@@ -10,12 +12,12 @@ type Reference_NumberType = `${Value_NumberType}&`;
 
 export type NumberType = Value_NumberType | Reference_NumberType;
 
-type Value_ParserType = "ParserContext" | "NodeHandle" | "TokenGeneric" | "TokenSpan";
+type Value_ParserType = "ParserContext" | "NodeHandle" | "TokenGeneric" | "TokenSpan" | "NodeType";
 type Reference_ParserType = `${Value_ParserType}&`;
 
 type ParserType = Value_ParserType | Reference_ParserType;
 
-export type Type = NumberType | ParserType;
+export type Type = NumberType | ParserType | CPPBase;
 
 export const FieldTypeToSizeMap: Map<Type,FieldSize> = new Map<Type,FieldSize>();
 

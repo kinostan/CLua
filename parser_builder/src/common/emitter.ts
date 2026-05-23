@@ -37,7 +37,14 @@ export class BaseEmitter {
 
         let field_list = class_object.get_sorted_fields();
         for (const field_element of field_list) {
-            this.emit(`${field_element.type} ${field_element.name} = ${field_element.type}{0};`);
+            let field = field_element.field;
+            let default_initialization = field.default_expression;
+            
+            if (default_initialization.length == 0) {
+                default_initialization = field.type + `{0}`;
+            };
+
+            this.emit(`${field.type} ${field.field_name} = ${default_initialization};`);
         }
 
         this.step_dedent();

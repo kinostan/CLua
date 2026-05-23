@@ -88,7 +88,7 @@ export type ValidKeyword =
     | "namespace" | "volatile" | "mutable" | "extern" | "friend" | "new" | "delete"
     | "true" | "false" | "nullptr" | "typedef" | "auto" | "decltype" | "comptime"
     | "static_assert" | "sizeof" | "lua_embed" | "import" | "export"
-    | "static_cast" | "reinterpret_cast";
+    | "static_cast" | "reinterpret_cast" | "let";
 
 type RawKeyword =
     | "If" | "Else" | "For" | "While" | "Do" | "Switch" | "Case" | "Default"
