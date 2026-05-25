@@ -7,6 +7,11 @@ import { ParserEmitter } from "#root/common/emitter";
 import { ClassDescription, NamespaceDescription } from "#root/common/descriptions";
 
 namespace CLua {
+    function process_pattern_tree<T extends Patterns.Pattern>(emitter: ParserEmitter,pattern_root: T)
+    {
+        
+    };
+
     function parser_headers(emitter: ParserEmitter)
     {
         emitter.emit(`#include "parser.hpp"`);
@@ -42,7 +47,7 @@ namespace CLua {
 
     function emit_parser_cpp_logic(emitter: ParserEmitter)
     {
-        
+        process_pattern_tree(emitter,ConfigPatterns.RootPattern);
     };
 
     export function emit_parser_cpp()

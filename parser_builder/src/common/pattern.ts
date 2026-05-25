@@ -1,15 +1,23 @@
-import { ValidSymbol, ValidKeyword, keyword_to_raw, symbol_to_raw, is_symbol } from "#root/common/clua_types";
+import {Field} from "#common/descriptions"
+import {ValidSymbol, ValidKeyword, keyword_to_raw, symbol_to_raw, is_symbol} from "#root/common/clua_types";
 import {BaseEmitter} from "#common/emitter";
 
-type ActionCallback = (base_emitter: BaseEmitter,node_reference_variable_name: string) => void;
+export class BindContext {
+    reference_map: Map<string,Field | null> = new Map<string,Field | null>();
+};
+
+export type ActionCallback = (base_emitter: BaseEmitter,bind_context: BindContext) => void;
 
 export type PatternType = 
 QuantityPattern | SymbolMapPattern | KeywordPattern | Pattern | OrPattern | 
-StringPattern | NumberPattern | CharPattern | ActionPattern;
+StringPattern | NumberPattern | CharPattern | ActionPattern | Binder;
+
+export const NO_NODE = -1;
+export const NO_ERROR = -1;
 
 export class BasePattern {
-    error_emitter_message_id: number;
-    node_template_id: number = -1;
+    error_emitter_message_id: number = NO_ERROR;
+    node_template_id: number = NO_NODE;
     constructor(error_emitter_message_id: number)
     {
         this.error_emitter_message_id = error_emitter_message_id;
@@ -21,7 +29,26 @@ export class BasePattern {
     };
 };
 
-export class SymbolMapPattern extends BasePattern {
+export class Binder extends BasePattern
+{
+    bind_context: BindContext = new BindContext();
+    constructor()
+    {
+        super(NO_ERROR);
+    };
+
+    set_new_mapping(key: string, var_description: Field): this
+    {   
+        if (this.bind_context.reference_map.has(key))
+        {
+            throw new Error("Can't set the same slot again");
+        };
+        this.bind_context.reference_map.set(key, var_description);
+        return this;
+    };
+};
+
+export class SymbolMapPattern extends BasePattern { 
     symbol_map: Map<ValidSymbol,boolean> = new Map<ValidSymbol,boolean>();
 
     constructor(error_emitter_message_id: number, ...symbol_list: ValidSymbol[]) {
@@ -85,7 +112,8 @@ export class IdentifierPattern extends Pattern{
     {
         super(error_emitter_message_id,"identifier");
         this.insert_pattern(
-            new ActionPattern("create identifier token variable",(emitter: BaseEmitter,identifier_node_reference: string) => {
+            new ActionPattern("create identifier token variable",(emitter: BaseEmitter,bind_context: BindContext) => {
+                let identifier_node_reference = bind_context.reference_map.get("identifier_node_reference");
                 emitter.emit(
                     `${identifier_node_reference}.identifier_token = see_current_token()`
                 )
@@ -99,7 +127,8 @@ export class StringPattern extends Pattern {
     {
         super(error_emitter_message_id, "string");
         this.insert_pattern(
-            new ActionPattern("set string",(emitter: BaseEmitter,node_reference_variable_name: string) => {
+            new ActionPattern("set string",(emitter: BaseEmitter,bind_context: BindContext) => {
+                let node_reference_variable_name = bind_context.reference_map.get("string_node_reference");
                 emitter.emit(
                     `${node_reference_variable_name}.string_token = parser_context.see_current_token();`
                 );
@@ -113,7 +142,8 @@ export class NumberPattern extends Pattern {
     {
         super(error_emitter_message_id, "number");
         this.insert_pattern(
-            new ActionPattern("set number",(emitter: BaseEmitter,node_reference_variable_name: string) => {
+            new ActionPattern("set number",(emitter: BaseEmitter,bind_context: BindContext) => {
+                 let node_reference_variable_name = bind_context.reference_map.get("number_node_reference");
                 emitter.emit(`${node_reference_variable_name}.fraction = parser_context.get_current_fraction();`);
                 emitter.emit(`${node_reference_variable_name}.integer = parser_context.get_current_integer();`);
             })
@@ -126,7 +156,8 @@ export class CharPattern extends Pattern {
     {
         super(error_emitter_message_id, "char");
         this.insert_pattern(
-            new ActionPattern("set char value",(emitter: BaseEmitter, node_reference_variable_name: string) => {
+            new ActionPattern("set char value",(emitter: BaseEmitter, bind_context: BindContext) => {
+                 let node_reference_variable_name = bind_context.reference_map.get("char_node_reference");
                 emitter.emit(`${node_reference_variable_name}.char_value = parser_context.get_current_char_value();`);
             })
         );

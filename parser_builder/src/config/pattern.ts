@@ -4,6 +4,7 @@ import {
     CLuaNodes
 } from "#config/nodes";
 import { ValidKeyword } from "#root/common/clua_types";
+import { BaseEmitter } from "#root/common/emitter";
 
 export let clua_pattern_map: Map<string, BasicPatterns.PatternType> = new Map();
 
@@ -18,7 +19,10 @@ let Statement = new BasicPatterns.Pattern(
 
 let Expression = new BasicPatterns.Pattern(
     0,"expression"
-);
+).insert_pattern(
+    new BasicPatterns.ActionPattern("set expression node",(emitter: BaseEmitter, bind_context: BasicPatterns.BindContext) => {
+        emitter.emit(`NodeHandle node = parser_context.create_node<${typeof CLuaNodes.ExpressionStatementNode}>()`);
+})).set_node_template_id(CLuaNodes.ExpressionStatementNode);
 
 let Declaration = new BasicPatterns.Pattern(
     0,"declaration"
@@ -26,19 +30,19 @@ let Declaration = new BasicPatterns.Pattern(
     new BasicPatterns.KeywordPattern<ValidKeyword>(0,"let")
 ).insert_pattern(
     new BasicPatterns.IdentifierPattern(0)
-).insert_pattern(Expression).insert_pattern(
-    new BasicPatterns.ActionPattern("create declaration node",() => {
+).insert_pattern(Expression);
 
-    })
-);
-
-let Root = new BasicPatterns.Pattern(
-    0, "root"
+let LineOfCode = new BasicPatterns.Pattern(
+    0, "LOC"
 ).insert_pattern(
     (new BasicPatterns.OrPattern(0,"declaration expression statement"))
     .add_pattern(Statement)
     .add_pattern(Declaration)
     .add_pattern(Expression)
+);
+
+let Root = (new BasicPatterns.Pattern(BasicPatterns.NO_ERROR,"root")).insert_pattern(
+    new BasicPatterns.QuantityPattern(LineOfCode,-1,-1)
 );
 
 let NumberPattern = set_pattern("number", 
@@ -54,3 +58,8 @@ let CharPattern = set_pattern("char",
 ).set_node_template_id(CLuaNodes.CharLiteralNode);
 
 
+let RootPattern = set_pattern("root", Root);
+
+export {
+    RootPattern
+};
