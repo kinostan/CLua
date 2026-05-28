@@ -185,7 +185,7 @@ namespace ASTParser{
             return lexer.get_current_fraction();
         };
 
-        inline unsigned long long get_current_integer()
+        inline Common::uint64 get_current_integer()
         {
             return lexer.get_current_integer();
         };

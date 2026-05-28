@@ -1,139 +1,105 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuantityPattern = exports.OrPattern = exports.Pattern = exports.CharPattern = exports.NumberPattern = exports.StringPattern = exports.PrimitivePattern = exports.KeywordListPattern = exports.KeywordPattern = exports.SymbolMapPattern = exports.BasePattern = void 0;
-const types_1 = require("#clua/types");
+exports.MatchCharToken = exports.MatchStringToken = exports.MatchSymbolToken = exports.MatchNumericToken = exports.MatchIdentifierToken = exports.OptionalPattern = exports.ChoicePattern = exports.Pattern = exports.BasePattern = void 0;
 class BasePattern {
-    constructor(error_emitter_message_id) {
-        this.node_template_id = -1;
-        this.error_emitter_message_id = error_emitter_message_id;
+    constructor() {
+        this.class_name = this.constructor.name;
     }
-    ;
-    set_node_template_id(id) {
-        this.node_template_id = id;
-        return this;
-    }
-    ;
 }
 exports.BasePattern = BasePattern;
-;
-class SymbolMapPattern extends BasePattern {
-    constructor(error_emitter_message_id, ...symbol_list) {
-        super(error_emitter_message_id);
-        this.symbol_map = new Map();
-        for (const symbol of symbol_list) {
-            if (!(0, types_1.is_symbol)(symbol)) {
-                throw new Error(`invalid clua symbol: ${symbol}`);
-            }
-            ;
-            this.symbol_map.set(symbol, true);
-        }
-        ;
-    }
-    ;
-    has_symbol(symbol) {
-        return this.symbol_map.has(symbol);
-    }
-    ;
-}
-exports.SymbolMapPattern = SymbolMapPattern;
-;
-class KeywordPattern extends BasePattern {
-    constructor(error_emitter_message_id, keyword) {
-        super(error_emitter_message_id);
-        this.keyword = keyword;
-    }
-    ;
-}
-exports.KeywordPattern = KeywordPattern;
-;
-class KeywordListPattern extends BasePattern {
-    constructor(error_emitter_message_id, name) {
-        super(error_emitter_message_id);
-        this.keyword_pattern_name = "";
-        this.keyword_list = new Map();
-        this.keyword_pattern_name = name;
-    }
-    ;
-    insert_keyword(keyword) {
-        this.keyword_list.set(keyword, true);
-        return this;
-    }
-    ;
-}
-exports.KeywordListPattern = KeywordListPattern;
-;
-class PrimitivePattern extends BasePattern {
-    constructor(error_emitter_message_id, primitive_pattern_name) {
-        super(error_emitter_message_id);
-        this.primitive_pattern_name = "";
-        this.primitive_pattern_name = primitive_pattern_name;
-    }
-    ;
-}
-exports.PrimitivePattern = PrimitivePattern;
-;
-class StringPattern extends PrimitivePattern {
-    constructor(error_emitter_message_id) {
-        super(error_emitter_message_id, "string");
-    }
-    ;
-}
-exports.StringPattern = StringPattern;
-;
-class NumberPattern extends PrimitivePattern {
-    constructor(error_emitter_message_id) {
-        super(error_emitter_message_id, "number");
-    }
-    ;
-}
-exports.NumberPattern = NumberPattern;
-;
-class CharPattern extends PrimitivePattern {
-    constructor(error_emitter_message_id) {
-        super(error_emitter_message_id, "char");
-    }
-    ;
-}
-exports.CharPattern = CharPattern;
-;
 class Pattern extends BasePattern {
-    constructor(error_emitter_message_id, pattern_name) {
-        super(error_emitter_message_id);
-        this.pattern_name = "";
+    constructor() {
+        super();
         this.pattern_list = new Array();
-        this.pattern_name = pattern_name;
     }
     ;
+    insert_pattern(pattern) {
+        this.pattern_list.push(pattern);
+    }
+    ;
+    get_yield_type() {
+        return "NodeHandle";
+    }
 }
 exports.Pattern = Pattern;
 ;
-class OrPattern extends BasePattern {
-    constructor(error_emitter_message_id, pattern_name) {
-        super(error_emitter_message_id);
-        this.or_pattern_name = "";
-        this.accepted_patterns = new Array();
-        this.or_pattern_name = pattern_name;
+class ChoicePattern extends Pattern {
+    constructor() {
+        super();
     }
-    ;
-    add_pattern(pattern) {
-        this.accepted_patterns.push(pattern);
-        return this;
+    get_yield_type() {
+        if (this.pattern_list.length <= 0) {
+            return "None";
+        }
+        const first_type = this.pattern_list[0].get_yield_type();
+        for (const pattern of this.pattern_list) {
+            if (pattern.get_yield_type() !== first_type) {
+                throw new Error(`[MetaCompiler Type Error] ChoicePattern mismatch. ` +
+                    `Alternative paths must yield the same type. Expected: ${first_type}, got: ${pattern.get_yield_type()}`);
+            }
+        }
+        return first_type;
     }
-    ;
 }
-exports.OrPattern = OrPattern;
-;
-class QuantityPattern extends BasePattern {
-    constructor(pattern, minimum, maximum) {
-        super(0);
-        this.minimum = 0;
-        this.maximum = -1;
-        this.pattern = pattern;
-        this.minimum = minimum;
-        this.maximum = maximum;
+exports.ChoicePattern = ChoicePattern;
+class OptionalPattern extends Pattern {
+    constructor() {
+        super();
     }
-    ;
+    get_yield_type() {
+        if (this.pattern_list.length === 0) {
+            return "None";
+        }
+        if (this.pattern_list.length === 1) {
+            return this.pattern_list[0].get_yield_type();
+        }
+        return "NodeHandle";
+    }
 }
-exports.QuantityPattern = QuantityPattern;
-;
-console.log((0, types_1.symbol_to_raw)("!="));
+exports.OptionalPattern = OptionalPattern;
+class MatchIdentifierToken extends BasePattern {
+    constructor() {
+        super();
+    }
+    get_yield_type() {
+        return "NodeHandle";
+    }
+}
+exports.MatchIdentifierToken = MatchIdentifierToken;
+class MatchNumericToken extends BasePattern {
+    constructor() {
+        super();
+    }
+    get_yield_type() {
+        return "NumericToken";
+    }
+}
+exports.MatchNumericToken = MatchNumericToken;
+class MatchSymbolToken extends BasePattern {
+    constructor(expected_symbol) {
+        super();
+        this.expected_symbol = expected_symbol;
+    }
+    get_yield_type() {
+        return "SymbolToken";
+    }
+}
+exports.MatchSymbolToken = MatchSymbolToken;
+class MatchStringToken extends BasePattern {
+    constructor() {
+        super();
+    }
+    get_yield_type() {
+        return "StringToken";
+    }
+}
+exports.MatchStringToken = MatchStringToken;
+class MatchCharToken extends BasePattern {
+    constructor() {
+        super();
+    }
+    get_yield_type() {
+        return "CharToken";
+    }
+}
+exports.MatchCharToken = MatchCharToken;

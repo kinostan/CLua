@@ -188,7 +188,7 @@ namespace CLua {
             return lexer_state.current_number_fraction;
         };
 
-        const unsigned long long get_current_integer()
+        const Common::uint64 get_current_integer()
         {
             return lexer_state.current_number_integer;
         };
@@ -278,7 +278,7 @@ namespace CLua {
             return lexer_context.get_current_fraction();
         };
 
-        const unsigned long long get_current_integer()
+        const Common::uint64 get_current_integer()
         {
             return lexer_context.get_current_integer();
         };

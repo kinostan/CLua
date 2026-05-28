@@ -61,10 +61,17 @@ export class OptionalPattern extends Pattern {
     }
 
     public override get_yield_type(): PatternYieldType {
-        return "Infer"; 
+        if (this.pattern_list.length === 0) {
+            return "None";
+        }
+        
+        if (this.pattern_list.length === 1) {
+            return this.pattern_list[0]!.get_yield_type();
+        }
+
+        return "NodeHandle";
     }
 }
-
 export class MatchIdentifierToken extends BasePattern {
     constructor() {
         super();
