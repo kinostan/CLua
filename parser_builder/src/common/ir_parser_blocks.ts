@@ -186,7 +186,7 @@ export class IRBindField extends IRBlock<IRBindField> {
 
     public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
         let source_id = -1;
-        if (this.source_var instanceof VarDefinition) source_id = this.source_var.token_var_id;
+        if (this.source_var instanceof IR) source_id = this.source_var.token_var_id;
         else if (this.source_var instanceof IRInvokeParserRule) source_id = this.source_var.rule_var_id;
         else if (this.source_var instanceof IRFetchLexerValue) source_id = this.source_var.value_var_id;
 
