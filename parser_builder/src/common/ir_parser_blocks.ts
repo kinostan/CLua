@@ -1,5 +1,6 @@
 import { CppEmitContext } from "#common/emitter";
 import { Field } from "./node";
+import { ErrorType } from "./error";
 
 export type TokenType = 
     | "IdentifierToken" 
@@ -16,8 +17,7 @@ export type TokenType =
 
 export type LexerValueKind = "Symbol" | "Keyword" | "Char" | "Integer" | "Fraction" | "NumberHint" | "Error";
 
-// Wszystko co definiuje nową zmienną w rejestrze IR parsera
-export type VarDefinition = IRTokenAssign | IRInvokeParserRule | IRFetchLexerValue;
+type __VarDefinition = IRTokenAssign | IRCreateASTNode | IRFetchLexerValue | IRInvokeParserRule
 
 export type IRBlockType = 
     | IRTokenAssign 
@@ -50,11 +50,17 @@ export abstract class IRBlock<SubclassType> {
     abstract process_step(build_context: BuildContext): boolean;
 }
 
+abstract class VarDefinition<T> extends IRBlock<T> {
+    constructor() {
+        super();
+    }
+}
+
 // ==========================================
 // 1. BLOKI AKCJI STRUMIENIA I EKSTRAKCJI
 // ==========================================
 
-export class IRTokenAssign extends IRBlock<IRTokenAssign> {
+export class IRTokenAssign extends VarDefinition<IRTokenAssign> {
     public token_var_id: number = -1;
     public token_type: TokenType;
 
@@ -77,7 +83,7 @@ export class IRTokenAssign extends IRBlock<IRTokenAssign> {
     };
 }
 
-export class IRInvokeParserRule extends IRBlock<IRInvokeParserRule> {
+export class IRInvokeParserRule extends VarDefinition<IRInvokeParserRule> {
     public rule_var_id: number = -1;
     
     constructor(public readonly rule_name: string) {
@@ -97,7 +103,7 @@ export class IRInvokeParserRule extends IRBlock<IRInvokeParserRule> {
     };
 }
 
-export class IRFetchLexerValue extends IRBlock<IRFetchLexerValue> {
+export class IRFetchLexerValue extends VarDefinition<IRFetchLexerValue> {
     public value_var_id: number = -1;
 
     constructor(public readonly value_kind: LexerValueKind) {
@@ -146,9 +152,9 @@ export class IRFetchLexerValue extends IRBlock<IRFetchLexerValue> {
 
 export class IRVarReference extends IRBlock<IRVarReference> {
     public var_id: number = -1;
-    public var_definition: VarDefinition;
+    public var_definition: __VarDefinition;
 
-    constructor(var_definition: VarDefinition) {
+    constructor(var_definition: __VarDefinition) {
         super();
         this.var_definition = var_definition;
         this.sync_id();
@@ -171,7 +177,7 @@ export class IRVarReference extends IRBlock<IRVarReference> {
 export class IRBindField extends IRBlock<IRBindField> {
     constructor(
         public readonly target_field: Field,
-        public readonly source_var: VarDefinition
+        public readonly source_var: __VarDefinition
     ) {
         super();
     }
@@ -180,7 +186,7 @@ export class IRBindField extends IRBlock<IRBindField> {
 
     public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
         let source_id = -1;
-        if (this.source_var instanceof IRTokenAssign) source_id = this.source_var.token_var_id;
+        if (this.source_var instanceof VarDefinition) source_id = this.source_var.token_var_id;
         else if (this.source_var instanceof IRInvokeParserRule) source_id = this.source_var.rule_var_id;
         else if (this.source_var instanceof IRFetchLexerValue) source_id = this.source_var.value_var_id;
 
@@ -188,7 +194,7 @@ export class IRBindField extends IRBlock<IRBindField> {
     };
 }
 
-export class IRCreateASTNode extends IRBlock<IRCreateASTNode> {
+export class IRCreateASTNode extends VarDefinition<IRCreateASTNode> {
     constructor(
         public readonly node_name: string,
         public readonly bound_fields: Array<IRBindField>
@@ -255,4 +261,27 @@ export class IRScope extends IRBlock<IRScope> {
             emitter.emit_namespace(`namespace ${this.scope_name}`,execute_body);
         }
     };
+}
+
+export class IREmitErrorNode extends IRBlock<IREmitErrorNode> {
+    start_token_var?: IRVarReference;
+
+    constructor(
+        private readonly error_type: ErrorType,
+        private readonly context_info: string
+    ) {
+        super();
+    }
+
+    public process_step(build_context: BuildContext): boolean {
+        return false;
+    }
+
+    public emit = (build_context: BuildContext, emitter: CppEmitContext) => {
+        const type_enum = this.error_type;
+        emitter.emit_line(`
+            //I'll have to restructure either this fun call or my emit_error to make it no scream type of shiiiiieee
+            parser_context.emit_error(${type_enum}, "${this.context_info}", ${this.start_token_var}, lexer.see_current_token()));
+        `);
+    }
 }

@@ -1,3 +1,5 @@
+import { ErrorType } from "./error";
+
 export type PatternYieldType = "NodeHandle" | "CharToken" | "StringToken" | "NumericToken" | "SymbolToken" | "Infer" | "None" 
 
 export type PatternType = BasePattern | Pattern;
@@ -12,9 +14,12 @@ export abstract class BasePattern {
     abstract get_yield_type(): PatternYieldType;
 }
 
-export class Pattern extends BasePattern {
+export abstract class PrimitivePattern extends BasePattern {
+    error: ErrorType = ErrorType.NONE;
+};
+
+export class Pattern extends PrimitivePattern {
     pattern_list: Array<BasePattern> = new Array<BasePattern>();
-    
     constructor()
     {
         super();
@@ -72,7 +77,8 @@ export class OptionalPattern extends Pattern {
         return "NodeHandle";
     }
 }
-export class MatchIdentifierToken extends BasePattern {
+
+export class MatchKeywordToken extends PrimitivePattern {
     constructor() {
         super();
     }
@@ -82,7 +88,17 @@ export class MatchIdentifierToken extends BasePattern {
     }
 }
 
-export class MatchNumericToken extends BasePattern {
+export class MatchIdentifierToken extends PrimitivePattern {
+    constructor() {
+        super();
+    }
+
+    get_yield_type(): PatternYieldType { 
+        return "NodeHandle"; 
+    }
+}
+
+export class MatchNumericToken extends PrimitivePattern {
     constructor() {
         super();
     }
@@ -92,7 +108,7 @@ export class MatchNumericToken extends BasePattern {
     }
 }
 
-export class MatchSymbolToken extends BasePattern {
+export class MatchSymbolToken extends PrimitivePattern {
     constructor(public readonly expected_symbol?: string) {
         super();
     }
@@ -102,7 +118,7 @@ export class MatchSymbolToken extends BasePattern {
     }
 }
 
-export class MatchStringToken extends BasePattern {
+export class MatchStringToken extends PrimitivePattern {
     constructor() {
         super();
     }
@@ -112,7 +128,7 @@ export class MatchStringToken extends BasePattern {
     }
 }
 
-export class MatchCharToken extends BasePattern {
+export class MatchCharToken extends PrimitivePattern {
     constructor() {
         super();
     }
