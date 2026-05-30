@@ -13,13 +13,18 @@ export class Field {
 
 export class NodeDefinition {
     fields: Array<Field> = new Array<Field>();
+    debug_name?: string;
 
-    constructor()
+    constructor(debug_name?: string)
     {
-        
+        if (!debug_name)
+        {
+            return;
+        };
+        this.debug_name = debug_name;
     };
 
-    insert_field(field: Field)
+    insert_field(field: Field): this
     {
         let has_field = this.fields.find((that_field) => {
             return that_field.identifier == field.identifier;
@@ -33,5 +38,6 @@ export class NodeDefinition {
         };
 
         this.fields.push(field);
+        return this;
     };
 };

@@ -17,16 +17,7 @@ export type TokenType =
 
 export type LexerValueKind = "Symbol" | "Keyword" | "Char" | "Integer" | "Fraction" | "NumberHint" | "Error";
 
-type __VarDefinition = IRTokenAssign | IRCreateASTNode | IRFetchLexerValue | IRInvokeParserRule
-
-export type IRBlockType = 
-    | IRTokenAssign 
-    | IRInvokeParserRule 
-    | IRFetchLexerValue
-    | IRVarReference 
-    | IRBindField 
-    | IRCreateASTNode
-    | IRScope;
+export type IRBlockType = VarDefinition.IRDefCreateNode | VarDefinition.IRDefTokenPeek;
 
 export interface BuildContext {
     get_variable_name_from_reference_id(id: number): string;
@@ -46,242 +37,63 @@ export abstract class IRBlock<SubclassType> {
         this.class_name = this.constructor.name;
     }
 
-    abstract emit: (build_context: BuildContext, emitter: CppEmitContext) => void;
     abstract process_step(build_context: BuildContext): boolean;
 }
 
-abstract class VarDefinition<T> extends IRBlock<T> {
-    constructor() {
-        super();
-    }
-}
+type VarDefinitionType = IRDefCreateNode | IRDefTokenPeek;
 
-// ==========================================
-// 1. BLOKI AKCJI STRUMIENIA I EKSTRAKCJI
-// ==========================================
+//IR STATEMENT
 
-export class IRTokenAssign extends VarDefinition<IRTokenAssign> {
-    public token_var_id: number = -1;
-    public token_type: TokenType;
-
-    constructor(token_type: TokenType) {
-        super();
-        this.token_type = token_type;
-    }
-
-    process_step(build_context: BuildContext): boolean {
-        if (this.token_var_id === -1) {
-            this.token_var_id = build_context.get_new_variable_id(this.constructor.name);
-        }
-        return false;
-    }
-
-    public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
-        const var_name = `var_${this.token_var_id}`;
-        emitter.emit_line(`auto ${var_name} = parser_context.see_current_token().as<CLua::${this.token_type}>();`);
-        emitter.emit_line(`parser_context.get_next_token();`);
+export namespace Statemet {
+    class Statemet
+    {
+        likely: boolean = false;
+        ir_expression: IRExpression = null;
     };
-}
+};
 
-export class IRInvokeParserRule extends VarDefinition<IRInvokeParserRule> {
-    public rule_var_id: number = -1;
-    
-    constructor(public readonly rule_name: string) {
-        super();
-    }
+//IR VAR DEFINITION
+export namespace VarDefinition {
+    abstract class VarDefinition<T> extends IRBlock<T> {
+        var_id: number = -1;
 
-    process_step(build_context: BuildContext): boolean {
-        if (this.rule_var_id === -1) {
-            this.rule_var_id = build_context.get_new_variable_id(this.constructor.name);
-        }
-        return false;
-    }
-
-    public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
-        const var_name = `var_${this.rule_var_id}`;
-        emitter.emit_line(`auto ${var_name} = Expression::expect_${this.rule_name}(parser_context);`);
-    };
-}
-
-export class IRFetchLexerValue extends VarDefinition<IRFetchLexerValue> {
-    public value_var_id: number = -1;
-
-    constructor(public readonly value_kind: LexerValueKind) {
-        super();
-    }
-
-    process_step(build_context: BuildContext): boolean {
-        if (this.value_var_id === -1) {
-            this.value_var_id = build_context.get_new_variable_id(this.constructor.name);
-        }
-        return false;
-    }
-
-    public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
-        const var_name = `var_${this.value_var_id}`;
-        
-        switch (this.value_kind) {
-            case "Symbol":
-                emitter.emit_line(`auto ${var_name} = parser_context.get_current_symbol();`);
-                break;
-            case "Keyword":
-                emitter.emit_line(`auto ${var_name} = parser_context.get_current_keyword();`);
-                break;
-            case "Char":
-                emitter.emit_line(`auto ${var_name} = parser_context.get_current_char_value();`);
-                break;
-            case "Integer":
-                emitter.emit_line(`auto ${var_name} = parser_context.get_current_integer();`);
-                break;
-            case "Fraction":
-                emitter.emit_line(`auto ${var_name} = parser_context.get_current_fraction();`);
-                break;
-            case "NumberHint":
-                emitter.emit_line(`auto ${var_name} = parser_context.get_current_number_hint();`);
-                break;
-            case "Error":
-                emitter.emit_line(`auto ${var_name} = parser_context.get_current_error();`);
-                break;
-        }
-    };
-}
-
-// ==========================================
-// 2. BLOKI STRUKTURALNE I REFERENCJE
-// ==========================================
-
-export class IRVarReference extends IRBlock<IRVarReference> {
-    public var_id: number = -1;
-    public var_definition: __VarDefinition;
-
-    constructor(var_definition: __VarDefinition) {
-        super();
-        this.var_definition = var_definition;
-        this.sync_id();
-    }
-
-    private sync_id(): void {
-        if (this.var_definition instanceof IRTokenAssign) this.var_id = this.var_definition.token_var_id;
-        else if (this.var_definition instanceof IRInvokeParserRule) this.var_id = this.var_definition.rule_var_id;
-        else if (this.var_definition instanceof IRFetchLexerValue) this.var_id = this.var_definition.value_var_id;
-    }
-
-    process_step(build_context: BuildContext): boolean {
-        this.sync_id();
-        return false;
-    }
-
-    public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {};
-}
-
-export class IRBindField extends IRBlock<IRBindField> {
-    constructor(
-        public readonly target_field: Field,
-        public readonly source_var: __VarDefinition
-    ) {
-        super();
-    }
-
-    process_step(build_context: BuildContext): boolean { return false; }
-
-    public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
-        let source_id = -1;
-        if (this.source_var instanceof IR) source_id = this.source_var.token_var_id;
-        else if (this.source_var instanceof IRInvokeParserRule) source_id = this.source_var.rule_var_id;
-        else if (this.source_var instanceof IRFetchLexerValue) source_id = this.source_var.value_var_id;
-
-        emitter.emit_line(`// Mapping register var_${source_id} to node field: ${this.target_field.identifier}`);
-    };
-}
-
-export class IRCreateASTNode extends VarDefinition<IRCreateASTNode> {
-    constructor(
-        public readonly node_name: string,
-        public readonly bound_fields: Array<IRBindField>
-    ) {
-        super();
-    }
-
-    process_step(build_context: BuildContext): boolean { return false; }
-
-    public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
-        const args = this.bound_fields.map(bf => {
-            let source_id = -1;
-            if (bf.source_var instanceof IRTokenAssign) source_id = bf.source_var.token_var_id;
-            else if (bf.source_var instanceof IRInvokeParserRule) source_id = bf.source_var.rule_var_id;
-            else if (bf.source_var instanceof IRFetchLexerValue) source_id = bf.source_var.value_var_id;
-            return `var_${source_id}`;
-        }).join(", ");
-
-        emitter.emit_line(`auto result_node = parser_context.create_node<${this.node_name}>(${args});`);
-        emitter.emit_line(`return result_node;`);
-    };
-}
-
-// ==========================================
-// 3. LOGICZNE KONTENERY ZAKRESU (Scope Boundary)
-// ==========================================
-
-export class IRScope extends IRBlock<IRScope> {
-    public readonly ir_nodes: Array<IRBlockType> = new Array<IRBlockType>();
-
-    constructor(
-        public readonly scope_name: string,
-        public readonly is_function: boolean = false
-    ) {
-        super();
-    }
-
-    public insert_ir(ir_block: IRBlockType): void {
-        this.ir_nodes.push(ir_block);
-    }
-
-    public process_step(build_context: BuildContext): boolean {
-        let changed = false;
-        this.ir_nodes.forEach(node => {
-            if (node instanceof IRBlock && node.process_step(build_context)) {
-                changed = true;
-            }
-        });
-        return changed;
-    }
-
-    public emit = (build_context: BuildContext, emitter: CppEmitContext): void => {
-        const execute_body = () => {
-            this.ir_nodes.forEach(element => {
-                if (element instanceof IRBlock) {
-                    element.emit(build_context, emitter);
-                }
-            });
+        constructor() {
+            super();
         };
+    }
 
-        if (this.is_function) {
-            emitter.emit_function(`NodeHandle expect_${this.scope_name}(ParserContext& parser_context)`, execute_body);
-        } else {
-            emitter.emit_namespace(`namespace ${this.scope_name}`,execute_body);
+    //based on auto current_token = parser_context.see_current_token();
+    export class IRDefTokenPeek extends VarDefinition<IRDefTokenPeek> {
+        process_step(build_context: BuildContext): boolean {
+            /*    
+                I have to figure out what kind of logic can be added here for optimization or if 
+                process_step should even exist
+            */
+            return false;
         }
     };
-}
 
-export class IREmitErrorNode extends IRBlock<IREmitErrorNode> {
-    start_token_var?: IRVarReference;
+    /* 
+        auto error_node = parser_context.create_node<UnexpectedTokenError>(current_token);
+    */
+    export class IRDefCreateNode extends VarDefinition<IRDefCreateNode> {
+        node_id: number = -1;
+        arguments: Array<VarDefinitionType> = new Array<VarDefinitionType>();
 
-    constructor(
-        private readonly error_type: ErrorType,
-        private readonly context_info: string
-    ) {
-        super();
-    }
+        process_step(build_context: BuildContext): boolean {
+            /* 
+                Try to confirm if the references do exist and create
+                an error if they ever stop existing
+            */
+            return false;
+        }
+    };
 
-    public process_step(build_context: BuildContext): boolean {
-        return false;
-    }
+    export class IRDefParserError extends VarDefinition<IRDefParserError> {
 
-    public emit = (build_context: BuildContext, emitter: CppEmitContext) => {
-        const type_enum = this.error_type;
-        emitter.emit_line(`
-            //I'll have to restructure either this fun call or my emit_error to make it no scream type of shiiiiieee
-            parser_context.emit_error(${type_enum}, "${this.context_info}", ${this.start_token_var}, lexer.see_current_token()));
-        `);
-    }
-}
+        process_step(build_context: BuildContext): boolean {
+            return false;
+        }
+    };
+};
+

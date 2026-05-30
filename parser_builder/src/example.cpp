@@ -27,7 +27,7 @@ namespace ASTParser{
         bool consume_symbol(ParserContext& parser_context, CLua::SymbolKind expected_symbol)
         {
             auto current_token = parser_context.see_current_token();
-
+            /*can_be_consumed == ... is not a variable definition during emittion by generator*/
             auto can_be_consumed = current_token.token_type == TokenType::Symbol && parser_context.get_current_symbol() == expected_symbol;
         
             if (!can_be_consumed) [[unlikely]]
@@ -43,6 +43,7 @@ namespace ASTParser{
         NodeHandle expect_identifier(ParserContext& parser_context)
         {
             auto current_token = parser_context.see_current_token();
+        
             auto is_identifier = parser_context.is_identifier();
 
             if (!is_identifier) [[unlikely]]

@@ -20,18 +20,38 @@ export abstract class PrimitivePattern extends BasePattern {
 
 export class Pattern extends PrimitivePattern {
     pattern_list: Array<BasePattern> = new Array<BasePattern>();
+    node_id: number = -1;
+
     constructor()
     {
         super();
     };
 
-    insert_pattern(pattern: PatternType)
+    insert_pattern(pattern: PatternType): this
     {
         this.pattern_list.push(pattern);
+
+        return this;
+    };
+
+    yields_node(node_id: number): this
+    {
+        this.node_id = node_id;
+        return this;
     };
 
     get_yield_type(): PatternYieldType {
         return "NodeHandle";
+    }
+};
+
+export class PatternSwitchParser extends PrimitivePattern {
+    constructor(public readonly target_profile_id: number) {
+        super();
+    }
+
+    get_yield_type(): PatternYieldType {
+        return "None"; 
     }
 };
 
@@ -60,24 +80,43 @@ export class ChoicePattern extends Pattern {
     }
 }
 
-export class OptionalPattern extends Pattern {
-    constructor() {
+export class QuantityPattern extends PrimitivePattern {
+    constructor(
+        // The single pattern being quantified
+        public readonly child_pattern: BasePattern,
+        public readonly min: number = 0,
+        // Using -1 as a sentinel value for Infinity (e.g., zero-or-more)
+        public readonly max: number = -1 
+    ) {
         super();
+        
+        // Validation check tailored for the -1 sentinel
+        const is_max_infinite = this.max === -1;
+        if (this.min < 0 || (!is_max_infinite && this.max < this.min)) {
+            throw new Error(
+                `[MetaCompiler Range Error] Invalid Quantity bounds: min=${this.min}, max=${this.max}`
+            );
+        }
     }
 
     public override get_yield_type(): PatternYieldType {
-        if (this.pattern_list.length === 0) {
+        // If it's explicitly bounded to 0 iterations, it yields nothing
+        if (this.max === 0) {
             return "None";
         }
-        
-        if (this.pattern_list.length === 1) {
-            return this.pattern_list[0]!.get_yield_type();
+
+        // If it can execute multiple times (max is -1 or greater than 1),
+        // it means the high-performance C++ generator will pack these results.
+        // For now, returning its inner type keeps the pipeline moving.
+        if (this.max === -1 || this.max > 1) {
+            return this.child_pattern.get_yield_type(); 
         }
 
-        return "NodeHandle";
+        // If max is exactly 1 (like the old OptionalPattern), it perfectly inherits
+        // the structural type of its wrapped child asset.
+        return this.child_pattern.get_yield_type();
     }
 }
-
 export class MatchKeywordToken extends PrimitivePattern {
     constructor() {
         super();
