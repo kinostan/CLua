@@ -3,6 +3,14 @@ import * as PatternsConfig from "#config/clua/patterns"
 
 import { Pattern, PatternType } from "#common/pattern";
 
+/*
+NodeArray (basically buffer with a type and the value of NodeArray is basically a virtual index 
+pointing to a real index within the memory manager) 
+should be added as a type to the parser.hpp when 
+memory manager gets advanced enough as it fits very well for 
+QuantityPattern and reduces memory costs when there's lots of nodes
+*/
+
 export class BuildContext {
     private next_var_id = 0;
     
@@ -32,9 +40,31 @@ export class BuildContext {
         return this.variable_dependencies.get(var_id)?.size ?? 0;
     }
 
+    private is_pattern_valid(pattern: PatternType): boolean
+    {
+        return false;
+    };
+
+    private collapse_pattern(pattern: PatternType): PatternType 
+    { 
+        /* 
+            A collapsable patterns are strictly those patterns which logic withing the bounds
+            of pattern.ts expressivness allow to compress that logic by reducing the amount of grammar 
+            expression nodes.
+        */
+        let collapsed_pattern!: PatternType;
+
+        return collapsed_pattern;
+    };
+
     public emit_ir_from_pattern(root_pattern: PatternType)
     {
+        if (!this.is_pattern_valid(root_pattern))
+        {
+            throw new Error("Invalid root pattern");
+        };
 
+        const collapsed_root_pattern = this.collapse_pattern(root_pattern);
     };
 }
 

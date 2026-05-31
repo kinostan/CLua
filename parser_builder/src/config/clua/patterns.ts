@@ -1,5 +1,4 @@
-// config/patterns.ts
-import { NodeID } from "./nodes_declare";
+import { NodeID } from "#config/clua/nodes_declare";
 import * as P from "#common/pattern";
 
 export namespace Patterns {

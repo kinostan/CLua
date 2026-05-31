@@ -298,7 +298,7 @@ namespace CLua {
       NewLine,
       EndOfFile,
       Error,
-   };
+    };
 
     namespace TypeClassificator {
       inline bool is_neutral_char_type(CharacterType char_type)

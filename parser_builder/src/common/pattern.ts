@@ -12,14 +12,18 @@ export abstract class BasePattern {
     }
 
     abstract get_yield_type(): PatternYieldType;
+    abstract get_children(): Array<PatternType>;
 }
 
 export abstract class PrimitivePattern extends BasePattern {
     error: ErrorType = ErrorType.NONE;
+    get_children(): Array<PatternType> {
+        return [];
+    }
 };
 
 export class Pattern extends PrimitivePattern {
-    pattern_list: Array<BasePattern> = new Array<BasePattern>();
+    pattern_list: Array<PatternType> = new Array<PatternType>();
     node_id: number = -1;
 
     constructor()
@@ -42,6 +46,10 @@ export class Pattern extends PrimitivePattern {
 
     get_yield_type(): PatternYieldType {
         return "NodeHandle";
+    }
+
+    get_children(): Array<PatternType> {
+        return this.pattern_list.slice();
     }
 };
 
@@ -116,7 +124,12 @@ export class QuantityPattern extends PrimitivePattern {
         // the structural type of its wrapped child asset.
         return this.child_pattern.get_yield_type();
     }
+
+    get_children(): Array<PatternType> {
+        return [this.child_pattern];
+    }
 }
+
 export class MatchKeywordToken extends PrimitivePattern {
     constructor() {
         super();
@@ -176,3 +189,73 @@ export class MatchCharToken extends PrimitivePattern {
         return "CharToken"; 
     }
 }
+
+export namespace PatternOperators {
+    export function is_equal(left_pattern: PatternType, right_pattern: PatternType): boolean {
+        if (left_pattern === right_pattern) return true;
+
+        if (!left_pattern || !right_pattern) return false;
+        if (left_pattern.constructor !== right_pattern.constructor) return false;
+
+        if (left_pattern instanceof MatchSymbolToken && right_pattern instanceof MatchSymbolToken) {
+            return left_pattern.expected_symbol === right_pattern.expected_symbol;
+        }
+
+        if (left_pattern instanceof PatternSwitchParser && right_pattern instanceof PatternSwitchParser) {
+            return left_pattern.target_profile_id === right_pattern.target_profile_id;
+        }
+
+        // Handle Quantity Containers
+        if (left_pattern instanceof QuantityPattern && right_pattern instanceof QuantityPattern) {
+            if (left_pattern.min !== right_pattern.min || left_pattern.max !== right_pattern.max) return false;
+            return is_equal(left_pattern.child_pattern as PatternType, right_pattern.child_pattern as PatternType);
+        }
+
+        // Handle Sequence and Alternative Paths (Pattern & ChoicePattern)
+        if (left_pattern instanceof Pattern && right_pattern instanceof Pattern) {
+            
+            // A pattern yielding an AST Node is never identical to left_pattern raw structural path
+            if (left_pattern.node_id !== right_pattern.node_id) return false;
+
+            const a_children = left_pattern.pattern_list;
+            const b_children = right_pattern.pattern_list;
+
+            if (a_children.length !== b_children.length) return false;
+
+            for (let i = 0; i < a_children.length; i++) {
+                if (!is_equal(a_children[i]!, b_children[i]!)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return left_pattern.class_name == right_pattern.class_name;
+    }
+
+    export function is_collapsible_with(left_pattern: PatternType, right_pattern: PatternType): boolean
+    {
+        if (!is_equal(left_pattern,right_pattern))
+        {
+            if (!(right_pattern instanceof QuantityPattern || right_pattern instanceof ChoicePattern))
+            {
+                return false;
+            };
+
+            for (const element of right_pattern.get_children()) {
+                if (is_collapsible_with(left_pattern, element)) {
+                    return true; 
+                }
+            };
+
+            return false;
+        };
+
+        return true;
+    };
+
+    export function collapse_patterns(left_pattern: PatternType, right_pattern: PatternType): PatternType
+    {
+        
+    };
+};
