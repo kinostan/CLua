@@ -1,6 +1,6 @@
-import { ErrorType } from "./error";
+import { ErrorType } from "./parser_error";
 
-export type PatternYieldType = "NodeHandle" | "CharToken" | "StringToken" | "NumericToken" | "SymbolToken" | "Infer" | "None" 
+export type PatternYieldType = "NodeHandle" | "CharToken" | "StringToken" | "NumericToken" | "SymbolToken" | "None" 
 
 export type PatternType = BasePattern | Pattern;
 
@@ -16,10 +16,15 @@ export abstract class BasePattern {
 }
 
 export abstract class PrimitivePattern extends BasePattern {
-    error: ErrorType = ErrorType.NONE;
+    error: ErrorType = ErrorType.None;
     get_children(): Array<PatternType> {
         return [];
     }
+    with_error(error: ErrorType): this
+    {
+        this.error = error;
+        return this;
+    };
 };
 
 export class Pattern extends PrimitivePattern {
@@ -131,7 +136,7 @@ export class QuantityPattern extends PrimitivePattern {
 }
 
 export class MatchKeywordToken extends PrimitivePattern {
-    constructor() {
+    constructor(expected_keyword: string) {
         super();
     }
 
@@ -161,8 +166,11 @@ export class MatchNumericToken extends PrimitivePattern {
 }
 
 export class MatchSymbolToken extends PrimitivePattern {
-    constructor(public readonly expected_symbol?: string) {
+    expected_symbol: string = "";
+
+    constructor(expected_symbol: string) {
         super();
+        this.expected_symbol = expected_symbol;
     }
 
     get_yield_type(): PatternYieldType { 
@@ -233,29 +241,43 @@ export namespace PatternOperators {
         return left_pattern.class_name == right_pattern.class_name;
     }
 
-    export function is_collapsible_with(left_pattern: PatternType, right_pattern: PatternType): boolean
-    {
-        if (!is_equal(left_pattern,right_pattern))
+    class Command {
+        is_a(class_constructor: any)
         {
-            if (!(right_pattern instanceof QuantityPattern || right_pattern instanceof ChoicePattern))
-            {
-                return false;
-            };
-
-            for (const element of right_pattern.get_children()) {
-                if (is_collapsible_with(left_pattern, element)) {
-                    return true; 
-                }
-            };
-
-            return false;
+            return this.constructor === class_constructor;
         };
-
-        return true;
     };
 
-    export function collapse_patterns(left_pattern: PatternType, right_pattern: PatternType): PatternType
+    class CommandDelete extends Command {
+        pattern: PatternType;
+        constructor(delete_pattern: Pattern)
+        {
+            super();
+            this.pattern = delete_pattern;
+        };
+    };
+
+    /*
+        CommandMerge -- Merge(pattern_a,pattern_b) and pattern_a is merged into pattern_b if 
+        possible. The operation is valid only when pattern_b is a ChoicePattern
+
+        CommandInsert 
+    */
+
+    type ASTCommand = CommandDelete;
+
+    function execute_command_set(pattern: PatternType, command_set: Array<ASTCommand>)
     {
-        
+
+    };
+
+    export function collapse_pattern(pattern: PatternType): PatternType
+    {
+        /* 
+            A collapsable patterns are strictly those patterns which logic withing the bounds
+            of pattern.ts expressivness allow to compress that logic by reducing the amount of grammar 
+            expression nodes.
+        */
+        return pattern;
     };
 };

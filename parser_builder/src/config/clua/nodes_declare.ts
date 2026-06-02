@@ -3,5 +3,6 @@ export enum NodeID {
     LocalAssignNode,
     ExpressionNode,
     LiteralNode,
-    BinaryOpNode
+    BinaryOpNode,
+    GroupExpressionNode
 }

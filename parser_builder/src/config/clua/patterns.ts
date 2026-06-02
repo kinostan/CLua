@@ -1,22 +1,13 @@
 import { NodeID } from "#config/clua/nodes_declare";
 import * as P from "#common/pattern";
+import { ErrorType } from "#root/common/parser_error";
 
 export namespace Patterns {
-    export const IdentifierPattern = new P.MatchIdentifierToken();
     export const ExpressionPattern = new P.ChoicePattern();
  
-    export const LocalAssignPattern = new P.Pattern()
-        .insert_pattern(new P.MatchKeywordToken())   
-        .insert_pattern(new P.MatchIdentifierToken()) 
-        .insert_pattern(new P.MatchSymbolToken("="))  
-        .yields_node(NodeID.LocalAssignNode);
-
-    export const Root = new P.QuantityPattern(
-        new P.ChoicePattern()
-            .insert_pattern(IdentifierPattern)
-            .insert_pattern(ExpressionPattern)
-            .insert_pattern(LocalAssignPattern),
-        0,
-        -1
-    );
+    export const GroupExpressionPattern = new P.Pattern()
+    .insert_pattern(new P.MatchSymbolToken("(").with_error(ErrorType.UnexpectedTokenError))
+    .insert_pattern(ExpressionPattern) 
+    .insert_pattern(new P.MatchSymbolToken(")").with_error(ErrorType.UnexpectedTokenError))
+    .yields_node(NodeID.GroupExpressionNode)
 };

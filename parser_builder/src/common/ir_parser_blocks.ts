@@ -1,6 +1,5 @@
 import { CppEmitContext } from "#common/emitter";
 import { Field } from "./node";
-import { ErrorType } from "./error";
 
 export type TokenType = 
     | "IdentifierToken" 
@@ -17,7 +16,21 @@ export type TokenType =
 
 export type LexerValueKind = "Symbol" | "Keyword" | "Char" | "Integer" | "Fraction" | "NumberHint" | "Error";
 
-export type IRBlockType = VarDefinition.IRDefCreateNode | VarDefinition.IRDefTokenPeek;
+type VarReference = number; 
+type NodeReference = number;
+type ErrorReference = number;
+
+type VarDefinitionType = 
+VarDefinition.IRDefCreateNode | 
+VarDefinition.IRDefTokenPeek | 
+VarDefinition.IRDefParserError;
+
+type IRFunction = IRParsingFunctionDeclaration | IRParsingFunctionDefinition;
+
+type ActionConstructs = VarDefinitionType | IRParsingFunctionCall;
+type LogicalConstructs = IRRoot | IRFunction;
+
+export type IRBlockType = LogicalConstructs | ActionConstructs;
 
 export interface BuildContext {
     get_variable_name_from_reference_id(id: number): string;
@@ -25,8 +38,8 @@ export interface BuildContext {
     get_ir_nodes_with_variable_id(id: number): Array<IRBlock<IRBlockType>>;
 
     request_removal(block: IRBlockType): void;
-    move_block(block: IRBlockType, target_scope: IRScope): void;
-    get_parent_scope(block: IRBlockType): IRScope | null;
+    move_block(block: IRBlockType, target_scope: IRParsingFunctionDefinition): void;
+    get_parent_scope(block: IRBlockType): IRParsingFunctionDefinition | null;
 }
 
 export abstract class IRBlock<SubclassType> {
@@ -40,17 +53,59 @@ export abstract class IRBlock<SubclassType> {
     abstract process_step(build_context: BuildContext): boolean;
 }
 
-type VarDefinitionType = IRDefCreateNode | IRDefTokenPeek;
+export class IRRoot extends IRBlock<IRRoot>{
+    ir_block_list: Array<IRFunction> = new Array<IRFunction>();
 
-//IR STATEMENT
-
-export namespace Statemet {
-    class Statemet
+    constructor()
     {
-        likely: boolean = false;
-        ir_expression: IRExpression = null;
+        super()
+    };
+
+    insert_ir_parser_function(ir_function: IRFunction)
+    {
+        this.ir_block_list.push(ir_function);
+    };
+
+    process_step(build_context: BuildContext): boolean {
+        return false;
+    }  
+};
+
+export class IRParsingFunctionDeclaration extends IRBlock<IRParsingFunctionDeclaration>
+{
+    constructor()
+    {
+        super();
+    }
+
+    process_step(build_context: BuildContext): boolean {
+        return false;
+    };
+}
+
+export class IRParsingFunctionDefinition extends IRBlock<IRParsingFunctionDefinition>
+{
+    constructor()
+    {
+        super();
+    }
+
+    process_step(build_context: BuildContext): boolean {
+        return false;
     };
 };
+
+export class IRParsingFunctionCall extends IRBlock<IRParsingFunctionCall>
+{
+    constructor()
+    {
+        super();
+    }
+
+    process_step(build_context: BuildContext): boolean {
+        return false;
+    };
+}
 
 //IR VAR DEFINITION
 export namespace VarDefinition {
@@ -77,8 +132,12 @@ export namespace VarDefinition {
         auto error_node = parser_context.create_node<UnexpectedTokenError>(current_token);
     */
     export class IRDefCreateNode extends VarDefinition<IRDefCreateNode> {
-        node_id: number = -1;
-        arguments: Array<VarDefinitionType> = new Array<VarDefinitionType>();
+        node_id: NodeReference = -1;
+        arguments: Array<VarReference> = new Array<VarReference>();
+
+        insert_variable(variable_reference: VarReference){
+            this.arguments.push(variable_reference);
+        };
 
         process_step(build_context: BuildContext): boolean {
             /* 
@@ -90,6 +149,7 @@ export namespace VarDefinition {
     };
 
     export class IRDefParserError extends VarDefinition<IRDefParserError> {
+        error_id: ErrorReference = -1;
 
         process_step(build_context: BuildContext): boolean {
             return false;

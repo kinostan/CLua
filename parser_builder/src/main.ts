@@ -1,7 +1,8 @@
 import * as NodesConfig from "#root/config/clua/nodes_declare"
 import * as PatternsConfig from "#config/clua/patterns"
 
-import { Pattern, PatternType } from "#common/pattern";
+import { Pattern, PatternOperators, PatternType } from "#common/pattern";
+import { IRBlockType, IRRoot } from "./common/ir_parser_blocks";
 
 /*
 NodeArray (basically buffer with a type and the value of NodeArray is basically a virtual index 
@@ -13,9 +14,10 @@ QuantityPattern and reduces memory costs when there's lots of nodes
 
 export class BuildContext {
     private next_var_id = 0;
-    
+
+    private ir_tree_root!: IRBlockType
+
     private variable_definitions = new Map<number, any>();
-    
     private variable_dependencies = new Map<number, Set<any>>();
 
     public allocate_var_id(defining_block: any): number {
@@ -40,31 +42,32 @@ export class BuildContext {
         return this.variable_dependencies.get(var_id)?.size ?? 0;
     }
 
-    private is_pattern_valid(pattern: PatternType): boolean
+    /* 
+        IR specific build context
+    */
+    public emit_ir_from_pattern(root_pattern: PatternType,current_ir_node?: IRBlockType)
     {
-        return false;
-    };
-
-    private collapse_pattern(pattern: PatternType): PatternType 
-    { 
-        /* 
-            A collapsable patterns are strictly those patterns which logic withing the bounds
-            of pattern.ts expressivness allow to compress that logic by reducing the amount of grammar 
-            expression nodes.
-        */
-        let collapsed_pattern!: PatternType;
-
-        return collapsed_pattern;
-    };
-
-    public emit_ir_from_pattern(root_pattern: PatternType)
-    {
-        if (!this.is_pattern_valid(root_pattern))
+        if (current_ir_node === undefined)
         {
-            throw new Error("Invalid root pattern");
+            this.ir_tree_root = new IRRoot();
         };
 
-        const collapsed_root_pattern = this.collapse_pattern(root_pattern);
+        const collapsed_root_pattern = PatternOperators.collapse_pattern(root_pattern); 
+    };
+
+    public optimize_ir()
+    {
+        while (this.ir_tree_root.process_step(this)){};
+    };
+
+    public pretty_print_ir()
+    {
+
+    };
+
+    public emit_parser_code()
+    {
+
     };
 }
 
