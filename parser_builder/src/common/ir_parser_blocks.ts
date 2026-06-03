@@ -53,17 +53,35 @@ export abstract class IRBlock<SubclassType> {
     abstract process_step(build_context: BuildContext): boolean;
 }
 
-export class IRRoot extends IRBlock<IRRoot>{
-    ir_block_list: Array<IRFunction> = new Array<IRFunction>();
+class IRChildElementsComponent<ParentType> extends IRBlock<ParentType>
+{
+    child_elements: Array<IRBlockType>;
 
     constructor()
     {
-        super()
+        super();
+        this.child_elements = new Array<IRBlockType>()
+    } 
+
+    insert_child(ir_child: IRBlockType)
+    {
+        this.child_elements.push(ir_child);
     };
 
-    insert_ir_parser_function(ir_function: IRFunction)
+    get_children()
     {
-        this.ir_block_list.push(ir_function);
+        return this.child_elements.slice();
+    };
+
+    process_step(build_context: BuildContext): boolean {
+        return false;
+    }
+}
+
+export class IRRoot extends IRChildElementsComponent<IRRoot>{
+    constructor()
+    {
+        super()
     };
 
     process_step(build_context: BuildContext): boolean {
@@ -83,7 +101,7 @@ export class IRParsingFunctionDeclaration extends IRBlock<IRParsingFunctionDecla
     };
 }
 
-export class IRParsingFunctionDefinition extends IRBlock<IRParsingFunctionDefinition>
+export class IRParsingFunctionDefinition extends IRChildElementsComponent<IRParsingFunctionDefinition>
 {
     constructor()
     {

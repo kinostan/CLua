@@ -29,11 +29,13 @@ export abstract class PrimitivePattern extends BasePattern {
 
 export class Pattern extends PrimitivePattern {
     pattern_list: Array<PatternType> = new Array<PatternType>();
+    pattern_name: string;
     node_id: number = -1;
 
     constructor()
     {
         super();
+        this.pattern_name = this.class_name;
     };
 
     insert_pattern(pattern: PatternType): this
@@ -46,6 +48,12 @@ export class Pattern extends PrimitivePattern {
     yields_node(node_id: number): this
     {
         this.node_id = node_id;
+        return this;
+    };
+
+    set_pattern_name(pattern_name: string): this
+    {
+        this.pattern_name = pattern_name;
         return this;
     };
 

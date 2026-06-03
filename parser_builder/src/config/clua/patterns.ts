@@ -10,4 +10,10 @@ export namespace Patterns {
     .insert_pattern(ExpressionPattern) 
     .insert_pattern(new P.MatchSymbolToken(")").with_error(ErrorType.UnexpectedTokenError))
     .yields_node(NodeID.GroupExpressionNode)
+
+    export const Root = new P.Pattern().insert_pattern(
+        new P.QuantityPattern(
+            new P.ChoicePattern().insert_pattern(ExpressionPattern)
+        )
+    );
 };
