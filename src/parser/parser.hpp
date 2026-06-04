@@ -11,7 +11,7 @@
 #include <iostream>
 #include <vector>
 
-namespace ASTParser{
+namespace CLuaASTParser{
 
     using NodeType = CLuaNodes::NodeType;
     using NodeHandleTag = CLuaNodes::NodeHandleTag;
@@ -205,6 +205,16 @@ namespace ASTParser{
             error_list.push_back(parser_error);
 
             return error_handle;
+        };
+
+        size_t record_error_state()
+        {
+            return error_list.size();
+        }
+
+        void set_error_state(size_t target_error_state) 
+        {
+            error_list.resize(target_error_state);
         };
     
         inline bool is_symbol(CLua::SymbolKind expected_symbol)

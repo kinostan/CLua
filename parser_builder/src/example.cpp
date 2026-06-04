@@ -87,7 +87,13 @@ namespace ASTParser{
                 } else {
                     ParserError parser_error = ParserError(current_token,next_token);
                     TokenSpan fake_span = TokenSpan(next_token,next_token);
-                    parser_error.node_handle = parser_context.create_node<UnclosedBlockError>(fake_span);
+                    parser_error.node_handle = 
+                    /*
+                    This specific pattern here shouldn't exist in the future because I think it's redundant to create 
+                    error AST nodes, in fact I could just assign ErrorCode to Error and return NodeHandle which is 
+                    error type and contains the index of that Error within the list
+                    */
+                    parser_context.create_node<UnclosedBlockError>(fake_span);
 
                     return parser_context.emit_error(parser_error);
                 };

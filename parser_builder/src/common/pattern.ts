@@ -5,7 +5,7 @@ export type PatternYieldType = "NodeHandle" | "CharToken" | "StringToken" | "Num
 export type PatternType = BasePattern | Pattern;
 
 export abstract class BasePattern {
-    public readonly class_name: string;
+    class_name: string;
 
     constructor() {
         this.class_name = this.constructor.name;
@@ -13,6 +13,17 @@ export abstract class BasePattern {
 
     abstract get_yield_type(): PatternYieldType;
     abstract get_children(): Array<PatternType>;
+
+    set_pattern_name(pattern_name: string): this
+    {
+        this.class_name = pattern_name;
+        return this;
+    };
+
+    get_pattern_name(): string
+    {
+        return this.class_name;
+    };
 }
 
 export abstract class PrimitivePattern extends BasePattern {
@@ -29,13 +40,11 @@ export abstract class PrimitivePattern extends BasePattern {
 
 export class Pattern extends PrimitivePattern {
     pattern_list: Array<PatternType> = new Array<PatternType>();
-    pattern_name: string;
     node_id: number = -1;
 
     constructor()
     {
         super();
-        this.pattern_name = this.class_name;
     };
 
     insert_pattern(pattern: PatternType): this
@@ -48,12 +57,6 @@ export class Pattern extends PrimitivePattern {
     yields_node(node_id: number): this
     {
         this.node_id = node_id;
-        return this;
-    };
-
-    set_pattern_name(pattern_name: string): this
-    {
-        this.pattern_name = pattern_name;
         return this;
     };
 
@@ -146,6 +149,17 @@ export class QuantityPattern extends PrimitivePattern {
 export class MatchKeywordToken extends PrimitivePattern {
     constructor(expected_keyword: string) {
         super();
+        /* 
+            I really should create a map to keep track of these pattern_names and keep 
+            the track of reference counts or something to ensure uniqueness of these keys
+            But the problem would be that I need to register then these patterns which is 
+            another set of expressions and complexity which I want to avoid (maybe it's a good choice).
+        
+            Therefore I am going for simplicitly here and hope nobody ever using it
+            including me is going to set_pattern_name to a pattern as "keyword_[pattern_that_has_keyword]" 
+            because that would be stupid. Same goes for all other primitives.
+        */
+        this.set_pattern_name(`keyword_${expected_keyword}`);
     }
 
     get_yield_type(): PatternYieldType { 
@@ -179,6 +193,20 @@ export class MatchSymbolToken extends PrimitivePattern {
     constructor(expected_symbol: string) {
         super();
         this.expected_symbol = expected_symbol;
+
+        /* 
+        It's a bit tricky one maybe I should turn symbol stream into
+        "wordified" symbol stream to maintain the style that currently is in
+        common/clua/symbol_classifier.hpp 
+
+        "{"++", SymbolKind::DoublePlus}, {"+=", SymbolKind::PlusEqual},
+        {"--", SymbolKind::DoubleMinus}, {"-=", SymbolKind::MinusEqual},
+        {"*=", SymbolKind::StarEqual}, {"/=", SymbolKind::SlashEqual},
+        {"%=", SymbolKind::PercentEqual}"
+
+        */
+
+        this.set_pattern_name(`symbol_${expected_symbol}`);
     }
 
     get_yield_type(): PatternYieldType { 
@@ -248,6 +276,10 @@ export namespace PatternOperators {
 
         return left_pattern.class_name == right_pattern.class_name;
     }
+
+    /*
+    This set of commands is strictly for collapse_pattern operation 
+    */
 
     class Command {
         is_a(class_constructor: any)

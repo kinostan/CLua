@@ -1,5 +1,6 @@
 import { CppEmitContext } from "#common/emitter";
 import { Field } from "./node";
+import { Pattern } from "./pattern";
 
 export type TokenType = 
     | "IdentifierToken" 
@@ -91,7 +92,7 @@ export class IRRoot extends IRChildElementsComponent<IRRoot>{
 
 export class IRParsingFunctionDeclaration extends IRBlock<IRParsingFunctionDeclaration>
 {
-    constructor()
+    constructor(function_body: Pattern)
     {
         super();
     }
@@ -103,9 +104,12 @@ export class IRParsingFunctionDeclaration extends IRBlock<IRParsingFunctionDecla
 
 export class IRParsingFunctionDefinition extends IRChildElementsComponent<IRParsingFunctionDefinition>
 {
-    constructor()
+    linked_pattern: Pattern
+
+    constructor(function_body: Pattern)
     {
         super();
+        this.linked_pattern = function_body;
     }
 
     process_step(build_context: BuildContext): boolean {
@@ -115,9 +119,12 @@ export class IRParsingFunctionDefinition extends IRChildElementsComponent<IRPars
 
 export class IRParsingFunctionCall extends IRBlock<IRParsingFunctionCall>
 {
-    constructor()
+    linked_pattern: Pattern
+
+    constructor(function_body: Pattern)
     {
         super();
+        this.linked_pattern = function_body;
     }
 
     process_step(build_context: BuildContext): boolean {
