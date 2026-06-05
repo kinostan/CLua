@@ -50,6 +50,17 @@ class NodeInitializationContext {
     };
 };
 
+class ChoicePatternContext {
+    patterns: Array<PatternType>  = new Array<PatternType>();
+    output_node: VarDefinition.IRDeclNodeHandle = new VarDefinition.IRDeclNodeHandle();
+    choice_pattern_ir: Array<IRBlockType> = new Array<IRBlockType>();
+
+    constructor(build_context: BuildContext)
+    {
+        this.output_node.var_id = build_context.allocate_var_id(this.output_node);
+    };
+};
+
 /*
 NodeArray (basically buffer with a type and the value of NodeArray is basically a virtual index 
 pointing to a real index within the memory manager) 
@@ -94,14 +105,15 @@ export class BuildContext implements BuildContext {
                 throw new Error(`unexpected behaviour: disabled pattern in tracking map`);
             }
             
-            const function_ir = this.transform_pattern_to_function_definition(pattern);
+            const function_ir = this.transform_pattern_to_ir(pattern);
             root.insert_child(function_ir);
         });
     }
 
-    private transform_pattern_to_function_definition(pattern: Pattern): IRParsingFunctionDefinition {
+    private transform_pattern_to_ir(pattern: Pattern): IRParsingFunctionDefinition {
         const function_def = new IRParsingFunctionDefinition(pattern);
 
+        let node_context: NodeInitializationContext;
         let node_definition: NodeDefinition | null = null;
         let current_node_field = 0;
 
@@ -111,45 +123,35 @@ export class BuildContext implements BuildContext {
 
         if (pattern.node_id !== -1) {
             
-            const assigned_id = this.allocate_var_id(node_ir);
-            node_ir.insert_variable(assigned_id);
+            node_context = new NodeInitializationContext(pattern.node_id);
         }
 
-        function get_current_field_of_node(): Field
-        {
-            if (!node_definition || pattern.node_id == -1)
+        pattern.get_children().forEach(
+            (child_pattern: PatternType) => 
             {
-                throw new Error("Tried to call get_current_field_of_node() function when node_definition doesn't exist");
-            };
-
-            if (current_node_field >= node_definition.fields.length)
-            {
-                throw new Error("current_node_field is reading outside of node_definition fields");
-            };
-
-            const node_field = node_definition.fields[current_node_field];
-
-            if (!node_field)
-            {
-                throw new Error("Unexpected program behvaiour: node_field is undefined");
-            };
-
-            return node_field;
-        };
-
-        pattern.get_children().forEach((child_pattern: PatternType) => {
-           
-        });
+                let translated_ir = this.translate_child_pattern_to_ir(child_pattern);
+            }
+        );
 
         // Insert completed structural instruction block into definition list
         function_def.insert_child(node_ir);
         return function_def;
     }
 
-    private transform_choice_pattern_to_choice_ir(node_init_context: NodeInitializationContext)
+    private transform_choice_pattern_to_ir(choice_pattern: ChoicePattern): ChoicePatternContext
     {
-        
+        let choice_pattern_context: ChoicePatternContext = new ChoicePatternContext(this);
+
+        choice_pattern.get_children().forEach(pattern => {
+            
+        });
+
+        return choice_pattern_context;
     };
+
+    private translate_child_pattern_to_ir(child_pattern: PatternType): IRBlockType {
+      
+    }
 
     /*
     public optimize_ir(): void {

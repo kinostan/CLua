@@ -51,6 +51,10 @@
     Keyword(Export,"export")\
     Keyword(StaticCast,"static_cast")\
     Keyword(ReinterpretCast,"reinterpret_cast")\
+    Keyword(Let,"let")\
+    Keyword(Fun,"fun")\
+    Keyword(Decl,"decl")\
+    Keyword(MetaCLua,"metaclua")\
 
 namespace CLua {
     enum class Keyword {

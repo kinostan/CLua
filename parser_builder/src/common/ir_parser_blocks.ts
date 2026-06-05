@@ -134,16 +134,31 @@ export class IRParsingFunctionCall extends IRBlock<IRParsingFunctionCall>
 
 //IR VAR DEFINITION
 export namespace VarDefinition {
-    abstract class VarDefinition<T> extends IRBlock<T> {
+    class VarDeclaration<T> extends IRBlock<T> {
         var_id: number = -1;
 
         constructor() {
             super();
         };
+
+        process_step(build_context: BuildContext): boolean {
+            return false;
+        }
     }
 
+    export class IRDeclNodeHandle extends VarDeclaration<IRDeclNodeHandle> {
+        constructor()
+        {
+            super();
+        };
+
+        process_step(build_context: BuildContext): boolean {
+            return false;
+        }
+    };
+
     //based on auto current_token = parser_context.see_current_token();
-    export class IRDefTokenPeek extends VarDefinition<IRDefTokenPeek> {
+    export class IRDefTokenPeek extends VarDeclaration<IRDefTokenPeek> {
         process_step(build_context: BuildContext): boolean {
             /*    
                 I have to figure out what kind of logic can be added here for optimization or if 
@@ -156,7 +171,7 @@ export namespace VarDefinition {
     /* 
         auto error_node = parser_context.create_node<UnexpectedTokenError>(current_token);
     */
-    export class IRDefCreateNode extends VarDefinition<IRDefCreateNode> {
+    export class IRDefCreateNode extends VarDeclaration<IRDefCreateNode> {
         node_id: NodeReference = -1;
         arguments: Array<VarReference> = new Array<VarReference>();
 
@@ -173,7 +188,7 @@ export namespace VarDefinition {
         }
     };
 
-    export class IRDefParserError extends VarDefinition<IRDefParserError> {
+    export class IRDefParserError extends VarDeclaration<IRDefParserError> {
         error_id: ErrorReference = -1;
 
         process_step(build_context: BuildContext): boolean {
