@@ -76,4 +76,9 @@ export class CppEmitContext {
             }
         }, ';');
     }
+
+    emit_include(include_path: string)
+    {
+        this.emit_line(`#include ${include_path}`);
+    };
 }

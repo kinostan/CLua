@@ -34,6 +34,7 @@ namespace CLuaASTParser{
     NodeHandle expect_pattern4(ParserContext& parser_context);
     NodeHandle expect_pattern5(ParserContext& parser_context);
     NodeHandle expect_pattern6(ParserContext& parser_context);
+    NodeHandle expect_pattern7(ParserContext& parser_context);
 
     //[HANDLE_LEXER_ERROR](current_token) --non-critical for parser error but still must be registered and recovered from
     //[EMIT_ERROR] --critical error which requires high level parser to recover
@@ -136,7 +137,7 @@ namespace CLuaASTParser{
                 choice_output_pattern = expect_pattern1(parser_context);
                 break;
             case Keyword::Fun:
-                    choice_output_pattern = expect_pattern3(parser_context);
+                choice_output_pattern = expect_pattern3(parser_context);
                 break;
             default:    
                     //[EMIT_ERROR_INVALID_TOKEN]
@@ -231,12 +232,12 @@ namespace CLuaASTParser{
                             choice_output_pattern = expect_pattern6(parser_context);
                             break;
                         default:
-                            //[EMIT_ERROR]
+                            //[EMIT_ERROR_INVALID_TOKEN]
                             break;
                         }
                         break;
                     default:
-                        //[EMIT_ERROR]
+                        //[EMIT_ERROR_INVALID_TOKEN]
                         break;
                     }
                 }
@@ -256,6 +257,56 @@ namespace CLuaASTParser{
         //[CREATE_NODE]<SomeNodeClass>(choice_output_pattern,other_variables)  
     };
 
+    NodeHandle expect_pattern_with_infinite_quantity_pattern(ParserContext& parser_context)
+    {
+        //IRQuantityPattern(0,inf,Pattern7) 
+
+        //IRParserStateRecord
+        auto cursor = parser_context.record_cursor();    
+        auto error_state = parser_context.record_error_state();
+
+        //IROptionalPattern
+        auto head_node = expect_pattern7(parser_context);
+        if (head_node.node_tag == NodeHandleTag::Error)
+        {
+
+            //IRParserStateSet(IRParserStateRecord,min)
+            //when min == 0
+            parser_context.set_cursor(cursor);
+            parser_context.set_error_state(error_state);
+
+            return NodeHandle(NodeHandleTag::NoPattern,0);
+
+            //when min >= 1 
+            return head_node;
+        };
+
+        auto current_bottom = head_node;
+    
+        while (!parser_context.has_reached_end())
+        {
+            //IRParserStateRecord
+            auto cursor = parser_context.record_cursor();    
+            auto error_state = parser_context.record_error_state();
+
+            auto next_bottom = expect_pattern7(parser_context);
+
+            if (next_bottom.node_tag == NodeHandleTag::Error)
+            {
+                //IRParserStateSet(IRParserStateRecord)
+                parser_context.set_cursor(cursor);
+                parser_context.set_error_state(error_state);
+                break;
+            };
+
+            //auto& current_bottom_ref = parser_context.get_node_from_handle<HeadNodeType>(current_bottom);
+            //current_bottom_ref.[GET_NEXT_ELEMENT_FIELD_NAME] = next_bottom;
+
+            current_bottom = next_bottom;
+        }
+
+    };
+    
     NodeHandle Parser::generate_AST(){
         return get_root_ast_node(parser_context);
     }
