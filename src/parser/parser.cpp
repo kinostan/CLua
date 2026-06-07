@@ -168,18 +168,19 @@ namespace CLuaASTParser{
             Pattern6: KW("decl"), Identifier()
         */
         
-        //IRChoicePatternResolve
-        NodeHandle choice_output_pattern;
+        //IRChoicePattern
+        NodeHandle choice_output_pattern; //IRNodeDeclare(choice_output_pattern,null)
         //IRInDepthChoicePatternAbiguityResolution(choice_output_pattern,ChoicePattern,1))
-        auto current_token = parser_context.see_current_token();
+        auto current_token = parser_context.see_current_token();//IRTokenDeclare(current_token,IRSeeCurrentToken)
         //[HANDLE_LEXER_ERROR](current_token)
 
         switch (current_token.token_type) //IRTokenChoice
         {
+        //IRCase(Multiple(TokenType(String),TokenType(Numeric)))
         case TokenType::String:
         case TokenType::Numeric:
         {
-            choice_output_pattern = expect_pattern2(parser_context);
+            choice_output_pattern = expect_pattern2(parser_context);//child of IRCase
             break;
         }
         case TokenType::Identifier:
@@ -187,14 +188,14 @@ namespace CLuaASTParser{
                 switch (parser_context.get_current_keyword()) //IRKeywordChoice
                 {
                 case Keyword::Let: 
-                    //IRKeywordChoice(Let,IRReDefNodeFromCall(choice_output_pattern,pattern1)
+                    //IRCase(Keyword("let"),IRNodeAssign(choice_output_pattern,IRPatternCall(pattern5))
                     choice_output_pattern = expect_pattern1(parser_context);
                 case Keyword::Fun:
-                    //IRKeywordChoice(Fun,IRReDefNodeFromCall(choice_output_pattern,pattern3)
+                    //IRCase(Keyword("fun"),IRNodeAssign(choice_output_pattern,IRPatternCall(pattern5))
                     choice_output_pattern = expect_pattern3(parser_context);
                 case Keyword::Decl: 
                 {
-                    //IRKeywordChoice(Decl,IRInDepthChoicePatternAmbiguityResolution(choice_output_pattern,ChoicePattern,2))
+                    //IRKeywordCase(Keyword("decl"),IRInDepthChoicePatternAmbiguityResolution(choice_output_pattern,ChoicePattern,2))
 
                     //IRParserStateRecord
                     auto cursor = parser_context.record_cursor();    
@@ -202,10 +203,10 @@ namespace CLuaASTParser{
 
                     parser_context.get_next_token();//IRAdvanceToken
 
-                    auto current_token2 = parser_context.see_current_token();//IRVarDefineCurrentToken
+                    auto current_token2 = parser_context.see_current_token();//IRTokenDeclare(current_token2,IRSeeCurrentToken)
                     //[HANDLE_LEXER_ERROR](current_token2) 
 
-                    switch (current_token2.token_type)//
+                    switch (current_token2.token_type)//IRTokenChoice
                     {
                     case TokenType::Identifier://IRTokenChoice
                         switch (parser_context.get_current_keyword())//IRKeywordChoice
@@ -224,7 +225,8 @@ namespace CLuaASTParser{
                                 //IRParserStateSet(IRParserRecord)
                                 parser_context.set_cursor(cursor);
                                 parser_context.set_error_state(error_state);
-                                choice_output_pattern = expect_pattern5(parser_context);
+
+                                choice_output_pattern = expect_pattern5(parser_context); //IRNodeAssign(choice_output_pattern,IRPatternCall(pattern5))
                             };
 
                             break;
@@ -305,6 +307,9 @@ namespace CLuaASTParser{
             current_bottom = next_bottom;
         }
 
+        //this is only when QuantityPattern is the last Pattern in the 
+        //Pattern section
+        return head_node;
     };
     
     NodeHandle Parser::generate_AST(){

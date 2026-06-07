@@ -177,9 +177,18 @@ export class MatchIdentifierToken extends PrimitivePattern {
     }
 }
 
+export enum NumericTokenType {
+    float,
+    integer,
+};
+
 export class MatchNumericToken extends PrimitivePattern {
-    constructor() {
+    number_type: NumericTokenType = NumericTokenType.integer;
+
+    constructor(number_type: NumericTokenType) {
         super();
+
+        this.number_type = number_type;
     }
 
     get_yield_type(): PatternYieldType { 
