@@ -100,10 +100,3 @@ export namespace VarDefinition {
 export namespace HighIR {
     export type HIRBlockType = IRParsingFunctionDeclaration;
 };
-
-export namespace HIROperators {
-    export function transform_high_ir_into_low_ir(root: HighIR.IRBlockType)
-    {
-
-    };
-};

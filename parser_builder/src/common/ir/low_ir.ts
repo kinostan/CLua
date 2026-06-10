@@ -351,27 +351,23 @@ export namespace LowIR {
                 super(IRSymbolAssign, var_id, expression);
             }
         }
+
+        export class IRParserStateRecord extends IRBlock {
+            public readonly state_var_id: number;
+            constructor(state_var_id: number) {
+                super(IRParserStateRecord);
+                this.state_var_id = state_var_id;
+            }
+            process_step(build_context: BuildContext): boolean { return false; }
+        }
+
+        export class IRParserStateSet extends IRBlock {
+            public readonly linked_ir_parser_record: IRParserStateRecord;
+            constructor(parser_record: IRParserStateRecord) {
+                super(IRParserStateSet);
+                this.linked_ir_parser_record = parser_record;
+            }
+            process_step(build_context: BuildContext): boolean { return false; }
+        }
     };
 }
-
-export namespace LIROperators {
-
-    function transform_low_ir_with_dispatch_into_parser_code(emit_context: CppEmitContext, current_ir_block: IRBlock)
-    {
-
-    };
-
-    export function transform_low_ir_into_parser_code(emit_context: CppEmitContext, lir_root: IRRoot)
-    {
-        let RootChildren = lir_root.get_children();
-
-        emit_context.emit_include(`"parser.hpp"`);
-        
-        emit_context.emit_include(`<common/clua/tokens.hpp>`);
-        emit_context.emit_include(`<common/base.hpp>`);
-
-        RootChildren.forEach((ir_block: IRBlock) => {
-            transform_low_ir_with_dispatch_into_parser_code(emit_context,ir_block);
-        })
-    };
-};

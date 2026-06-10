@@ -11,6 +11,11 @@
 #include <iostream>
 #include <vector>
 
+/*
+ If I ever want to expand the scope of the target emittion language from just CLua to 
+ CLua and LuaU I need to add a separate emitter for parser.hpp which implies that 
+ tokens should be universalized in some way so that parser can use them. 
+*/
 namespace CLuaASTParser{
 
     using NodeType = CLuaNodes::NodeType;
@@ -23,18 +28,34 @@ namespace CLuaASTParser{
     using TokenType = CLua::TokenType;
     
     const auto InvalidNode = CLuaNodes::InvalidNode;
+
+
+    enum Error {
+        None
+    };
     
     //AST-concept-1 should only parse math expressions and evaluate them immedieatly i
     class ParserError {
         public:
+
+        TokenSpan token_span;
+        CLua::Error lexer_error = CLua::Error::None;
+        Error parser_error = Error::None;
 
         ParserError(TokenGeneric start, TokenGeneric end): token_span(TokenSpan(start,end))
         {};
         ParserError(TokenGeneric only_token): token_span(TokenSpan(only_token,only_token))
         {};
 
-        TokenSpan token_span;
-        NodeHandle node_handle = InvalidNode;
+        void attach_lexer_error(CLua::Error lexer_error)
+        {
+            this->lexer_error = lexer_error;
+        };
+
+        void attach_parser_error(Error parser_error)
+        {
+            this->parser_error = parser_error;
+        };
     };
 
     struct ParserState {
