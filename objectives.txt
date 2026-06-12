@@ -1,0 +1,28 @@
+Create a unified lexer structure:
+-It should be able to handle LuaU's grammar in the sense that LuaU's parser that's 
+generated will be able to fully construct a valid AST node tree to allow to reason 
+about these constructs inside of this language's boundaries.
+
+Lexer tokens:
+
+enum Token : u8
+{
+    End        = 0,    // Null termination
+    Word    ,        // Token starts with a character
+    Number    ,        // Token starts with a digit
+    Operator,        // Ascii range operator symbol
+
+    whitespace    , 
+    NewLine     ,
+    //Comment 
+    comment does not stick well with the idea of unilexer
+    because it's a language dependent construct which is also complex.
+
+    Invalid            //Anything that couldn't be recognized
+};
+
+
+
+-Because of that the get methods for token values sadly must be externalized which 
+maybe slightly slower (unless external functions are inlined and static then it won't 
+matter almost at all, because the cache is still fresh)

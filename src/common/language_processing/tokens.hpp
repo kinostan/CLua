@@ -4,21 +4,18 @@
 
 #include <debugger/debugger.hpp>
 
-namespace CLua {
+namespace Util::Lexer {
     using namespace LexerDebug;
 
-    enum class TokenType: Common::uint8 {
-        Identifier,
-        Numeric,
-        Symbol,
-        Whitespace,
-        NewLine,
-        Comment,
-        String,
-        Char,
-        EndOfFile,
-        Error,
-        None
+    enum class TokenType : Common::uint8 {
+        Word,        // ([a-zA-Z_][a-zA-Z0-9_]*)
+        Numeric,     // (0-9)
+        Symbol,      // ASCII operators / punctuation characters
+        Whitespace,  // \t, \r, ' '
+        NewLine,     // \n explicit new line
+        EndOfFile,   // \0 Null termination
+        Error,       // Unrecognized states
+        None         // Bug state (fallback for uninitialized parser allocations)
     };
 
     struct TokenBase
@@ -36,7 +33,7 @@ namespace CLua {
     struct IdentifierToken : TokenBase {};
     template<>
     struct TokenKind<IdentifierToken> {
-        inline static constexpr TokenType value = TokenType::Identifier;
+        inline static constexpr TokenType value = TokenType::Word;
     };  
 
     struct NumericToken : TokenBase {};
@@ -56,25 +53,6 @@ namespace CLua {
     struct TokenKind<WhitespaceToken> {
         inline static constexpr TokenType value = TokenType::Whitespace;
     };  
-
-    struct CommentToken: TokenBase {};
-    template<>
-    struct TokenKind<CommentToken>
-    {
-        inline static constexpr TokenType value = TokenType::Comment;
-    };
-
-    struct StringToken : TokenBase {};
-    template<>
-    struct TokenKind<StringToken> {
-        inline static constexpr TokenType value = TokenType::String;
-    };  
-
-    struct CharToken: TokenBase {};
-    template<>
-    struct TokenKind<CharToken> {
-        inline static constexpr TokenType value = TokenType::Char;
-    };
 
     struct NewLineToken : TokenBase {};
     template<>
@@ -125,6 +103,10 @@ namespace CLua {
                 + std::to_string(static_cast<int>(token_type))
             );
             return reinterpret_cast<T&>(*this);
+        }
+
+        inline bool is(TokenType expected) const {
+            return token_type == expected;
         }
     };
 
