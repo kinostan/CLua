@@ -5,7 +5,7 @@
 
 #include "./source.hpp"
 #include "./tokens.hpp"
-#include "./char_table_type.hpp"c
+#include "./char_table_type.hpp"
 
 #include <debugger/debugger.hpp>
 
@@ -26,7 +26,6 @@ namespace Util::Lexer {
 
     struct LexerState { 
         Common::uint64 cursor_index = 0;    
-
         Error current_error;
     };
 
@@ -93,31 +92,18 @@ namespace Util::Lexer {
             );
 
             lexer_state = new_lexer_state;
+            source.index = new_lexer_state.cursor_index;
         };
 
         inline LexerState record_cursor()
         {
+            lexer_state.cursor_index = source.index;
             return lexer_state;
         };
     };
 
     class Lexer
     {
-        private:
-        void consume_numbers_letters(LexerContext& lexer_context)
-        {
-            auto current_char = lexer_context.source.see_current();
-            auto char_type = get_char_type_from_char(current_char); 
-
-            while (char_type == CharType::Numeric || char_type == CharType::Word)
-            {
-                lexer_context.source.consume();
-
-                current_char = lexer_context.source.see_current();
-                char_type = get_char_type_from_char(current_char);
-            };
-        };
-
         private:
         LexerContext lexer_context;
 
@@ -129,38 +115,108 @@ namespace Util::Lexer {
         };
 
         private:
+        void consume_numbers()
+        {
+            auto current_char = lexer_context.source.see_current();
+            auto char_type = get_char_type_from_char(current_char); 
+
+            while (char_type == CharType::Numeric)
+            {
+                lexer_context.source.consume();
+
+                current_char = lexer_context.source.see_current();
+                char_type = get_char_type_from_char(current_char);
+            };
+        };
+
+        void consume_letters()
+        {
+            auto current_char = lexer_context.source.see_current();
+            auto char_type = get_char_type_from_char(current_char); 
+
+            while (char_type == CharType::Word)
+            {
+                lexer_context.source.consume();
+
+                current_char = lexer_context.source.see_current();
+                char_type = get_char_type_from_char(current_char);
+            };
+        };
+
+        private:
         TokenGeneric get_next_token()
         {
             Common::uint64 start = lexer_context.source.index;
-      
-            auto token_type = guess_token_type(lexer_context);
+            auto current_char = lexer_context.source.see_current();
+            auto char_type = CharTable::get_char_type_from_char(current_char);
+            TokenType token_type = TokenType::None; 
+
+            switch (char_type)
+            {
+                case CharTable::CharType::Word:
+                case CharTable::CharType::Numeric:
+                {
+                    consume_letters();
+                    token_type = TokenType::Word; 
+                    break;
+                }
+                case CharTable::CharType::Symbol:
+                {
+                    lexer_context.source.consume();
+                    token_type = TokenType::Symbol;
+                    break;
+                }
+                case CharTable::CharType::Whitespace:
+                    lexer_context.source.consume();
+                    token_type = TokenType::Whitespace; 
+                case CharTable::CharType::Newline:
+                {
+                    lexer_context.source.consume();
+                    token_type = TokenType::NewLine; 
+                    break;
+                }
+                case CharTable::CharType::EndOfFile:
+                {
+                    token_type = TokenType::EndOfFile;
+                    break;
+                }
+                case CharTable::CharType::Unicode:
+                {
+                    lexer_context.source.consume(); 
+                    
+                    lexer_context.record_error(ErrorCode::InvalidByte);
+                    token_type = lexer_context.ultimate_token_type;
+                    break;
+                }
+                case CharTable::CharType::Unrecognized:
+                {
+                    lexer_context.source.consume(); 
+                    
+                    lexer_context.record_error(ErrorCode::InvalidByte);
+                    token_type = lexer_context.ultimate_token_type;
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            LAssert(
+                token_type != TokenType::None,
+                "Unexpected behaviour from the lexer, because it didn't handle all char types"
+            );
+
             lexer_context.original_token_type = token_type;
             lexer_context.ultimate_token_type = token_type;
-            try_next_token(lexer_context,token_type);
 
             Common::uint64 end = lexer_context.source.index;
             Common::uint64 length = end - start;
+
             TokenGeneric token;
             token.token_type = lexer_context.ultimate_token_type;
             token.offset = start;
             token.length = length;
 
             return token;
-            auto char_type = CharTable::get_char_type_from_char(lexer_context.source.see_current());
-
-            switch (char_type)
-            {
-            case CharTable::CharType::EndOfFile:
-
-            case CharTable::
-            
-            default:
-                LAssert(
-                    true,
-                    "Unexpected behaviour from the lexer, because it didn't handle all char types"
-                );
-                break;
-            }
         };
     
         public:

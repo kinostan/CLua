@@ -6,12 +6,14 @@
 #include <type_traits>
 
 #include <linear_allocator/linear_allocator.hpp>
-#include <ast_nodes/base.hpp>
+#include <common/language_processing/node_handle.hpp>
+#include <common/language_processing/node_base.hpp>
 
-namespace CLuaNodes{ 
+namespace AST{ 
     class NodeManager {
+ 
         using NodeHandle = NodeHandle;
-        using BaseNode = BaseNode;
+
         private:
         Common::LinearAllocator allocator;
         public:

@@ -37,7 +37,7 @@ namespace Util::CharTable {
 
         table['\n'] = CharType::Newline;
 
-        table['_'] = CharType::Word;
+        table['_'] = CharType::Symbol;
 
         for (int lower_case = 'a'; lower_case <= 'z'; lower_case++) {
             table[lower_case] = CharType::Word;

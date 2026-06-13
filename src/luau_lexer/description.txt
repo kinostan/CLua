@@ -1,6 +1,0 @@
-A specialized lexer for LuaU code that is no longer half baked. It's going to provide
-better diagnostics for the user vs the older integrated lua lexer into the clua lexer, 
-it's also supposed to be easily integrated into CLua's parser though. The idea is that
-the clua parser delegates source and index of the source code and LuaU parser processes it 
-and then returns a list of variables that have been used and is supposed to stop processing on 
-luau block end still, although it will depend on errors.

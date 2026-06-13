@@ -1,28 +1,23 @@
-Create a unified lexer structure:
--It should be able to handle LuaU's grammar in the sense that LuaU's parser that's 
-generated will be able to fully construct a valid AST node tree to allow to reason 
-about these constructs inside of this language's boundaries.
+Objectives for tomorrow:
+-Review current lexer/parser pipeline
+    -Consider how ParserContext is going to interact with 
+    NodeManager and if the current system could support 
+    CLua and LuaU grammars in theory (write down implementation files to consume and emit ast trees primarly).
+    -Review the error emittion to fit into the requirements of general purpose parser
+-Improve that pipeline
+    -Record emitted nodes as in the current architecture it's simple enough by tracking index 
+    thanks to memory being incremented lineary without fragmentation, although in the future
+    I will have to keep track of list of memory regions that have been allocated between record and
+    set session.
 
-Lexer tokens:
+Long term point of the current objectives:
+    -Set up infrastructure to allow to be able to generate
+    parser code for multiple languages which are like LuaU or CLua
+    -This in turn allows to write one simple shared parser builder
+    which based on that allows to emit multiple language parsers 
+    within one multilanguage grammar expression tree.
 
-enum Token : u8
-{
-    End        = 0,    // Null termination
-    Word    ,        // Token starts with a character
-    Number    ,        // Token starts with a digit
-    Operator,        // Ascii range operator symbol
-
-    whitespace    , 
-    NewLine     ,
-    //Comment 
-    comment does not stick well with the idea of unilexer
-    because it's a language dependent construct which is also complex.
-
-    Invalid            //Anything that couldn't be recognized
-};
-
-
-
--Because of that the get methods for token values sadly must be externalized which 
-maybe slightly slower (unless external functions are inlined and static then it won't 
-matter almost at all, because the cache is still fresh)
+Trade offs:
+    -Loss of specialization (slightly worse performance potentiallyc)
+    -Loss of explicitiness in NodeType 
+    (It's no longer a unified enum and now it's type is an implicit by being an unsigned integer)

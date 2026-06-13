@@ -3,7 +3,7 @@
 #include <common/base.hpp>
 #include <debugger/debugger.hpp>
 
-namespace CLuaNodes { 
+namespace AST { 
     enum class NodeHandleTag : Common::uint8 {
         Valid     = 0b00, 
         Reserved  = 0b01, 

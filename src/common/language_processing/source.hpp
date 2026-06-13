@@ -1,10 +1,9 @@
 #pragma once
 
 #include <common/base.hpp>
+#include <common/language_processing/tokens.hpp>
 
 #include <debugger/debugger.hpp>
-#include <common/clua/symbol_classifier.hpp>
-#include <common/clua/keyword_classifier.hpp>
 
 #include <vector>
 #include <type_traits>
@@ -33,8 +32,11 @@ namespace Common {
             );
         };
 
-        std::string_view slice_string(Common::uint64 string_index, Common::uint64 string_length)
+        std::string_view slice_string(Util::Lexer::TokenSpan& span)
         {
+            auto string_index = span.start.offset;
+            auto string_length = (span.end.offset + span.end.length) - string_index;
+            
             return std::string_view(
                 reinterpret_cast<char*>(source_buffer + string_index),
                 string_length

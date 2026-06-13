@@ -14,6 +14,7 @@ namespace Util::Lexer {
         Whitespace,  // \t, \r, ' '
         NewLine,     // \n explicit new line
         EndOfFile,   // \0 Null termination
+        UnicodeSequence, // char >= 128
         Error,       // Unrecognized states
         None         // Bug state (fallback for uninitialized parser allocations)
     };
@@ -115,6 +116,7 @@ namespace Util::Lexer {
         TokenGeneric start;
         TokenGeneric end;
         
+        TokenSpan() = default;
         TokenSpan(TokenGeneric start,TokenGeneric end): start(start), end(end)
         {};
     };
