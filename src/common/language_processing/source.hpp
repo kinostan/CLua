@@ -74,12 +74,12 @@ namespace Common {
         inline bool can_consume_sentinel(Common::uint64 consume_distance = 1)
         {
             //source_size, because the additional character is a null terminator
-            return index + consume_distance - 1 < source_size + 1;
+            return index + consume_distance < source_size + 1;
         };
 
         inline bool can_consume(Common::uint64 consume_distance = 1)
         {
-            return index + consume_distance - 1 < source_size;
+            return index + consume_distance < source_size;
         };
 
         inline void consume(Common::uint64 consume_distance = 1)

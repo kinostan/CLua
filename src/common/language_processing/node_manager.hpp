@@ -52,5 +52,7 @@ namespace AST{
             )
             return reinterpret_cast<Node*>(allocator.memory_region_start + node_handle.node_value);
         };
+
+        //void set_linear_memory_offset()
     };
 };

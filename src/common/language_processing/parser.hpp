@@ -3,6 +3,7 @@
 #include <common/base.hpp>
 
 #include <common/language_processing/node_manager.hpp>
+#include <common/language_processing/node_handle.hpp>
 #include <common/language_processing/lexer.hpp>
 
 #include <iostream>
@@ -58,14 +59,28 @@ namespace Util::Parser {
         inline bool has_reached_end() const { return has_reached_eof; };
         inline Util::Lexer::Lexer& get_lexer() { return lexer; }
 
-        inline TokenGeneric get_next_token()
+        inline void advance_token()
         {
-            return lexer.process_next_token();
+            PAssert(
+                current_token.offset >= lexer.get_lexer_context().source.index 
+                && current_token.token_type != TokenType::None,
+                "assertion failed as the parser tried to advance token witout seeing that next token first"
+            );
+            lexer.commit_token_window(current_token);
         };
 
-        inline TokenGeneric see_current_token() const
+        inline TokenGeneric peek_next_token()
         {
-            PAssert(current_token.token_type != TokenType::None, "Queried current token context before setup initialization.");
+            current_token = lexer.peek_next_token();
+            return current_token;
+        };
+
+        inline TokenGeneric see_current_token()
+        {
+            PAssert(
+                current_token.token_type != TokenType::None,
+                "assertion failed because token_type of current_token is invalid (token_type == None)"
+            );          
             return current_token;
         };
 
@@ -90,10 +105,26 @@ namespace Util::Parser {
             lexer.set_cursor(parser_state.lexer_state);
         };
 
-        size_t record_error_state() { return error_list.size(); }
-        void set_error_state(size_t target_error_state) { error_list.resize(target_error_state); };
-        
-        void emit_error(const ParserError& parser_error) { error_list.push_back(parser_error); };
+        NodeHandle emit_error(const NodeHandle& error_node) { 
+            auto error_id = error_list.size();
+            auto error_handle = NodeHandle(
+                AST::NodeHandleTag::Error,
+                error_id
+            );
+
+
+            error_list.push_back(error_node); 
+            return error_handle;
+        };
+
+        private:
+        size_t record_error_state() { 
+            return error_list.size(); 
+        }
+
+        void set_error_state(size_t target_error_state) { 
+            error_list.resize(target_error_state); 
+        };
     };
 
     class IParser {

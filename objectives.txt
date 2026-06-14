@@ -3,6 +3,7 @@ Objectives for tomorrow:
     -Consider how ParserContext is going to interact with 
     NodeManager and if the current system could support 
     CLua and LuaU grammars in theory (write down implementation files to consume and emit ast trees primarly).
+        
     -Review the error emittion to fit into the requirements of general purpose parser
 -Improve that pipeline
     -Record emitted nodes as in the current architecture it's simple enough by tracking index 
