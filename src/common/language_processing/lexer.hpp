@@ -97,16 +97,21 @@ namespace Util::Lexer {
 
                 i++;
             } while(word[i] != '\0');
+
+            if (source.can_peek(i))
+            {
+                auto next_char_type = get_char_type_from_char(source.peek(i));
+                if (next_char_type == CharType::Word)
+                {
+                    return false;
+                };
+            };
             
             return true;
         };
 
         bool match_symbols(unsigned char* symbols)
         {
-            /*
-            
-            */
-
             LAssert(
                 //Are symbol characters valid
                 [&symbols](){
@@ -141,6 +146,15 @@ namespace Util::Lexer {
 
                 i++;
             } while(symbols[i] != '\0');
+
+            if (source.can_peek(i))
+            {
+                auto next_char_type = get_char_type_from_char(source.peek(i));
+                if (next_char_type == CharType::Symbol)
+                {
+                    return false;
+                };
+            };
             
             return true;
         };
@@ -290,6 +304,16 @@ namespace Util::Lexer {
                 .cursor_index = token.offset + token.length,
                 .current_error = ErrorCode::None
             });
+        };
+
+        inline bool match_word(unsigned char* word)
+        {
+            return lexer_context.match_word(word);
+        };
+
+        inline bool match_symbols(unsigned char* symbols)
+        {
+            return lexer_context.match_symbols(symbols);
         };
         
         LexerContext& get_lexer_context()

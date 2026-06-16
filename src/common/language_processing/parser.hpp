@@ -58,6 +58,13 @@ namespace Util::Parser {
 
         inline bool has_reached_end() const { return has_reached_eof; };
         inline Util::Lexer::Lexer& get_lexer() { return lexer; }
+    
+        inline bool match_word(unsigned char* word) {
+            return lexer.match_word(word);
+        };
+        inline bool match_symbols(unsigned char* symbols) {
+            return lexer.match_symbols(symbols);
+        };
 
         inline void advance_token()
         {
@@ -111,7 +118,6 @@ namespace Util::Parser {
                 AST::NodeHandleTag::Error,
                 error_id
             );
-
 
             error_list.push_back(error_node); 
             return error_handle;
