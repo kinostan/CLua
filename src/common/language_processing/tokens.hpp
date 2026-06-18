@@ -80,6 +80,11 @@ namespace Util::Lexer {
     };  
 
     struct TokenGeneric : TokenBase {
+        TokenGeneric ()
+        {
+            token_type = TokenType::None;
+        };
+
         template <typename T>
         requires std::derived_from<T, TokenBase>
         T& as() {

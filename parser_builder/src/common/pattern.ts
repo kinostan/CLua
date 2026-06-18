@@ -1,6 +1,6 @@
 import { ErrorType } from "./parser_error";
 
-export type PatternYieldType = "NodeHandle" | "WordToken" | "NumericToken" | "SymbolToken" | "WhitespaceToken" | "NewLineToken" | "None" 
+export type PatternYieldType = "NodeHandle" | "TokenSpan" | "WordToken" | "NumericToken" | "SymbolToken" | "WhitespaceToken" | "NewLineToken" | "None" 
 
 export type PatternType = BasePattern | Pattern;
 
@@ -273,7 +273,7 @@ export class TokenSpanPattern extends BasePattern {
     }
 
     public override get_yield_type(): PatternYieldType {
-        return "NodeHandle";
+        return "TokenSpan";
     }
 
     public override get_children(): Array<PatternType> {
@@ -281,22 +281,22 @@ export class TokenSpanPattern extends BasePattern {
     }
 }
 
-/**
- * Consumes all tokens until any of the exclude_patterns are matched.
- * Important: Per architectural rule, it MUST consume the matching exclude_pattern upon success.
-*/
 export class InvertedPattern extends PrimitivePattern {
-    public exclude_patterns: Array<BasePattern> = new Array<BasePattern>();
+    public terminators: Array<BasePattern> = new Array<BasePattern>();
+    public interrput_patterns: Array<BasePattern> = new Array<BasePattern>();
     public node_id: number = -1;
 
-    constructor(node_id: number) {
+    constructor() {
         super();
-        this.node_id = node_id;
-        this.set_pattern_name(`inverted_node_${node_id}`);
     }
 
-    public insert_exclude_pattern(pattern: BasePattern): this {
-        this.exclude_patterns.push(pattern);
+    public insert_terminator(pattern: BasePattern): this {
+        this.terminators.push(pattern);
+        return this;
+    }
+
+    public insert_whitelist_pattern(pattern: BasePattern): this {
+        this.interrput_patterns.push(pattern);
         return this;
     }
 
@@ -304,11 +304,16 @@ export class InvertedPattern extends PrimitivePattern {
         return "NodeHandle"; 
     }
 
+    // Children are both your terminators and your whitelisted elements
     get_children(): Array<PatternType> {
-        return this.exclude_patterns;
+        return [...this.terminators, ...this.interrput_patterns];
     }
-}
 
+    yields_node(node_id: number): this {
+        this.node_id = node_id;
+        return this;
+    };
+}
 /**
  * State Variables: Capture the repetition count of a pattern match.
  * Used for LuaU Long Strings/Comments [===[ ... ]===] where the child 
@@ -331,8 +336,8 @@ export class CaptureLengthPattern extends PrimitivePattern {
     }
 }
 
-/**
-    * State Variables: Match a pattern repetition count previously captured.
+/*
+* State Variables: Match a pattern repetition count previously captured.
 */
 export class MatchContextLengthPattern extends PrimitivePattern {
     constructor(

@@ -24,6 +24,37 @@ namespace Util::Parser {
         Util::Lexer::LexerState lexer_state;
     };
 
+    
+    struct ASTResponse {
+        NodeHandle root;
+        NodeHandle returned_error;
+        TokenSpan error_recovery_span;
+    };
+
+    struct ErrorRecoveryContext {
+        TokenGeneric start;
+        TokenGeneric end;
+
+        void start_record(TokenGeneric first_token)
+        {
+            start = first_token;
+        };
+
+        void end_recording(TokenGeneric last_token)
+        {
+            end = last_token;
+        };
+
+        TokenSpan get_token_span()
+        {
+            PAssert(
+                start.token_type != TokenType::None && end.token_type != TokenType::None,
+                "In order for this function to work you must define boundaries of that error recovery function"
+            );
+            return TokenSpan(start,end);
+        };
+    };
+
     class ParserContext {
     private:
         bool has_reached_eof = false;
@@ -34,6 +65,7 @@ namespace Util::Parser {
         TokenGeneric current_token;
         std::vector<NodeHandle> error_list;
 
+        ErrorRecoveryContext error_recovery_context; 
     public:
         ParserContext(Common::Source& source) : 
             lexer(source), 
@@ -137,5 +169,15 @@ namespace Util::Parser {
     public:
         virtual ~IParser() = default;
         virtual NodeHandle generate_AST() = 0;
+        
+        ASTResponse generate_AST_with_embedding(){
+            PAssert(
+                generate_AST != nullptr,
+                "generate_AST function is undefined!"
+            )
+
+            auto root = generate_AST();
+            
+        };
     };
 }

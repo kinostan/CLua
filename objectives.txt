@@ -1,24 +1,15 @@
 Objectives for tomorrow:
--Review current lexer/parser pipeline
-    -Consider how ParserContext is going to interact with 
-    NodeManager and if the current system could support 
-    CLua and LuaU grammars in theory (write down implementation files to consume and emit ast trees primarly).
-        
-    -Review the error emittion to fit into the requirements of general purpose parser
--Improve that pipeline
-    -Record emitted nodes as in the current architecture it's simple enough by tracking index 
-    thanks to memory being incremented lineary without fragmentation, although in the future
-    I will have to keep track of list of memory regions that have been allocated between record and
-    set session.
+Write parser code that would be generated from the pattern in the most base form.
+Pattern -> Emitted Code
+Then based on that define IR blocks (distinguish high level IR and low level IR).
+High level IR allows to reason how node handle is bound with variables which are created in the result of certain pattern.
 
-Long term point of the current objectives:
-    -Set up infrastructure to allow to be able to generate
-    parser code for multiple languages which are like LuaU or CLua
-    -This in turn allows to write one simple shared parser builder
-    which based on that allows to emit multiple language parsers 
-    within one multilanguage grammar expression tree.
+On top of that parser needs a method which returns upon recovering from error the NodeHandle and TokenSpan, where TokenSpan 
+contains information how long it took to recover from error. This token span is error token exclusive 
+(excludes error token which initiated the recovery it). (That's because I am using a new method for error recovery to determine which parsed language is out of error state the fastest)
 
-Trade offs:
-    -Loss of specialization (slightly worse performance potentiallyc)
-    -Loss of explicitiness in NodeType 
-    (It's no longer a unified enum and now it's type is an implicit by being an unsigned integer)
+Every pattern implicitly that is created will have whitespace optionally ahead of itself unless explicitly disabled. They in most cases
+won't be anything meaningful, but the rule for them being expected can be switched off with .ws() method call that is inside of primitive pattern.
+
+Task of high IR is to explicitly handle whitespace 
+(emit from Pattern tokens explicitly the whitespace and create some kind of relationship with patterns)
