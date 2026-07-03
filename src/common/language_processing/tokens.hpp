@@ -4,7 +4,7 @@
 
 #include <debugger/debugger.hpp>
 
-namespace Util::Lexer {
+namespace Common::Lexer {
     using namespace LexerDebug;
 
     enum class TokenType : Common::uint8 {

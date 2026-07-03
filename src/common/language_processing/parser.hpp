@@ -9,19 +9,20 @@
 #include <iostream>
 #include <vector>
 
-namespace Util::Parser {
+namespace Common::Parser {
 
     using NodeHandle = AST::NodeHandle;
     using BaseNode = AST::BaseNode;
 
-    using TokenGeneric = Util::Lexer::TokenGeneric;
-    using TokenSpan = Util::Lexer::TokenSpan;
-    using TokenType = Util::Lexer::TokenType;
+    using TokenGeneric = Common::Lexer::TokenGeneric;
+    using TokenSpan = Common::Lexer::TokenSpan;
+    using TokenType = Common::Lexer::TokenType;
 
     struct ParserState {
         bool has_reached_eof = false;     
         TokenGeneric current_token; 
-        Util::Lexer::LexerState lexer_state;
+        Common::Lexer::LexerState lexer_state;
+        Common::uint64 linear_memory_offset;
     };
 
     
@@ -59,7 +60,7 @@ namespace Util::Parser {
     private:
         bool has_reached_eof = false;
 
-        Util::Lexer::Lexer lexer;
+        Common::Lexer::Lexer lexer;
         AST::NodeManager node_manager;
         
         TokenGeneric current_token;
@@ -89,7 +90,7 @@ namespace Util::Parser {
         }
 
         inline bool has_reached_end() const { return has_reached_eof; };
-        inline Util::Lexer::Lexer& get_lexer() { return lexer; }
+        inline Common::Lexer::Lexer& get_lexer() { return lexer; }
     
         inline bool match_word(unsigned char* word) {
             return lexer.match_word(word);
@@ -101,7 +102,7 @@ namespace Util::Parser {
         inline void advance_token()
         {
             PAssert(
-                current_token.offset >= lexer.get_lexer_context().source.index 
+                current_token.offset >= lexer.get_lexer_context().source.peeked_char_index
                 && current_token.token_type != TokenType::None,
                 "assertion failed as the parser tried to advance token witout seeing that next token first"
             );
@@ -125,7 +126,10 @@ namespace Util::Parser {
 
         inline std::string_view get_token_text(TokenSpan& span)
         {
-            return lexer.get_lexer_context().source.slice_string(span);
+            return lexer.get_lexer_context().source.slice_string(
+                span.start.offset,
+                span.end.offset + span.end.length - span.start.offset 
+            );
         }
 
         ParserState record_cursor()
@@ -134,6 +138,8 @@ namespace Util::Parser {
             parser_state.current_token = current_token;
             parser_state.has_reached_eof = has_reached_eof;
             parser_state.lexer_state = lexer.record_cursor();
+            parser_state.linear_memory_offset = node_manager.get_linear_memory_offset();
+
             return parser_state;
         };
 
@@ -142,6 +148,7 @@ namespace Util::Parser {
             current_token = parser_state.current_token;
             has_reached_eof = parser_state.has_reached_eof;
             lexer.set_cursor(parser_state.lexer_state);
+            node_manager.set_linear_memory_offset(parser_state.linear_memory_offset);
         };
 
         NodeHandle emit_error(const NodeHandle& error_node) { 
@@ -167,17 +174,15 @@ namespace Util::Parser {
 
     class IParser {
     public:
-        virtual ~IParser() = default;
-        virtual NodeHandle generate_AST() = 0;
+        virtual NodeHandle generate_AST(ParserContext& parser_context) = 0;
         
-        ASTResponse generate_AST_with_embedding(){
+        ASTResponse generate_AST_with_embedding(ParserContext& parser_context){
             PAssert(
                 generate_AST != nullptr,
                 "generate_AST function is undefined!"
             )
 
-            auto root = generate_AST();
-            
+            auto root = generate_AST(parser_context); 
         };
     };
 }

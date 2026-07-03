@@ -9,7 +9,7 @@
 
 #include <debugger/debugger.hpp>
 
-namespace Util::Lexer {
+namespace Common::Lexer {
     using Source = Common::Source;
     using CharType = CharTable::CharType;
     using CharTable::get_char_type_from_char;
@@ -25,7 +25,7 @@ namespace Util::Lexer {
     };
 
     struct LexerState { 
-        Common::uint64 cursor_index = 0;    
+        Common::uint64 peek_index = 0;    
         Error current_error;
     };
 
@@ -61,7 +61,7 @@ namespace Util::Lexer {
         }
         
         public:
-        bool match_word(unsigned char* word)
+        bool match_word(unsigned char* word,Common::uint64 offset = 0)
         {
             LAssert(
                 //Are symbol characters valid
@@ -81,14 +81,14 @@ namespace Util::Lexer {
                 "Word is invalid, it contains non-word characters"
             );
 
-            size_t i = 0;
+            size_t i = offset;
             do {
                 if (!source.can_peek(i))
                 {
                     return false;
                 };
                 auto current_stream_char = source.peek(i);
-                auto current_word_char = word[i];
+                auto current_word_char = word[i - offset];
                 
                 if (current_stream_char != current_word_char)
                 {
@@ -96,7 +96,7 @@ namespace Util::Lexer {
                 };
 
                 i++;
-            } while(word[i] != '\0');
+            } while(word[i - offset] != '\0');
 
             if (source.can_peek(i))
             {
@@ -110,7 +110,7 @@ namespace Util::Lexer {
             return true;
         };
 
-        bool match_symbols(unsigned char* symbols)
+        bool match_symbols(unsigned char* symbols,Common::uint64 offset = 0)
         {
             LAssert(
                 //Are symbol characters valid
@@ -130,14 +130,14 @@ namespace Util::Lexer {
                 "Symbols stream is invalid, it contains non-symbol characters"
             )
 
-            size_t i = 0;
+            size_t i = offset;
             do {
                 if (!source.can_peek(i))
                 {
                     return false;
                 };
                 auto current_stream_char = source.peek(i);
-                auto current_word_char = symbols[i];
+                auto current_word_char = symbols[i - offset];
                 
                 if (current_stream_char != current_word_char)
                 {
@@ -145,7 +145,7 @@ namespace Util::Lexer {
                 };
 
                 i++;
-            } while(symbols[i] != '\0');
+            } while(symbols[i - offset] != '\0');
 
             if (source.can_peek(i))
             {
@@ -183,18 +183,18 @@ namespace Util::Lexer {
 
         inline void set_cursor(LexerState new_lexer_state)
         {
-            LAssert(
-                new_lexer_state.cursor_index < source.source_size,
-                "cursor_index exceeds legal value"
-            );
-
             lexer_state = new_lexer_state;
-            source.index = new_lexer_state.cursor_index;
+            source.peeked_char_index = new_lexer_state.peek_index;
+
+            LAssert(
+                source.can_peek_sentinel(),
+                "peek_index exceeds legal value"
+            );
         };
 
         inline LexerState record_cursor()
         {
-            lexer_state.cursor_index = source.index;
+            lexer_state.peek_index = source.peeked_char_index;
             return lexer_state;
         };
     };
@@ -213,59 +213,134 @@ namespace Util::Lexer {
         };
 
         private:
+        bool scan_unicode(Common::uint64& token_size)   
+        {
+            auto leader = lexer_context.source.see_current();
+
+            int expected_bytes = 0;
+
+            if (leader >= 0 && leader <= 127) {
+                expected_bytes = 1;
+            } else if (leader >= 194 && leader <= 223) {
+                expected_bytes = 2;
+            } else if (leader >= 224 && leader <= 239) {
+                expected_bytes = 3;
+            } else if (leader >= 240 && leader <= 244) {
+                expected_bytes = 4;
+            } else {
+                token_size = 1;
+                return false; 
+            }
+
+            token_size = 1;
+
+            for (int i = 1; i < expected_bytes; ++i) {
+                auto next_byte = lexer_context.source.peek(i);
+
+                if (next_byte >= 128 && next_byte <= 191) {
+                    token_size++;
+                } else {
+                    return false; 
+                }
+            }
+
+            return true; // Successfully scanned a valid UTF-8 sequence
+        }
 
         TokenGeneric scan_token_bounds()
         {
-            Common::uint64 start_offset = lexer_context.source.index;
-            Common::uint64 scan_index = 0;
+            Common::uint64 start_offset = lexer_context.source.peeked_char_index;
+            Common::uint64 token_size = 0;
 
-            auto current_char = lexer_context.source.peek(scan_index);
+            auto current_char = lexer_context.source.peek(token_size);
             auto char_type = CharTable::get_char_type_from_char(current_char);
             TokenType token_type = TokenType::None;
 
             switch (char_type)
             {
                 case CharTable::CharType::Word:
+                {
+                    lexer_context.original_token_type = TokenType::Word;
+                    lexer_context.ultimate_token_type = TokenType::Word;
+
+                    do {
+                        token_size++;
+                        char_type = CharTable::get_char_type_from_char(lexer_context.source.peek(token_size));
+                    } while (char_type == CharType::Word);
+
+                    token_type = TokenType::Word;
+                    break;
+                }
                 case CharTable::CharType::Numeric:
                 {
-                    while (char_type == CharType::Word || char_type == CharType::Numeric) {
-                        scan_index++;
-                        char_type = CharTable::get_char_type_from_char(lexer_context.source.peek(scan_index));
-                    }
-                    token_type = TokenType::Word;
+                    lexer_context.original_token_type = TokenType::Numeric;
+                    lexer_context.ultimate_token_type = TokenType::Numeric;
+
+                    do {
+                        token_size++;
+                        char_type = CharTable::get_char_type_from_char(lexer_context.source.peek(token_size));
+                    } while (char_type == CharType::Numeric);
+                    
+                    token_type = TokenType::Numeric;
                     break;
                 }
                 case CharTable::CharType::Symbol:
                 {
-                    scan_index = 1;
+                    lexer_context.original_token_type = TokenType::Symbol;
+                    lexer_context.ultimate_token_type = TokenType::Symbol;
+
+                    token_size = 1;
                     token_type = TokenType::Symbol;
                     break;
                 }
                 case CharTable::CharType::Whitespace:
                 {
-                    while (char_type == CharType::Whitespace) {
-                        scan_index++;
-                        char_type = CharTable::get_char_type_from_char(lexer_context.source.peek(scan_index));
-                    }
+                    lexer_context.original_token_type = TokenType::Whitespace;
+                    lexer_context.ultimate_token_type = TokenType::Whitespace;
+
+                    do {
+                        token_size++;
+                        char_type = CharTable::get_char_type_from_char(lexer_context.source.peek(token_size));
+                    } while (char_type == CharType::Whitespace);
+
                     token_type = TokenType::Whitespace;
                     break;
                 }
-                case CharTable::CharType::Newline:
+                case CharTable::CharType::NewLine:
                 {
-                    scan_index = 1;
+                    lexer_context.original_token_type = TokenType::NewLine;
+                    lexer_context.ultimate_token_type = TokenType::NewLine;
+
+                    token_size = 1;
                     token_type = TokenType::NewLine;
                     break;
                 }
                 case CharTable::CharType::EndOfFile:
                 {
-                    scan_index = 1; 
+                    lexer_context.original_token_type = TokenType::EndOfFile;
+                    lexer_context.ultimate_token_type = TokenType::EndOfFile;
+
+                    token_size = 1;
                     token_type = TokenType::EndOfFile;
                     break;
                 }
                 case CharTable::CharType::Unicode:
+                {
+                    lexer_context.original_token_type = TokenType::UnicodeSequence;
+                    lexer_context.ultimate_token_type = TokenType::UnicodeSequence;
+            
+                    auto is_byte_code_valid = scan_unicode(token_size);
+                    token_type = TokenType::UnicodeSequence;
+                    if (!is_byte_code_valid) [[unlikely]]
+                    {
+                        lexer_context.record_error(ErrorCode::UnrecognizedUnicodeSequence);
+                        scan_unicode(token_size);
+                    };
+                    break;
+                }
                 case CharTable::CharType::Unrecognized:
                 {
-                    scan_index = 1;
+                    token_size = 1;
                     lexer_context.record_error(ErrorCode::InvalidByte);
                     token_type = TokenType::Error;
                     break;
@@ -274,15 +349,16 @@ namespace Util::Lexer {
                     break;
             }
 
+            LAssert(
+                token_size > 0,
+                "Unexpected code behaviour, peeked token size is 0"
+            );
             LAssert(token_type != TokenType::None, "Lexer window calculation bypassed validation rules.");
-
-            lexer_context.original_token_type = token_type;
-            lexer_context.ultimate_token_type = token_type;
 
             TokenGeneric token;
             token.token_type = lexer_context.ultimate_token_type;
             token.offset = start_offset;
-            token.length = scan_index;
+            token.length = token_size;
 
             return token;
         };
@@ -301,7 +377,7 @@ namespace Util::Lexer {
         {
             lexer_context.set_cursor(
                 LexerState{
-                .cursor_index = token.offset + token.length,
+                .peek_index = token.offset + token.length,
                 .current_error = ErrorCode::None
             });
         };
@@ -326,6 +402,15 @@ namespace Util::Lexer {
             lexer_context.token_enter();
             return scan_token_bounds();
         };
+
+        TokenGeneric process_next_token()
+        {
+            lexer_context.token_enter();
+            TokenGeneric token = scan_token_bounds();
+
+            commit_token_window(token);
+            return token;
+        }
 
         const Error get_current_error()
         {

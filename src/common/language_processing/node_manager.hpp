@@ -53,6 +53,14 @@ namespace AST{
             return reinterpret_cast<Node*>(allocator.memory_region_start + node_handle.node_value);
         };
 
-        //void set_linear_memory_offset()
+        void set_linear_memory_offset(Common::uint64 new_offset)
+        {
+            allocator.memory_top = new_offset;
+        };
+
+        Common::uint64 get_linear_memory_offset()
+        {
+            return allocator.memory_top;
+        };
     };
 };
