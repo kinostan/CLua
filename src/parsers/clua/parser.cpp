@@ -87,6 +87,18 @@ NodeHandle root(ParserContext& parser_context)
     if (parser_context.match_word("if")) 
     {
         //guess was a partial success now
+
+        //here's a problem though with how to efficiently express that I want to look up 
+        //another token, but not lex it fully
+        //(helper function needs to be added to parser's API or make it fully integrated into lexer)
+        //(optionally the idea of lexer is fully removed and lexer gets fully integrated into parser)
+        //the result would be that parser owns source and manages it and there are not high level 
+        //abstractions like token types 
+        //(although they would exist in the sense that there are keywords and some special tokens like EOF)
+        //But there is no diambiguation between symbol or character. 
+        //The implication of such decision is that dismabiguation of patterns happens at per character level
+        //this allows high specialization, but also potentially large code emittions which are harder to debug
+
         parser_context.peek_next_token();
     };
 };
