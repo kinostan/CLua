@@ -92,11 +92,17 @@ namespace Common::Parser {
         inline bool has_reached_end() const { return has_reached_eof; };
         inline Common::Lexer::Lexer& get_lexer() { return lexer; }
     
-        inline bool match_word(unsigned char* word) {
-            return lexer.match_word(word);
+        inline bool match_word(char* word,Common::uint64 offset = 0) {
+            return lexer.match_word( 
+                reinterpret_cast<unsigned char*>(word),
+                offset
+            );
         };
-        inline bool match_symbols(unsigned char* symbols) {
-            return lexer.match_symbols(symbols);
+        inline bool match_symbols(char* symbols,Common::uint64 offset = 0) {
+            return lexer.match_symbols(
+                reinterpret_cast<unsigned char*>(symbols),
+                offset
+            );
         };
 
         inline void advance_token()

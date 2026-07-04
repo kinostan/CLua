@@ -39,6 +39,11 @@ namespace AST {
         {
             return "Node Handle Instance";
         };
+
+        inline bool is_error()
+        {
+            return node_tag == NodeHandleTag::Error;
+        };
     };
 
     const NodeHandle InvalidNode = NodeHandle(

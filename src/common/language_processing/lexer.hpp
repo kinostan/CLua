@@ -382,14 +382,14 @@ namespace Common::Lexer {
             });
         };
 
-        inline bool match_word(unsigned char* word)
+        inline bool match_word(unsigned char* word,Common::uint64 offset = 0)
         {
-            return lexer_context.match_word(word);
+            return lexer_context.match_word(word,offset);
         };
 
-        inline bool match_symbols(unsigned char* symbols)
+        inline bool match_symbols(unsigned char* symbols,Common::uint64 offset = 0)
         {
-            return lexer_context.match_symbols(symbols);
+            return lexer_context.match_symbols(symbols,offset);
         };
         
         LexerContext& get_lexer_context()
