@@ -1,10 +1,10 @@
-import {Pattern, PatternType} from "#common/pattern";
+import {Pattern as P} from "#common/pattern";
 
 export class Field {
     identifier: string;
-    field_pattern: PatternType;
+    field_pattern: P.PatternType;
     
-    constructor(identifier: string,field_pattern: PatternType)
+    constructor(identifier: string,field_pattern: P.PatternType)
     {
         this.identifier = identifier;
         this.field_pattern = field_pattern;

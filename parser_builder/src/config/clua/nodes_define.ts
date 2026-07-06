@@ -1,8 +1,8 @@
 // config/nodes_define.ts
 import { NodeID } from "./nodes_declare";
-import { NodeDefinition, Field } from "#root/common/node";
-import * as P from "#common/pattern";
-import * as LangDefinition from "./patterns"
+import { NodeDefinition, Field } from "#root/common/ast/node";
+import { Pattern as P } from "#common/pattern";
+import * as LangDefinition from "./grammar"
 
 export const NodeRegistry = new Map<NodeID, NodeDefinition>();
 
