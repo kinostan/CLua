@@ -1,14 +1,20 @@
 #pragma once
 
+#include <common/language_processing/base.hpp>
 #include <common/base.hpp>
 
 #include <common/language_processing/node_handle.hpp>
-#include <common/language_processing/tokens.hpp>
 
 #include <debugger/debugger.hpp>
 
 namespace AST {
     using NodeType = Common::uint16;
+
+    enum class BaseTypes {
+        Invalid,
+        LinkedList,
+        TokenSpan
+    };
 
     NodeType Invalid = 0;
     NodeType UErrorNode = Invalid;
@@ -24,11 +30,26 @@ namespace AST {
         NodeType node_type = Invalid;
     };
 
+    //node_type = ... is not going to make an effect during initialization
+    //mainly because of how nodes are being created now
+    //that means that .node_type is not assigned automatically and it's only
+    //used here as a visual information for the user
+    class LinkedNodeList: public BaseNode{
+        NodeType node_type = static_cast<NodeType>(BaseTypes::LinkedList);
+        NodeHandle value;
+        NodeHandle next;
+    };
+
+    class TokenSpanNode: public BaseNode{
+        NodeType node_type = static_cast<NodeType>(BaseTypes::TokenSpan);
+        Common::TokenSpan token_span;
+    };
+
     class BaseErrorNode: public BaseNode {
-        Util::Lexer::TokenSpan error_span;
+        Common::TokenSpan error_span;
         ErrorCode error_code = ErrorCodes::None;
 
-        BaseErrorNode(Util::Lexer::TokenSpan error_span): error_span(error_span)
+        BaseErrorNode(Common::TokenSpan error_span): error_span(error_span)
         {
             node_type = UErrorNode;
         };

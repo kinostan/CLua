@@ -5,10 +5,10 @@
 
 namespace AST { 
     enum class NodeHandleTag : Common::uint8 {
-        Valid     = 0b00, 
-        Reserved  = 0b01, 
-        NoPattern = 0b10,
-        Error     = 0b11  
+        Valid     = 0b00,       //NodeHandle defined by a user
+        CompilerData  = 0b01,   //TokenSpan or LinkedNode list
+        NoPattern = 0b10,       //Explicit null return
+        Error     = 0b11        //Error code defined by user
     };
 
     struct NodeHandle {
@@ -25,11 +25,6 @@ namespace AST {
                 static_cast<unsigned int>(node_tag) < 4 && node_value <= (ULLONG_MAX >> 2) - 1,
                 "the field sizes can't be exceeded or sth" 
             );
-            Assert(
-                node_tag != NodeHandleTag::Reserved,
-                "invalid stat3e for node tag is being set"
-            );
-
         };
 
         NodeHandle& operator=(NodeHandle& node) = default;
@@ -45,15 +40,4 @@ namespace AST {
             return node_tag == NodeHandleTag::Error;
         };
     };
-
-    const NodeHandle InvalidNode = NodeHandle(
-        NodeHandleTag::Error,
-        (ULLONG_MAX >> 2) - 1
-    );
-
-    const NodeHandle NoPatternNode = NodeHandle(    
-        NodeHandleTag::NoPattern,
-        0
-    );
-
 };

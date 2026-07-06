@@ -1,15 +1,28 @@
-Objectives for tomorrow:
-Write parser code that would be generated from the pattern in the most base form.
-Pattern -> Emitted Code
-Then based on that define IR blocks (distinguish high level IR and low level IR).
-High level IR allows to reason how node handle is bound with variables which are created in the result of certain pattern.
-
-On top of that parser needs a method which returns upon recovering from error the NodeHandle and TokenSpan, where TokenSpan 
-contains information how long it took to recover from error. This token span is error token exclusive 
-(excludes error token which initiated the recovery it). (That's because I am using a new method for error recovery to determine which parsed language is out of error state the fastest)
-
-Every pattern implicitly that is created will have whitespace optionally ahead of itself unless explicitly disabled. They in most cases
-won't be anything meaningful, but the rule for them being expected can be switched off with .ws() method call that is inside of primitive pattern.
-
-Task of high IR is to explicitly handle whitespace 
-(emit from Pattern tokens explicitly the whitespace and create some kind of relationship with patterns)
+Has to be finished by 15th of July
+Work on multi-lang parser code generator.
+    -Finish the conversion of Lexer API into ScannerlessParser API
+        -API must allow to match a string of characters 
+        and advance conditionally and allows to read individual characters
+        -API allows to create nodes and writing directly in memory 
+        (API allows to reserve memory and then perform direct writes)
+        -Node fields are initialized by field by field when
+        memory region from the API is given 
+        (the code is generated so it doesn't matter)
+    -Define IR 
+        -IR must be defined from the example code
+            -Example code must be written based on examples of patterns
+                -Patterns and their expression set must be defined for the languages
+                that I will be using (CLua and LuaU)
+                    -LuaU needs a way to express long comments and strings
+                    otherwise the other features in CLua and LuaU can be easily expressed 
+                    in the parser.
+                -Patterns instead of inherently returning node type, they should be returning different 
+                values depending whether node return type is expected or not.                
+                -Node definition rules must be set to how patterns relate to fields
+                    -
+    -Reason about patterns and generate IR from pattern sets    
+        -I must extract keywords onto a list
+        -Define what a valid pattern is
+        -Link node fields with pattern expressions during emittion
+        -Patterns must express also error recovery patterns
+    -Validate IR & (optionally) optimize IR code   

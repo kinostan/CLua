@@ -1,17 +1,25 @@
 import { ErrorType } from "./parser_error";
 
-export type PatternYieldType = "NodeHandle" | "TokenSpan" | "WordToken" | "NumericToken" | "SymbolToken" | "WhitespaceToken" | "NewLineToken" | "None" 
+export enum PatternYieldType {
+    NodeHandle, 
+    TokenSpan,
+    Symbol,
+    None
+};
 
 export type PatternType = BasePattern | Pattern;
 
 export abstract class BasePattern {
     class_name: string;
+    yield_type: PatternYieldType = PatternYieldType.None;
 
     constructor() {
         this.class_name = this.constructor.name;
     }
 
-    abstract get_yield_type(): PatternYieldType;
+    get_yield_type(): PatternYieldType {
+        return this.yield_type;
+    };
     abstract get_children(): Array<PatternType>;
 
     set_pattern_name(pattern_name: string): this
@@ -60,25 +68,21 @@ export class Pattern extends PrimitivePattern {
         return this;
     };
 
-    get_yield_type(): PatternYieldType {
-        return "NodeHandle";
-    }
-
     get_children(): Array<PatternType> {
         return this.pattern_list.slice();
     }
 };
 
+//Sets a clear boundary between languages and implies 
+//that new keyword table is generated for the new language
 export class PatternSwitchParser extends PrimitivePattern {
     constructor(public readonly target_profile_id: number) {
         super();
     }
-
-    get_yield_type(): PatternYieldType {
-        return "None"; 
-    }
 };
 
+//Matches in IR which pattern is being expressed and 
+//handles multiple paths
 export class ChoicePattern extends Pattern {
     constructor() {
         super();
@@ -86,7 +90,7 @@ export class ChoicePattern extends Pattern {
 
     public override get_yield_type(): PatternYieldType {
         if (this.pattern_list.length <= 0) {
-            return "None";
+            return PatternYieldType.None;
         }
 
         const first_type = this.pattern_list[0]!.get_yield_type();
@@ -104,6 +108,9 @@ export class ChoicePattern extends Pattern {
     }
 }
 
+//Implicitly creates a new field for Node of a chain of nodes of the same type
+//Node should first insert a field with value using the expression
+//then in the next field empty QuantityPattern is inserted
 export class QuantityPattern extends PrimitivePattern {
     constructor(
         // The single pattern being quantified
@@ -126,7 +133,7 @@ export class QuantityPattern extends PrimitivePattern {
     public override get_yield_type(): PatternYieldType {
         // If it's explicitly bounded to 0 iterations, it yields nothing
         if (this.max === 0) {
-            return "None";
+            return PatternYieldType.None;
         }
 
         // If it can execute multiple times (max is -1 or greater than 1),
@@ -146,48 +153,23 @@ export class QuantityPattern extends PrimitivePattern {
     }
 }
 
-export class MatchKeywordToken extends PrimitivePattern {
-    constructor(expected_keyword: string) {
-        super();
-        /* 
-            I really should create a map to keep track of these pattern_names and keep 
-            the track of reference counts or something to ensure uniqueness of these keys
-            But the problem would be that I need to register then these patterns which is 
-            another set of expressions and complexity which I want to avoid (maybe it's a good choice).
-
-            Therefore I am going for simplicitly here and hope nobody ever using it
-            including me is going to set_pattern_name to a pattern as "keyword_[pattern_that_has_keyword]" 
-            because that would be stupid. Same goes for all other primitives.
-        */
-        this.set_pattern_name(`keyword_${expected_keyword}`);
-    }
-
-    get_yield_type(): PatternYieldType { 
-        return "WordToken"; 
-    }
-}
-
-export class MatchIdentifierToken extends PrimitivePattern {
+//Implicit TokenSpan
+export class MatchCharacterSet extends PrimitivePattern {
     constructor() {
         super();
     }
 
     get_yield_type(): PatternYieldType { 
-        return "WordToken"; 
+        return PatternYieldType.TokenSpan; 
     }
 }
 
-export class MatchNumericToken extends PrimitivePattern {
-    constructor() {
-         super();
-    }
+//Symbol type
+/* 
+    Symbol is nothing else than keywords and operators being combined together into 1 group 
+*/
 
-    get_yield_type(): PatternYieldType { 
-        return "NumericToken"; 
-    }
-}
-
-export class MatchSymbolToken extends PrimitivePattern {
+export class MatchSymbolPattern extends PrimitivePattern {
     expected_symbol: string = "";
     symbol_label: string = "";
 
@@ -196,91 +178,32 @@ export class MatchSymbolToken extends PrimitivePattern {
         this.expected_symbol = expected_symbol;
         this.symbol_label = symbol_label;
 
-        /* 
-        It's a bit tricky one maybe I should turn symbol stream into
-        "wordified" symbol stream to maintain the style that currently is in
-        common/clua/symbol_classifier.hpp 
-
-        "{"++", SymbolKind::DoublePlus}, {"+=", SymbolKind::PlusEqual},
-        {"--", SymbolKind::DoubleMinus}, {"-=", SymbolKind::MinusEqual},
-        {"*=", SymbolKind::StarEqual}, {"/=", SymbolKind::SlashEqual},
-        {"%=", SymbolKind::PercentEqual}"
-        */
         const name_suffix = symbol_label ? `_${symbol_label}` : "";
         this.set_pattern_name(`symbol_${expected_symbol}${name_suffix}`);
     }
 
     get_yield_type(): PatternYieldType { 
-        return "SymbolToken" 
+        return PatternYieldType.Symbol 
     }
 }
 
-export class MatchWhitespaceToken extends PrimitivePattern {
-    constructor() {
-        super();
-    }
+//Functionality of InvertedPattern
+//Error recovery patterns 
+//  -Consume terminators
+//Strings
+//  -Inverted pattern allows 
+//  expressing strings or even comments
 
-    get_yield_type(): PatternYieldType {
-        return "WhitespaceToken";
-    }
-}
-
-export class MatchNewLineToken extends PrimitivePattern {
-    constructor() {
-        super();
-    }
-
-    get_yield_type(): PatternYieldType {
-        return "NewLineToken";
-    }
-}
-
-/**
- * Extracts a symbol value from a pattern match.
- * This acts as a 'binding marker' for the yields_node() logic. It signals that
- * the parser should extract the symbol information from the immediate child
- * (depth=1) and map it to a non-NodeHandle field in the C++ AST node.
-*/
-export class ExtractSymbol extends BasePattern {
-    constructor(
-        public readonly child_pattern: BasePattern
-    ) {
-        super();
-        this.set_pattern_name(`extract_symbol`);
-    }
-
-    public override get_yield_type(): PatternYieldType {
-        return "SymbolToken";
-    }
-
-    public override get_children(): Array<PatternType> {
-        return [this.child_pattern];
-    }
-}
-
-/**
- * Captures the raw TokenSpan of the child pattern and wraps it in a NodeHandle.
- * Essential for Numeric Literals and other constructs where you want validation
- * but only need the raw text in the AST.
-*/
-export class TokenSpanPattern extends BasePattern {
-    constructor(
-        public readonly node_id: number, 
-        public readonly child_pattern: BasePattern
-    ) {
-        super();
-        this.set_pattern_name(`token_span_node_${node_id}`);
-    }
-
-    public override get_yield_type(): PatternYieldType {
-        return "TokenSpan";
-    }
-
-    public override get_children(): Array<PatternType> {
-        return [this.child_pattern];
-    }
-}
-
+//InvertedPattern yield types and implications
+//When yields node
+//It also creates implicitly a linked luist node type and requires the InvertedPattern
+//to have a unique name to itself
+//InvertedPattern must hold all detected interrupt_patterns in a linked list
+//When yields symbol
+//Invalid
+//When yields token span
+//Check if interrupt_patterns emit nodes/symbols to warn user
+//if data is being lost
 export class InvertedPattern extends PrimitivePattern {
     public terminators: Array<BasePattern> = new Array<BasePattern>();
     public interrput_patterns: Array<BasePattern> = new Array<BasePattern>();
@@ -301,7 +224,7 @@ export class InvertedPattern extends PrimitivePattern {
     }
 
     public override get_yield_type(): PatternYieldType { 
-        return "NodeHandle"; 
+        return PatternYieldType.TokenSpan; 
     }
 
     // Children are both your terminators and your whitelisted elements
@@ -314,6 +237,7 @@ export class InvertedPattern extends PrimitivePattern {
         return this;
     };
 }
+
 /**
  * State Variables: Capture the repetition count of a pattern match.
  * Used for LuaU Long Strings/Comments [===[ ... ]===] where the child 
@@ -325,10 +249,6 @@ export class CaptureLengthPattern extends PrimitivePattern {
         public readonly context_key: LengthContext
     ) {
         super();
-    }
-
-    public override get_yield_type(): PatternYieldType {
-        return "None"; 
     }
 
     public override get_children(): Array<PatternType> {
@@ -345,10 +265,6 @@ export class MatchContextLengthPattern extends PrimitivePattern {
         public readonly context_key: LengthContext
     ) {
         super();
-    }
-
-    public override get_yield_type(): PatternYieldType {
-        return "None"; 
     }
 
     public override get_children(): Array<PatternType> {

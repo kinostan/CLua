@@ -21,6 +21,13 @@ namespace Common {
         LinearAllocator() = default;
         LinearAllocator(Common::uint64 initial_size)
         {
+            if (initial_size == 0)
+            {
+                memory_region_start = nullptr;
+                memory_region_size = 0;
+                return;
+            };
+
             memory_region_start = new Byte[initial_size];
             memory_top = 0;
             if (memory_region_start == nullptr)

@@ -21,13 +21,13 @@ namespace AST{
         allocator(Common::LinearAllocator(initial_allocated_memory_region))
         {};
 
-        template<typename Node, typename... Args>
-        requires (std::derived_from<Node,BaseNode>) && std::is_constructible_v<Node, Args...>
-        inline NodeHandle create_node(Args&&... args)
+        template<typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        inline NodeHandle create_node()
         {
             auto offset = allocator.allocate(sizeof(Node));
             auto node = NodeHandle(NodeHandleTag::Valid,offset);
-            new (get_node_pointer_from_handle<Node>(node)) Node(std::forward<Args>(args)...);
+            new (get_node_pointer_from_handle<Node>(node)) Node();
             return node;
         };
 
@@ -42,7 +42,7 @@ namespace AST{
             return *(reinterpret_cast<Node*>(allocator.memory_region_start + node_handle.node_value));
         };
 
-        template<typename Node, typename... Args>
+        template<typename Node>
         requires (std::derived_from<Node,BaseNode>) 
         inline Node* get_node_pointer_from_handle(NodeHandle node_handle)
         {

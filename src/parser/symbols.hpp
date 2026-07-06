@@ -1,5 +1,5 @@
 namespace CLua {
-    enum class Keyword {
+    enum class Symbol {
         If,
         Unknown
     };
