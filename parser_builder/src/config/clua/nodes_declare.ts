@@ -1,8 +1,6 @@
 export enum NodeID {
-    InvalidNode = 0,
-    LocalAssignNode,
-    ExpressionNode,
-    LiteralNode,
-    BinaryOpNode,
-    GroupExpressionNode
+    NONE,
+    AST_IDENTIFIER,
+    AST_LOCAL_DECL,
+    AST_FUNC_CALL
 }

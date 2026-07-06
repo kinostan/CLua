@@ -10,7 +10,7 @@
 namespace AST {
     using NodeType = Common::uint16;
 
-    enum class BaseTypes {
+    enum struct BaseTypes {
         Invalid,
         LinkedList,
         TokenSpan
@@ -25,7 +25,7 @@ namespace AST {
         ErrorCode None = 0;
     };
 
-    class BaseNode {
+    struct BaseNode {
         public:
         NodeType node_type = Invalid;
     };
@@ -34,18 +34,18 @@ namespace AST {
     //mainly because of how nodes are being created now
     //that means that .node_type is not assigned automatically and it's only
     //used here as a visual information for the user
-    class LinkedNodeList: public BaseNode{
+    struct LinkedNodeList: public BaseNode{
         NodeType node_type = static_cast<NodeType>(BaseTypes::LinkedList);
         NodeHandle value;
         NodeHandle next;
     };
 
-    class TokenSpanNode: public BaseNode{
+    struct TokenSpanNode: public BaseNode{
         NodeType node_type = static_cast<NodeType>(BaseTypes::TokenSpan);
         Common::TokenSpan token_span;
     };
 
-    class BaseErrorNode: public BaseNode {
+    struct BaseErrorNode: public BaseNode {
         Common::TokenSpan error_span;
         ErrorCode error_code = ErrorCodes::None;
 

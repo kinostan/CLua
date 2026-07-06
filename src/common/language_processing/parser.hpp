@@ -58,6 +58,11 @@ namespace Common {
             return true;
         };
 
+        inline bool can_consume(Common::uint64 consume_size = 1)
+        {
+            return source->can_consume_sentinel(consume_size);
+        };
+
         inline void consume(Common::uint64 size = 1)
         {
             source->consume(size);
@@ -102,10 +107,17 @@ namespace Common {
 
         template <typename Node>
         requires (std::derived_from<Node,BaseNode>)
-        NodeHandle reserve_node(Node)
+        NodeHandle reserve_node()
         {
             return node_manager.create_node<Node>();
         }
+    
+        template <typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        Node& get_node_reference(NodeHandle node)
+        {
+            return node_manager.get_node_from_handle(node);
+        };
     };
 
     class Parser
