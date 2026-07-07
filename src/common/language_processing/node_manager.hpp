@@ -22,7 +22,7 @@ namespace AST{
         {};
 
         template<typename Node>
-        requires (std::derived_from<Node,BaseNode>)
+        
         inline NodeHandle create_node()
         {
             auto offset = allocator.allocate(sizeof(Node));

@@ -5,6 +5,7 @@
 
 #include "nodes.hpp"
 #include "symbols.hpp"
+#include "error_codes.hpp"
 
 /* 
  Parser per language has a very specific set of 

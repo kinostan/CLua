@@ -48,6 +48,7 @@ namespace AST {
     struct BaseErrorNode: public BaseNode {
         Common::TokenSpan error_span;
         ErrorCode error_code = ErrorCodes::None;
+        bool commited = false;
 
         BaseErrorNode(Common::TokenSpan error_span): error_span(error_span)
         {

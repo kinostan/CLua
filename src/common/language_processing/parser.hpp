@@ -36,8 +36,10 @@ namespace Common {
         {}
         
         public:
-        bool match_sequence(unsigned char* word,Common::uint64 offset = 0)
+        bool match_sequence(char* word,Common::uint64 offset = 0)
         {
+            unsigned char* _word = reinterpret_cast<unsigned char*>(word);
+
             size_t i = offset;
             do {
                 if (!source->can_peek(i))
@@ -45,7 +47,7 @@ namespace Common {
                     return false;
                 };
                 auto current_stream_char = source->peek(i);
-                auto current_word_char = word[i - offset];
+                auto current_word_char = _word[i - offset];
                 
                 if (current_stream_char != current_word_char)
                 {
@@ -53,7 +55,7 @@ namespace Common {
                 };
 
                 i++;
-            } while(word[i - offset] != '\0');
+            } while(_word[i - offset] != '\0');
 
             return true;
         };
@@ -67,6 +69,11 @@ namespace Common {
         {
             source->consume(size);
         };
+
+        inline auto peek(Common::uint64 offset = 0)
+        {
+            return source->peek(offset);
+        }
 
         inline auto see_current()
         {

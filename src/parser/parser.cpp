@@ -1,4 +1,5 @@
 #include <common/language_processing/base.hpp>
+#include <common/language_processing/node_base.hpp>
 #include <common/language_processing/node_handle.hpp>
 
 #include "parser.hpp"
@@ -7,66 +8,182 @@ using namespace AST;
 
 using ParserContext = Common::ParserContext;
 
+namespace CLua
+{
+    NodeHandle parse_GenericIdentifier(ParserContext& context)
+    {
+        auto current_char = context.see_current();
 
-NodeHandle parse_local_declaration_tail(Common::ParserContext& ctx, NodeHandle kw_handle);
-NodeHandle parse_function_call_tail(Common::ParserContext& ctx, NodeHandle name_handle);
+        auto start_index = context.source->peeked_char_index;
+        auto end_index = start_index;
+        auto is_commited = false; 
+        //this is set to true in pattern when there's no ambiguity between patterns
+        
+        auto is_valid = (current_char >= 'a' && current_char <= 'z') ||
+                        (current_char >= 'A' && current_char <= 'Z') || 
+                        current_char == '_';
 
-NodeHandle parse_statement_optimized(Common::ParserContext& ctx) {
-    auto backtrack_state = ctx.record_cursor();
-    uint64_t start_idx = ctx.source->peeked_char_index;
+        if (!is_valid)
+        {
+            auto error_node_handle = context.reserve_node<BaseErrorNode>();
+            auto& error_node = context.get_node_reference<BaseErrorNode>(error_node_handle);
 
-    // 1. Wspólna faza spekulatywna (czytamy ID raz)
-    if (!is_alpha_or_underscore(ctx.see_current())) return NoPatternNode;
-    
-    ctx.consume(1);
-    while (ctx.can_consume(1) && is_alnum_or_underscore(ctx.see_current())) ctx.consume(1);
-    
-    uint64_t end_idx = ctx.source->peeked_char_index;
-    uint64_t length = end_idx - start_idx;
+            error_node.node_type = static_cast<AST::NodeType>(BaseTypes::Invalid);
+            error_node.error_code = static_cast<AST::ErrorCode>(CLua::ErrorCode::ExpectedIdentifier); // Expected identifier error
+            error_node.error_span = Common::TokenSpan(0,0);
+            error_node.commited = is_commited;
 
-    // Tworzymy bazowy TokenSpan (rezerwacja w arenie)
-    NodeHandle first_id_handle = ctx.reserve_node<IdentifierNode>();
-    IdentifierNode& first_id = ctx.get_node_reference<IdentifierNode>(first_id_handle);
-    first_id.node_type = static_cast<NodeType>(NodeID::AST_IDENTIFIER);
-    first_id.start = start_idx;
-    first_id.end = end_idx;
+            return context.record_error(error_node_handle);
+        }
 
-    // Opcjonalne spacje
-    uint64_t spaces_after = 0;
-    while (ctx.can_consume(1) && ctx.see_current() == ' ') { ctx.consume(1); spaces_after++; }
+        context.consume(); 
+        
+        end_index = context.source->peeked_char_index;
+        is_commited = true; 
+        //is_commited can be only switched to true once and only to true
 
-    char current_char = ctx.see_current();
+        while (context.can_consume())
+        {
+            current_char = context.see_current();
 
-    // ==========================================================
-    // LEKKA DRABINKA ROZSTRZYGANIA (Brak Code Bloat)
-    // ==========================================================
-    
-    if (length == 5 && ctx.equals_string(first_id, "local") && spaces_after > 0 && current_char != '(') {
-        // Zamiast inliniować całe parsowanie deklaracji, skaczemy do delegata
-        goto label_call_local;
+            is_valid = (current_char >= 'a' && current_char <= 'z') ||
+                    (current_char >= 'A' && current_char <= 'Z') || 
+                    current_char == '_' || 
+                    (current_char >= '0' && current_char <= '9');
+
+            if (!is_valid)
+            {
+                break; 
+            }
+            
+            context.consume();
+            end_index = context.source->peeked_char_index;
+        }
+        
+        auto node_handle1 = context.reserve_node<Nodes::IdentifierNode>();
+        auto node_ref1 = context.get_node_reference<Nodes::IdentifierNode>(node_handle1);
+
+        node_ref1.node_type = static_cast<AST::NodeType>(CLua::NodeType::IdentifierNode);
+        node_ref1.span = Common::TokenSpan(start_index,end_index);
+
+        return node_handle1;
     }
 
-    if (current_char == '(') {
-        ctx.consume(1); // konsumujemy '('
-        goto label_call_func;
+    NodeHandle parse_StatementParser(ParserContext& context) 
+    {
+        /*
+        export const StatementParser = new P.ChoicePattern()
+            .insert_pattern(LocalDeclaration)
+            .insert_pattern(FunctionCall)
+            .set_pattern_name("StatementParser");
+
+            Strategy of choosing the most right error: (who consumed the furthest index)
+        */
+
+        auto backtrack_state = context.record_cursor();
+
+        auto pattern1 = parse_LocalDeclaration(context);
+
+        if (!pattern1.is_error())
+        {
+            return pattern1;
+        };
+
+        context.set_cursor(backtrack_state);
+
+        /*
+        export const FunctionCall = new P.Pattern()
+            .insert_pattern(GenericIdentifier)
+            .insert_pattern(OptionalWhitespace)
+            .insert_pattern(new P.MatchSymbolPattern("(", "OPEN_PAREN"))
+            .insert_pattern(OptionalWhitespace)
+            .insert_pattern(GenericIdentifier)
+            .insert_pattern(OptionalWhitespace)
+            .insert_pattern(new P.MatchSymbolPattern(")", "CLOSE_PAREN"))
+            .yields_node(NodeID.AST_FUNC_CALL) // ID: AST_FUNC_CALL
+            .set_pattern_name("FunctionCall");
+        */
+
+        auto pattern2 = parse_FunctionCall(context);
+
+        //generated by a naive algorithm
+        if (!pattern2.is_error())
+        {
+            return pattern2;
+        };
+
+        return pattern2; 
     }
+    /*Naive approach*/
+    NodeHandle parse_LocalDeclaration(ParserContext& context)
+    {
+        auto match_local = context.match_sequence("local");
 
-    // Jeśli to był po prostu wolny identyfikator (np. nazwa zmiennej w przypisaniu)
-    return first_id_handle;
+        auto start_index = context.source->peeked_char_index;
+        auto end_index = start_index;
+        auto is_commited = false; 
 
-    // ==========================================================
-    // ETYKIETY DELEGACJI
-    // ==========================================================
+        if(!match_local) 
+        {
+            auto error_node_handle = context.reserve_node<BaseErrorNode>();
+            auto& error_node = context.get_node_reference<BaseErrorNode>(error_node_handle);
 
-label_call_local:
-    // Wywołujemy kompletną, wydzieloną funkcję. Przekazujemy stan.
-    // L1i cache uwielbia to, bo ta funkcja jest zwarta!
-    return parse_local_declaration_tail(ctx, first_id_handle);
+            error_node.node_type = static_cast<AST::NodeType>(BaseTypes::Invalid);
+            error_node.error_code = static_cast<AST::ErrorCode>(CLua::ErrorCode::ExpectedKeyword);
+            error_node.error_span = Common::TokenSpan(0,0);
 
-label_call_func:
-    // Reużywalna funkcja obsługująca parsowanie argumentów i zamykanie nawiasów
-    return parse_function_call_tail(ctx, first_id_handle);
-}
+            return context.record_error(error_node_handle);
+        }
+        context.consume(5); 
+        end_index = context.source->peeked_char_index - 1;
+        
+        int min_count = 1;
+        while (context.can_consume())
+        {
+            auto is_space = context.see_current() == ' ';
+            if (!is_space)
+            {
+                break;
+            }
+
+            min_count -= 1;
+
+            context.consume();
+            end_index = context.source->peeked_char_index - 1;
+        }
+        
+        if (min_count > 0)
+        {
+            auto error_node_handle = context.reserve_node<BaseErrorNode>();
+            auto& error_node = context.get_node_reference<BaseErrorNode>(error_node_handle);
+
+            error_node.node_type = static_cast<AST::NodeType>(BaseTypes::Invalid);
+            error_node.error_code = 1; // Expected whitespace
+            error_node.error_span = Common::TokenSpan(0,0);
+
+            return context.record_error(error_node_handle);
+        }
+
+        is_commited = true; //"local " is unique only to LocalDeclaration pattern
+
+        auto pattern1 = parse_GenericIdentifier(context);
+
+        if (pattern1.is_error())
+        {
+            return pattern1; 
+        }
+
+        end_index = context.source->peeked_char_index - 1;
+
+        auto node_handle1 = context.reserve_node<Nodes::LocalDeclNode>();
+        auto node_ref1 = context.get_node_reference<Nodes::LocalDeclNode>(node_handle1);
+
+        node_ref1.node_type = static_cast<AST::NodeType>(CLua::NodeType::LocalDeclNode);
+        node_ref1.identifier = pattern1;
+
+        return node_handle1;
+    }
+};
 
 NodeHandle CLua::Parser::generate_AST(ParserContext& context)
 {

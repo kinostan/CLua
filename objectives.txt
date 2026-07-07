@@ -2,12 +2,15 @@ Has to be finished by 15th of July
 Work on multi-lang parser code generator.
     -Finish the conversion of Lexer API into ScannerlessParser API
         -API must allow to match a string of characters 
-        and advance conditionally and allows to read individual characters
+        and advance conditionally and allows to read individual characters from the whole source
+    
         -API allows to create nodes and writing directly in memory 
         (API allows to reserve memory and then perform direct writes)
+    
         -Node fields are initialized by field by field when
         memory region from the API is given 
         (the code is generated so it doesn't matter)
+
     -Define IR 
         -IR must be defined from the example code
             -Example code must be written based on examples of patterns

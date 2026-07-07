@@ -7,7 +7,7 @@ namespace Common{
         Common::uint64 start;
         Common::uint64 end;
 
-        TokenSpan(): start(start), end(end)
+        TokenSpan(Common::uint64 start,Common::uint64 end): start(start), end(end)
         {};
     };
 }
