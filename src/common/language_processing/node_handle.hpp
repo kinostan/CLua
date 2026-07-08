@@ -5,10 +5,10 @@
 
 namespace AST { 
     enum class NodeHandleTag : Common::uint8 {
-        Valid     = 0b00,       //NodeHandle defined by a user
+        Valid         = 0b00,   //NodeHandle defined by a user
         CompilerData  = 0b01,   //TokenSpan or LinkedNode list
-        NoPattern = 0b10,       //Explicit null return
-        Error     = 0b11        //Error code defined by user
+        Error         = 0b10,   //Explicit null return
+        CommitedError = 0b11    //Error code defined by user
     };
 
     struct NodeHandle {
@@ -37,7 +37,24 @@ namespace AST {
 
         inline bool is_error()
         {
-            return node_tag == NodeHandleTag::Error;
+            return node_tag == NodeHandleTag::Error || node_tag == NodeHandleTag::CommitedError;
+        };
+
+        inline bool is_commited_error()
+        {
+            return node_tag == NodeHandleTag::CommitedError;
+        };
+
+        inline NodeHandle& commit()
+        {
+            Assert(
+                is_error(),
+                "Can't commit when node is not an error type"
+            );
+        
+            node_tag = NodeHandleTag::CommitedError;
+
+            return *this;
         };
     };
 };

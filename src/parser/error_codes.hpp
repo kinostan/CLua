@@ -3,6 +3,11 @@ namespace CLua {
         None,
         ExpectedKeyword,
         ExpectedIdentifier,
-        UnknownStatement
+        UnknownStatement,
+        ExpectedCloseParen,
+        ExpectedOpenParen,
+        ExpectedWhitespace,
+        ExpectedCommentStart,
+        ExpectedNewline,
     };
 };

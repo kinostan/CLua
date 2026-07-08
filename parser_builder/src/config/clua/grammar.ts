@@ -24,31 +24,101 @@ export const IdentifierRest = new P.QuantityPattern(AlnumUnder, 0, -1);
 export const GenericIdentifier = new P.Pattern()
     .insert_pattern(AlphaUnder)
     .insert_pattern(IdentifierRest)
-    .yields_node(NodeID.AST_IDENTIFIER) 
+    .yields_node(NodeID.Identifier) 
     .set_pattern_name("GenericIdentifier");
+
+export const CommentStart = new P.MatchSymbolPattern("--", "COMMENT_START");
+export const NewLineChar = new P.MatchSymbolPattern("\n", "NEWLINE");
+    
+export const CommentContent = new P.InvertedPattern()
+    .insert_terminator(NewLineChar)
+    .set_pattern_name("CommentContent");
+
+export const LineComment = new P.Pattern()
+    .insert_pattern(CommentStart)
+    .insert_pattern(CommentContent)
+    .insert_pattern(NewLineChar)
+    .yields_node(NodeID.Comment)
+    .set_pattern_name("LineComment");
+
+export const QuoteChar = new P.MatchSymbolPattern('"', "QUOTE");
+
+// InvertedPattern konsumuje całą zawartość stringa, dopóki nie napotka zamykającego cudzysłowu
+export const StringContent = new P.Pattern()
+    .insert_pattern(
+        new P.InvertedPattern()
+                /*
+                    InvertedPattern should be inside of a pattern 
+                    because that's how compiler distinguishes them
+                */
+            .insert_terminator(QuoteChar)   
+            .set_pattern_name("StringContent")
+    ).set_pattern_name("StringPrimitive"); 
+
+export const StringLiteral = new P.Pattern()
+    .insert_pattern(QuoteChar)
+    .insert_pattern(StringContent)
+    .insert_pattern(QuoteChar)
+    .yields_node(NodeID.StringLiteral)
+    .set_pattern_name("StringLiteral");
+
+// Unikalny klucz kontekstu dla długości długiego komentarza
+export const LongCommentLengthCtx = new P.LengthContext();
+
+export const LongCommentOpenBracket = new P.MatchSymbolPattern("[", "OPEN_BRACKET");
+export const LongCommentCloseBracket = new P.MatchSymbolPattern("]", "CLOSE_BRACKET");
+export const EqualSign = new P.MatchSymbolPattern("=", "EQUAL_SIGN");
+
+export const CaptureEquals = new P.CaptureLengthPattern(
+    new P.QuantityPattern(EqualSign, 0, -1), // Dowolna liczba znaków '=' (od 0 wzwyż)
+    LongCommentLengthCtx
+);
+
+export const MatchEquals = new P.MatchContextLengthPattern(
+    new P.QuantityPattern(EqualSign, 0, -1),
+    LongCommentLengthCtx
+);
+
+// Kompletny znacznik otwarcia: --[===[
+export const LongCommentStart = new P.Pattern()
+    .insert_pattern(new P.MatchSymbolPattern("--", "COMMENT_START"))
+    .insert_pattern(LongCommentOpenBracket)
+    .insert_pattern(CaptureEquals)
+    .insert_pattern(LongCommentOpenBracket)
+    .set_pattern_name("LongCommentStart");
+
+// Kompletny znacznik zamknięcia: ]===]
+export const LongCommentEnd = new P.Pattern()
+    .insert_pattern(LongCommentCloseBracket)
+    .insert_pattern(MatchEquals)
+    .insert_pattern(LongCommentCloseBracket)
+    .set_pattern_name("LongCommentEnd");
+
+export const LongCommentContent = new P.InvertedPattern()
+    .insert_terminator(LongCommentEnd)
+    .set_inclusive(false)
+    .set_pattern_name("LongCommentContent");
+
+export const NumberLiteral = new P.Pattern()
+    .insert_pattern(
+        new P.QuantityPattern(
+            Digit,1,10
+        )
+    )
+
+export const Expression = new P.ChoicePattern()
+    .insert_pattern(StringLiteral)
+    .insert_pattern(NumberLiteral)
+    .insert_pattern(GenericIdentifier)
+    .set_pattern_name("Expression");
 
 export const LocalKeyword = new P.MatchSymbolPattern("local", "KEYWORD");
 
-
-/*
-    When locally pattern is ambigious 
-    I should disambigiouate by looking at a higher level scope.
-    Example:
-
-    LocalKeyword + RequiredWhitespace is ambigious with 
-    GenericIdentifier + OptionalWhitespace
-
-    How to disambiguate: 
-
-    Since GenericIdentifier doesn't start with "(" and it's the next required 
-    symbol for FunctionCall that's where these 2 patterns disambiguate and that's
-    how I know "local" is a true keyword
-*/
 export const LocalDeclaration = new P.Pattern()
     .insert_pattern(LocalKeyword)
     .insert_pattern(RequiredWhitespace)
     .insert_pattern(GenericIdentifier)
-    .yields_node(NodeID.AST_LOCAL_DECL) // ID: AST_LOCAL_DECL
+    .yields_node(NodeID.LocalDeclaration)
     .set_pattern_name("LocalDeclaration");
 
 export const FunctionCall = new P.Pattern()
@@ -59,7 +129,7 @@ export const FunctionCall = new P.Pattern()
     .insert_pattern(GenericIdentifier)
     .insert_pattern(OptionalWhitespace)
     .insert_pattern(new P.MatchSymbolPattern(")", "CLOSE_PAREN"))
-    .yields_node(NodeID.AST_FUNC_CALL) // ID: AST_FUNC_CALL
+    .yields_node(NodeID.FunctionCall)
     .set_pattern_name("FunctionCall");
 
 export const StatementParser = new P.ChoicePattern()
@@ -67,3 +137,15 @@ export const StatementParser = new P.ChoicePattern()
     .insert_pattern(FunctionCall)
     .set_pattern_name("StatementParser");
 
+export const Trivia = new P.ChoicePattern()
+    .insert_pattern(OptionalWhitespace)
+    .insert_pattern(LineComment);
+
+export const StatementWithTrivia = new P.Pattern()
+    .insert_pattern(Trivia)
+    .insert_pattern(StatementParser);
+
+// Główny węzeł programu - reprezentuje cały plik źródłowy
+export const SourceRoot = new P.QuantityPattern(StatementWithTrivia, 0, -1)
+    .yields_node(NodeID.AST_ROOT)
+    .set_pattern_name("SourceRoot");

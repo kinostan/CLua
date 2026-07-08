@@ -118,6 +118,13 @@ namespace Common {
         {
             return node_manager.create_node<Node>();
         }
+
+        template <typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        NodeHandle reserve_compiler_node()
+        {
+            return NodeHandle(NodeHandleTag::CompilerData,node_manager.create_node<Node>());
+        }
     
         template <typename Node>
         requires (std::derived_from<Node,BaseNode>)

@@ -5,7 +5,9 @@
 namespace CLua {
     enum class NodeType {
         IdentifierNode,
-        LocalDeclNode
+        LocalDeclNode,
+        FuncCallNode,
+        Comment
     };
 
     namespace Nodes {
@@ -16,5 +18,13 @@ namespace CLua {
         struct LocalDeclNode: AST::BaseNode {
             NodeHandle identifier;
         };
-    };
+
+        struct FuncCallNode: AST::BaseNode {
+            NodeHandle identifier;
+        };
+
+        struct Comment: AST::BaseNode {
+            Common::TokenSpan token_span;
+        };
+    }
 }

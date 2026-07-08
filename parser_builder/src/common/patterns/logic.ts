@@ -117,6 +117,7 @@ export class QuantityPattern extends PrimitivePattern {
 //if data is being lost
 export class InvertedPattern extends PrimitivePattern {
     public terminators: Array<BasePattern> = new Array<BasePattern>();
+    public inclusive: boolean = true; //does include terminating pattern
     public interrput_patterns: Array<BasePattern> = new Array<BasePattern>();
     public node_id: number = -1;
 
@@ -138,6 +139,12 @@ export class InvertedPattern extends PrimitivePattern {
         return PatternYieldType.TokenSpan; 
     }
 
+    public set_inclusive(inclusive: boolean): this
+    {
+        this.inclusive = inclusive;
+        return this;
+    };
+
     // Children are both your terminators and your whitelisted elements
     get_children(): Array<PatternType> {
         return [...this.terminators, ...this.interrput_patterns];
@@ -148,3 +155,4 @@ export class InvertedPattern extends PrimitivePattern {
         return this;
     };
 }
+
