@@ -8,6 +8,8 @@ namespace CLua {
         ExpectedOpenParen,
         ExpectedWhitespace,
         ExpectedCommentStart,
+        ExpectedCommentEnd,
         ExpectedNewline,
+        ExpectedStringClosure
     };
 };

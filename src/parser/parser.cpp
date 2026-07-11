@@ -8,28 +8,44 @@ using namespace AST;
 
 using ParserContext = Common::ParserContext;
 
+//IR LanguageContext(Root)
 namespace CLua
 {
+    //IR ParseFunction(Pattern)
     NodeHandle parse_OptionalWhitespace(ParserContext& context)
     {
         auto start_index = context.source->peeked_char_index;
 
+        //IR QuantityCheck(0,inf,BasePattern(CharRange())) 
+        //{min_token, max_token, quantity_expression}
+
         int min_count = 0;
+
         while (context.can_consume())
         {
+            //IR QuantityExpression(ExpressionSet){expression_set}
+            
+            //IR QuantityExpression() {expressions}
+
+            //IR IsChar(){is_valid_token}
             auto is_valid = context.see_current() == ' ';
+            
+            //IsInvalid(is_valid_token)
             if (!is_valid)
             {
-                break;
+                break; //generates break instead of generating order because it's inside of QuantityExpression
             }
+            
+            context.consume(); //Consumes CharRange pattern
+            //ExpressionSet End  
 
             min_count -= 1;
-
-            context.consume();
         }
 
+        //Generated if min_token exists
         if (min_count > 0)
         {
+            //IR ErrorEmit(ErrorCode,start_token,end_token) //both start_token and end_token are free expressions
             auto error_node_handle = context.reserve_node<BaseErrorNode>();
             auto& error_node = context.get_node_reference<BaseErrorNode>(error_node_handle);
 
@@ -39,13 +55,17 @@ namespace CLua
 
             return context.record_error(error_node_handle);
         }
+        //Generated if max_token exists (max > min & max >= 1)
 
+        //IR ReserveNode() {handle_token, reference_token}
         auto node_handle1 = context.reserve_compiler_node<AST::TokenSpanNode>();
         auto node_handle_ref1 = context.get_node_reference<AST::TokenSpanNode>(node_handle1);
 
+        //IR InitNode(NodeDefinition,reference_token) {node}
         node_handle_ref1.node_type = static_cast<AST::NodeType>(AST::BaseTypes::TokenSpan);
         node_handle_ref1.token_span = Common::TokenSpan(start_index,context.source->peeked_char_index);
     
+        //IR Return(Token) {return_token}
         return node_handle1;
     };
 
@@ -385,9 +405,19 @@ namespace CLua
 
         return node_handle1;
     }
+
+    NodeHandle parse_SourceRoot(ParserContext& context)
+    {
+        
+    };
+
+    NodeHandle parse_Root(ParserContext& context)
+    {
+
+    };
 };
 
 NodeHandle CLua::Parser::generate_AST(ParserContext& context)
 {
-      
+    return parse_Root(context);
 }

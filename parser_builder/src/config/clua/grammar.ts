@@ -1,8 +1,11 @@
 import { ErrorTypes } from "./errors";
 import { NodeID } from "./nodes_declare";
 import { 
-    Pattern as P
+    Pattern as P,
 } from "#common/pattern"; 
+import { QuantityPattern } from "#root/common/patterns/logic";
+import { MatchSymbolPattern } from "#root/common/patterns/primitives";
+
 
 export const SpaceChar = new P.CharRange().insert_range(" ", " ");
 export const OptionalWhitespace = new P.QuantityPattern(SpaceChar, 0, -1);
@@ -35,6 +38,7 @@ export const CommentContent = new P.InvertedPattern()
     .set_pattern_name("CommentContent");
 
 export const LineComment = new P.Pattern()
+    .insert_pattern(OptionalWhitespace)
     .insert_pattern(CommentStart)
     .insert_pattern(CommentContent)
     .insert_pattern(NewLineChar)
@@ -42,6 +46,8 @@ export const LineComment = new P.Pattern()
     .set_pattern_name("LineComment");
 
 export const QuoteChar = new P.MatchSymbolPattern('"', "QUOTE");
+
+export const ClosingString = QuoteChar.with_error(ErrorTypes.ExpectedStringClosure);
 
 // InvertedPattern konsumuje całą zawartość stringa, dopóki nie napotka zamykającego cudzysłowu
 export const StringContent = new P.Pattern()
@@ -51,14 +57,15 @@ export const StringContent = new P.Pattern()
                     InvertedPattern should be inside of a pattern 
                     because that's how compiler distinguishes them
                 */
-            .insert_terminator(QuoteChar)   
+            .insert_terminator(ClosingString) 
+            .set_inclusive(false)  
             .set_pattern_name("StringContent")
     ).set_pattern_name("StringPrimitive"); 
 
 export const StringLiteral = new P.Pattern()
     .insert_pattern(QuoteChar)
     .insert_pattern(StringContent)
-    .insert_pattern(QuoteChar)
+    .insert_pattern(ClosingString)
     .yields_node(NodeID.StringLiteral)
     .set_pattern_name("StringLiteral");
 
@@ -85,6 +92,7 @@ export const LongCommentStart = new P.Pattern()
     .insert_pattern(LongCommentOpenBracket)
     .insert_pattern(CaptureEquals)
     .insert_pattern(LongCommentOpenBracket)
+    .with_error(ErrorTypes.ExpectedCommentStart)
     .set_pattern_name("LongCommentStart");
 
 // Kompletny znacznik zamknięcia: ]===]
@@ -92,6 +100,7 @@ export const LongCommentEnd = new P.Pattern()
     .insert_pattern(LongCommentCloseBracket)
     .insert_pattern(MatchEquals)
     .insert_pattern(LongCommentCloseBracket)
+    .with_error(ErrorTypes.ExpectedCommentEnd)
     .set_pattern_name("LongCommentEnd");
 
 export const LongCommentContent = new P.InvertedPattern()
@@ -106,13 +115,17 @@ export const NumberLiteral = new P.Pattern()
         )
     )
 
-export const Expression = new P.ChoicePattern()
-    .insert_pattern(StringLiteral)
-    .insert_pattern(NumberLiteral)
-    .insert_pattern(GenericIdentifier)
+export const Expression = new P.Pattern()
+    .insert_pattern(OptionalWhitespace)
+    .insert_pattern(
+        new P.ChoicePattern()
+        .insert_pattern(StringLiteral)
+        .insert_pattern(NumberLiteral)
+        .insert_pattern(GenericIdentifier)
+    )
     .set_pattern_name("Expression");
 
-export const LocalKeyword = new P.MatchSymbolPattern("local", "KEYWORD");
+export const LocalKeyword = new P.MatchSymbolPattern("local", "KEYWORD").with_error(ErrorTypes.ExpectedKeyword);
 
 export const LocalDeclaration = new P.Pattern()
     .insert_pattern(LocalKeyword)
@@ -121,14 +134,24 @@ export const LocalDeclaration = new P.Pattern()
     .yields_node(NodeID.LocalDeclaration)
     .set_pattern_name("LocalDeclaration");
 
+export const ArgumentList = new P.ChoicePattern()
+    .insert_pattern(Expression)
+    .insert_pattern(
+        new P.Pattern()
+        .insert_pattern(new QuantityPattern(
+            new P.Pattern()
+            .insert_pattern(Expression)
+            .insert_pattern(new MatchSymbolPattern(","))
+        ,1,-1))
+        .insert_pattern(Expression)
+    )
+
 export const FunctionCall = new P.Pattern()
     .insert_pattern(GenericIdentifier)
     .insert_pattern(OptionalWhitespace)
-    .insert_pattern(new P.MatchSymbolPattern("(", "OPEN_PAREN"))
-    .insert_pattern(OptionalWhitespace)
-    .insert_pattern(GenericIdentifier)
-    .insert_pattern(OptionalWhitespace)
-    .insert_pattern(new P.MatchSymbolPattern(")", "CLOSE_PAREN"))
+    .insert_pattern(new P.MatchSymbolPattern("(", "OPEN_PAREN").with_error(ErrorTypes.ExpectedOpenParen))
+    .insert_pattern(ArgumentList)
+    .insert_pattern(new P.MatchSymbolPattern(")", "CLOSE_PAREN").with_error(ErrorTypes.ExpectedCloseParen))
     .yields_node(NodeID.FunctionCall)
     .set_pattern_name("FunctionCall");
 
@@ -138,14 +161,16 @@ export const StatementParser = new P.ChoicePattern()
     .set_pattern_name("StatementParser");
 
 export const Trivia = new P.ChoicePattern()
-    .insert_pattern(OptionalWhitespace)
     .insert_pattern(LineComment);
 
-export const StatementWithTrivia = new P.Pattern()
+export const LanguageExpressionUnit = new P.ChoicePattern()
     .insert_pattern(Trivia)
     .insert_pattern(StatementParser);
 
-// Główny węzeł programu - reprezentuje cały plik źródłowy
-export const SourceRoot = new P.QuantityPattern(StatementWithTrivia, 0, -1)
-    .yields_node(NodeID.AST_ROOT)
+export const SourceRoot = new P.QuantityPattern(LanguageExpressionUnit, 0, -1)
     .set_pattern_name("SourceRoot");
+
+export const Root = new P.Pattern()
+    .insert_pattern(SourceRoot)
+    .yields_node(NodeID.Root)
+    .set_pattern_name("Root");

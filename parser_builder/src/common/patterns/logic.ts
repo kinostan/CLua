@@ -2,7 +2,6 @@ import { BasePattern, PatternType, PatternYieldType, PrimitivePattern } from "./
 
 export class Pattern extends PrimitivePattern {
     pattern_list: Array<PatternType> = new Array<PatternType>();
-    node_id: number = -1;
 
     constructor()
     {
@@ -12,12 +11,6 @@ export class Pattern extends PrimitivePattern {
     insert_pattern(pattern: PatternType): this
     {
         this.pattern_list.push(pattern);
-        return this;
-    };
-
-    yields_node(node_id: number): this
-    {
-        this.node_id = node_id;
         return this;
     };
 
@@ -57,6 +50,9 @@ export class ChoicePattern extends Pattern {
 //Node should first insert a field with value using the expression
 //then in the next field empty QuantityPattern is inserted
 export class QuantityPattern extends PrimitivePattern {
+    error_low: number = -1;
+    error_high: number = -1;
+
     constructor(
         // The single pattern being quantified
         public readonly child_pattern: BasePattern,
@@ -76,22 +72,39 @@ export class QuantityPattern extends PrimitivePattern {
     }
 
     public override get_yield_type(): PatternYieldType {
-        // If it's explicitly bounded to 0 iterations, it yields nothing
-        if (this.max === 0) {
+        if (this.max === 0 || (this.min > this.max && this.max > 0)) {
             return PatternYieldType.None;
         }
 
-        // If it can execute multiple times (max is -1 or greater than 1),
-        // it means the high-performance C++ generator will pack these results.
-        // For now, returning its inner type keeps the pipeline moving.
-        if (this.max === -1 || this.max > 1) {
-            return this.child_pattern.get_yield_type(); 
-        }
+        const yield_type = this.child_pattern.get_yield_type();
 
-        // If max is exactly 1 (like the old OptionalPattern), it perfectly inherits
-        // the structural type of its wrapped child asset.
-        return this.child_pattern.get_yield_type();
+        switch (yield_type)
+        {
+            case PatternYieldType.NodeChain:
+            case PatternYieldType.NodeHandle:
+            {
+                return PatternYieldType.NodeChain;
+            }
+            case PatternYieldType.TokenSpan:
+            {
+                return PatternYieldType.TokenSpan;   
+            }             
+            default:
+            {
+                return PatternYieldType.Invalid;
+            }
+        };
     }
+
+    set_error_when_below_min(error: number)
+    {   
+        this.error_low = error;
+    };
+
+    set_error_when_above_max(error: number)
+    {
+        this.error_high = error;
+    };
 
     get_children(): Array<PatternType> {
         return [this.child_pattern];

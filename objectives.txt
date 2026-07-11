@@ -1,5 +1,6 @@
 Has to be finished by 15th of July
 Work on multi-lang parser code generator.
+    Done:
     -Finish the conversion of Lexer API into ScannerlessParser API
         -API must allow to match a string of characters 
         and advance conditionally and allows to read individual characters from the whole source
@@ -10,7 +11,7 @@ Work on multi-lang parser code generator.
         -Node fields are initialized by field by field when
         memory region from the API is given 
         (the code is generated so it doesn't matter)
-
+    Working on:
     -Define IR 
         -IR must be defined from the example code
             -Example code must be written based on examples of patterns
@@ -29,3 +30,7 @@ Work on multi-lang parser code generator.
         -Link node fields with pattern expressions during emittion
         -Patterns must express also error recovery patterns
     -Validate IR & (optionally) optimize IR code   
+To Do Today:
+    -Define translation of patterns to code
+    -If enough of time then define IR blocks
+    

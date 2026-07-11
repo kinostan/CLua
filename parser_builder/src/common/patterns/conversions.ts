@@ -45,7 +45,6 @@ export class SymbolConversion extends Conversion{
     {
         super(pattern);
         this.yield_type = PatternYieldType.Symbol;
-
         /* 
             Works only on symbol emitting patterns, and only on MatchSymbolPattern
             which is hidden within a quantity pattern or any other pattern under certain 
@@ -53,6 +52,14 @@ export class SymbolConversion extends Conversion{
         */
     };
 }
+
+export class NodeChainConversion extends Conversion {
+    constructor(pattern: BasePattern)
+    {
+        super(pattern);
+        this.yield_type = PatternYieldType.NodeHandle;
+    };
+};
 
 export function as_node(pattern: BasePattern): NodeConversion
 {
@@ -67,4 +74,15 @@ export function as_span(pattern: BasePattern): SpanConversion
 export function as_symbol(pattern: BasePattern): SymbolConversion
 {
     return new SymbolConversion(pattern);
+};
+
+
+/* 
+    Explicitly tells that this field links to compiler linker/array node type
+
+    as_node_chain: requires the ChoicePattern to all of it's patterns to emit nodes
+*/
+export function as_node_chain(pattern: BasePattern): NodeChainConversion
+{
+    return new NodeChainConversion(pattern);
 };

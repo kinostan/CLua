@@ -1,8 +1,9 @@
 export enum NodeID {
-    NONE,
+    None,
     Identifier,
     LocalDeclaration,
     FunctionCall,
     Comment,
-    StringLiteral
+    StringLiteral,
+    Root
 }
