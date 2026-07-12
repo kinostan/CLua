@@ -13,7 +13,8 @@ namespace AST {
     enum struct BaseTypes {
         Invalid,
         LinkedList,
-        TokenSpan
+        TokenSpan,
+        NullNode,
     };
 
     NodeType Invalid = 0;
@@ -49,4 +50,6 @@ namespace AST {
         Common::TokenSpan error_span;
         ErrorCode error_code = ErrorCodes::None;
     };
+
+    struct NullNode: public BaseNode {};
 }

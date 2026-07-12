@@ -21,23 +21,71 @@ namespace CLua
 
         int min_count = 0;
 
+        //IF emitting NodeChain 
+        //IR NewReserveNode(Chain) {handle_token, reference_token}
+        auto node_handle1 = context.reserve_compiler_node<AST::LinkedNodeList>();
+        auto node_handle_ref1 = context.get_node_reference<AST::LinkedNodeList>(node_handle1);   
+        
+        node_handle_ref1.next = context.get_null_node();
+        node_handle_ref1.value = context.get_null_node();
+        
+        //ELSE IF emitting TokenSpan
+        //IR NewReserveNode() {handle_token, reference_token}
+        //auto node_handle1 = context.reserve_compiler_node<AST::TokenSpanNode>();
+        //auto node_handle_ref1 = context.get_node_reference<AST::TokenSpanNode>(node_handle1);
+        //ENDIF
+
+        //IF NodeHandle type (Pattern emitting NodeHandle)
+        //IR NewBacktrackState() {backtrack_state_token}
+        //auto previous_backtrack_state = context.record_cursor();
+        //ENDIF
+        
         while (context.can_consume())
         {
             //IR QuantityExpression(ExpressionSet){expression_set}
             
-            //IR QuantityExpression() {expressions}
+            //IR QuantityExpression() {expression_block}
 
+            //IF Pattern.prototype = CharRange
+            //IR HandleInvalid(is_valid_token)
             //IR IsChar(){is_valid_token}
             auto is_valid = context.see_current() == ' ';
             
-            //IsInvalid(is_valid_token)
             if (!is_valid)
             {
                 break; //generates break instead of generating order because it's inside of QuantityExpression
             }
-            
             context.consume(); //Consumes CharRange pattern
-            //ExpressionSet End  
+            //ELSE IF Pattern.emitting_type = NodeHandle
+            /* 
+            //IR NewBacktrackState() {backtrack_state_token}: backtrack_in_loop
+            auto pattern_result = parse_Pattern(context);
+            if (pattern_result.is_error()) {
+                context.set_cursor(previous_backtrack_state);
+                break;
+            }
+            previous_backtrack_state = current_backtrack_state;
+
+            auto& current_tail_ref = context.get_node_reference<AST::LinkedNodeList>(current_tail_handle);
+
+            if (current_tail_ref == context.get_null_node()) {
+                current_tail_ref.value = pattern_result;
+            } else {
+                auto next_node_handle = context.reserve_compiler_node<AST::LinkedNodeList>();
+                auto& next_node_ref = context.get_node_reference<AST::LinkedNodeList>(next_node_handle);
+                
+                next_node_ref.node_type = static_cast<AST::NodeType>(AST::BaseTypes::NodeChain);
+                next_node_ref.value = pattern_result;
+                next_node_ref.next = context.get_null_node();
+                
+                current_tail_ref.next = next_node_handle;
+                current_tail_handle = next_node_handle;
+            }
+
+            //IR Assign(backtrack_state_token,backtrack_in_loop.backtract_state_token);
+            previous_backtrack_state = current_backstrack_state;
+            */
+            //ENDIF
 
             min_count -= 1;
         }
@@ -57,16 +105,15 @@ namespace CLua
         }
         //Generated if max_token exists (max > min & max >= 1)
 
-        //IR ReserveNode() {handle_token, reference_token}
-        auto node_handle1 = context.reserve_compiler_node<AST::TokenSpanNode>();
-        auto node_handle_ref1 = context.get_node_reference<AST::TokenSpanNode>(node_handle1);
-
+        //IF emitting TokenSpan
         //IR InitNode(NodeDefinition,reference_token) {node}
         node_handle_ref1.node_type = static_cast<AST::NodeType>(AST::BaseTypes::TokenSpan);
         node_handle_ref1.token_span = Common::TokenSpan(start_index,context.source->peeked_char_index);
-    
-        //IR Return(Token) {return_token}
+        //IR Return(Token) {return_token}        
         return node_handle1;
+        //ELSE IF emitting NodeChain
+        //return node_handle1;
+        //ENDIF
     };
 
     NodeHandle parse_GenericIdentifier(ParserContext& context)

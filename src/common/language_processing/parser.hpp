@@ -22,6 +22,31 @@ namespace Common {
 
     class ParserContext {
         public:
+                template <typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        NodeHandle reserve_node()
+        {
+            return node_manager.create_node<Node>();
+        }
+
+        template <typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        NodeHandle reserve_compiler_node()
+        {
+            return NodeHandle(NodeHandleTag::CompilerData,node_manager.create_node<Node>());
+        }
+    
+        template <typename Node>
+        requires (std::derived_from<Node,BaseNode>)
+        Node& get_node_reference(NodeHandle node)
+        {
+            return node_manager.get_node_from_handle(node);
+        };
+
+        private:
+        NodeHandle null_node;
+
+        public:
 
         Source* source;
         NodeManager node_manager;
@@ -33,7 +58,9 @@ namespace Common {
             source(source),
             node_manager(source->source_size / 2),
             error_node_list()
-        {}
+        {
+           null_node = reserve_compiler_node<AST::NullNode>();
+        }
         
         public:
         bool match_sequence(char* word,Common::uint64 offset = 0)
@@ -112,25 +139,9 @@ namespace Common {
             );
         };  
 
-        template <typename Node>
-        requires (std::derived_from<Node,BaseNode>)
-        NodeHandle reserve_node()
+        NodeHandle get_null_node()
         {
-            return node_manager.create_node<Node>();
-        }
-
-        template <typename Node>
-        requires (std::derived_from<Node,BaseNode>)
-        NodeHandle reserve_compiler_node()
-        {
-            return NodeHandle(NodeHandleTag::CompilerData,node_manager.create_node<Node>());
-        }
-    
-        template <typename Node>
-        requires (std::derived_from<Node,BaseNode>)
-        Node& get_node_reference(NodeHandle node)
-        {
-            return node_manager.get_node_from_handle(node);
+            return null_node;
         };
     };
 

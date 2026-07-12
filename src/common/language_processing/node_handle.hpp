@@ -3,6 +3,9 @@
 #include <common/base.hpp>
 #include <debugger/debugger.hpp>
 
+#include <compare> 
+#include <bit>
+
 namespace AST { 
     enum class NodeHandleTag : Common::uint8 {
         Valid         = 0b00,   //NodeHandle defined by a user
@@ -29,6 +32,11 @@ namespace AST {
 
         NodeHandle& operator=(NodeHandle& node) = default;
         NodeHandle& operator=(const NodeHandle& node) = default;
+        
+        bool operator==(const NodeHandle& node) const
+        {
+            return node_tag == node.node_tag && node_value == node.node_value;
+        };
 
         operator const char*()
         {
