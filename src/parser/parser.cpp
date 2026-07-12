@@ -60,10 +60,16 @@ namespace CLua
             /* 
             //IR NewBacktrackState() {backtrack_state_token}: backtrack_in_loop
             auto pattern_result = parse_Pattern(context);
-            if (pattern_result.is_error()) {
+            if (pattern.is_error())
+            {
+                if (pattern.is_commited_error()) 
+                {
+                    return pattern;
+                }
+
                 context.set_cursor(previous_backtrack_state);
                 break;
-            }
+            };
             previous_backtrack_state = current_backtrack_state;
 
             auto& current_tail_ref = context.get_node_reference<AST::LinkedNodeList>(current_tail_handle);

@@ -109,6 +109,11 @@ namespace Common {
 
         inline void set_cursor(ParserState parser_state)
         {
+            Assert(
+                parser_state.memory_offset >= null_node.node_value + sizeof(AST::NullNode),
+                "can't set cursor in null node reserved space"
+            );
+
             source->peeked_char_index = parser_state.peek_index;
             error_node_list.resize(parser_state.error_count);
             node_manager.set_linear_memory_offset(parser_state.memory_offset);

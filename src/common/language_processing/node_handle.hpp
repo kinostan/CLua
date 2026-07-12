@@ -3,9 +3,6 @@
 #include <common/base.hpp>
 #include <debugger/debugger.hpp>
 
-#include <compare> 
-#include <bit>
-
 namespace AST { 
     enum class NodeHandleTag : Common::uint8 {
         Valid         = 0b00,   //NodeHandle defined by a user
@@ -18,40 +15,34 @@ namespace AST {
         NodeHandleTag node_tag: 2 = NodeHandleTag::Error;
         Common::uint64 node_value: 62 = 0;
 
-        NodeHandle(NodeHandle& node_handle) = default;
-        NodeHandle(const NodeHandle& node_handle) = default;
-        NodeHandle() = default; 
+        NodeHandle() = default;
 
-        NodeHandle(NodeHandleTag node_tag,Common::uint64 node_value): node_tag(node_tag), node_value(node_value)
+        NodeHandle(NodeHandleTag node_tag, Common::uint64 node_value)
+            : node_tag(node_tag), node_value(node_value)
         {
             Assert(
                 static_cast<unsigned int>(node_tag) < 4 && node_value <= (ULLONG_MAX >> 2) - 1,
                 "the field sizes can't be exceeded or sth" 
             );
-        };
+        }
 
-        NodeHandle& operator=(NodeHandle& node) = default;
         NodeHandle& operator=(const NodeHandle& node) = default;
         
-        bool operator==(const NodeHandle& node) const
+        bool operator==(const NodeHandle& node) const noexcept
         {
-            return node_tag == node.node_tag && node_value == node.node_value;
-        };
+            typedef const Common::uint64 __attribute__((__may_alias__)) *safe_uint64_ptr;
+            return *reinterpret_cast<safe_uint64_ptr>(this) == *reinterpret_cast<safe_uint64_ptr>(&node);
+        }
 
-        operator const char*()
-        {
-            return "Node Handle Instance";
-        };
-
-        inline bool is_error()
+        inline bool is_error() const
         {
             return node_tag == NodeHandleTag::Error || node_tag == NodeHandleTag::CommitedError;
-        };
+        }
 
-        inline bool is_commited_error()
+        inline bool is_commited_error() const
         {
             return node_tag == NodeHandleTag::CommitedError;
-        };
+        }
 
         inline NodeHandle& commit()
         {

@@ -47,6 +47,8 @@ namespace AST {
     };
 
     struct BaseErrorNode: public BaseNode {
+        NodeHandle next_error_node;
+        NodeHandle ast_byproduct;//null_node by default 
         Common::TokenSpan error_span;
         ErrorCode error_code = ErrorCodes::None;
     };
