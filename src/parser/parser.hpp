@@ -12,6 +12,7 @@
 */
 
 namespace CLua {  
+    const Common::uint64 LanguageID = 0;
     class Parser: public Common::IParser {
        AST::NodeHandle generate_AST(Common::ParserContext& parser_context) override;
     };

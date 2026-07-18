@@ -269,7 +269,7 @@ namespace CLua
             error_node_handle.commit(); 
             return context.record_error(error_node_handle);
         }
-        context.consume(); // Zjadamy '\n'
+        context.consume(); 
 
         // Sukces: Składamy węzeł AST dla całego LineComment (yields_node)
         auto node_handle = context.reserve_node<CLua::Nodes::Comment>(); // Przypisane mapowanie dla NodeID.Comment

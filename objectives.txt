@@ -1,36 +1,4 @@
-Has to be finished by 15th of July
-Work on multi-lang parser code generator.
-    Done:
-    -Finish the conversion of Lexer API into ScannerlessParser API
-        -API must allow to match a string of characters 
-        and advance conditionally and allows to read individual characters from the whole source
-    
-        -API allows to create nodes and writing directly in memory 
-        (API allows to reserve memory and then perform direct writes)
-    
-        -Node fields are initialized by field by field when
-        memory region from the API is given 
-        (the code is generated so it doesn't matter)
-    Working on:
-    -Define IR 
-        -IR must be defined from the example code
-            -Example code must be written based on examples of patterns
-                -Patterns and their expression set must be defined for the languages
-                that I will be using (CLua and LuaU)
-                    -LuaU needs a way to express long comments and strings
-                    otherwise the other features in CLua and LuaU can be easily expressed 
-                    in the parser.
-                -Patterns instead of inherently returning node type, they should be returning different 
-                values depending whether node return type is expected or not.                
-                -Node definition rules must be set to how patterns relate to fields
-                    -
-    -Reason about patterns and generate IR from pattern sets    
-        -I must extract keywords onto a list
-        -Define what a valid pattern is
-        -Link node fields with pattern expressions during emittion
-        -Patterns must express also error recovery patterns
-    -Validate IR & (optionally) optimize IR code   
-To Do Today:
-    -Define translation of patterns to code
-    -If enough of time then define IR blocks
+Has to be finished by 22nd of July
+    -Define IR blocks
+    -Emit code
     

@@ -1,6 +1,6 @@
 namespace CLua {
     enum class ErrorCode {
-        None,
+        Unspecified,
         ExpectedKeyword,
         ExpectedIdentifier,
         UnknownStatement,

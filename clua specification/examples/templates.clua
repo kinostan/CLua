@@ -1,0 +1,24 @@
+fun foo_t<T>(T var): *T{
+    return &var + sizeof(T); //it's in most cases UB unless user knows what he's doing
+};
+
+fun foo_t<T when is_pointer(T)>(var: T)
+{
+    return var + sizeof(strip_pointer(T));
+};
+
+fun main: i64 {
+    static_assert(sizeof(i64) == sizeof(*i64));
+
+    let a = 5; //the variable will exist inside of table instead of buffer for quick LuaU native access
+
+    let b: *i64 = new<i64>(2); 
+    
+    if (b == null)
+    {
+        return -1;
+    };
+
+    return foo_t<i64>(b) as i64;
+};
+

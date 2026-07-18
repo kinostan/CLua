@@ -20,9 +20,18 @@ namespace Common {
         Common::uint64 error_count;
     };
 
+    struct LanguageError {
+        NodeHandle error_node;
+        Common::uint64 language_id;
+        
+        LanguageError(NodeHandle error_node, Common::uint64 language_id): error_node(error_node), language_id(language_id){};
+    };
+
     class ParserContext {
+
+
         public:
-                template <typename Node>
+        template <typename Node>
         requires (std::derived_from<Node,BaseNode>)
         NodeHandle reserve_node()
         {
@@ -50,7 +59,7 @@ namespace Common {
 
         Source* source;
         NodeManager node_manager;
-        std::vector<NodeHandle> error_node_list;
+        std::vector<LanguageError> error_node_list;
 
         ParserContext():node_manager(0){};
 
@@ -135,9 +144,11 @@ namespace Common {
             return parser_state;
         };
     
-        NodeHandle record_error(NodeHandle error_node)
+        NodeHandle record_error(NodeHandle error_node, Common::uint64 language_id)
         {
-            error_node_list.push_back(error_node);
+            error_node_list.push_back(
+                LanguageError(error_node,language_id)
+            );
             return NodeHandle(
                 NodeHandleTag::Error,
                 error_node_list.size() - 1

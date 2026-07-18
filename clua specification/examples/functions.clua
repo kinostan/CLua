@@ -1,0 +1,36 @@
+let const b: d64 = 1.234567;
+
+//function declaration:
+//fun [[function_name]](): [[attributes]] [[data type]] //data type must be the last attribute specifically
+//not really, because data type is semantics so for grammar it might not matter although I am unsure.
+//";" or "{"
+//{
+// [[code_block]]
+//}
+
+//exposes function's identity in luau module
+fun export foo(): u64
+{
+    return 1; //this can be deduced that foo is a const function
+}
+
+fun main() : i64
+{   
+
+    let b = 0; //inferred i64
+    let a: i64 = -4; 
+
+    const const_value = 5;
+    
+    /*
+    @Lua [&a] { //capture by reference
+        local a = 5; //conflicting identifiers with Biwisi
+        print("luau embedding")
+    } export a as a; //Would be a valid expression if the capture didn't take a as a variable
+    */
+
+    return a + (foo() as i64) + const_value;
+};
+
+
+
