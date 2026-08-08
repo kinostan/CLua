@@ -1,0 +1,24 @@
+# CLion Custom Compiler Configuration
+compilers:
+  - description: "MinGW-w64 GCC Custom Toolchain for CLua"
+    match-compiler-exe: "C:\\\\msys64\\\\mingw64\\\\bin\\\\g\\+\\+\\.exe"
+
+    # Core compiler configuration mappings
+    language: BOTH
+    compiler-family: GCC
+
+    # Default options parsed on project initialization
+    mandatory-options:
+      - "-m64"
+      - "-std=gnu++26"
+
+    # Defines mapped directly from your VS Code profiles
+    defines:
+      _DEBUG: "1"
+      UNICODE: "1"
+      _UNICODE: "1"
+
+    # System include headers parsed relative to your toolchain root
+    include-directories:
+      - "C:\\msys64\\mingw64\\include"
+      - "C:\\msys64\\mingw64\\lib\\gcc\\x86_64-w64-mingw32\\14.1.0\\include" # Update compiler version number if needed
