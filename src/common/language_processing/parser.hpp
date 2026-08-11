@@ -10,6 +10,7 @@
 #include <common/language_processing/node_base.hpp>
 
 #include <debugger/debugger.hpp>
+#include <concepts>
 
 namespace Common {
     using Source = Common::Source;
@@ -21,10 +22,10 @@ namespace Common {
     };
 
     struct LanguageError {
-        NodeHandle error_node;
+        AST::NodeHandle error_node;
         Common::uint64 language_id;
         
-        LanguageError(NodeHandle error_node, Common::uint64 language_id): error_node(error_node), language_id(language_id){};
+        LanguageError(AST::NodeHandle error_node, Common::uint64 language_id): error_node(error_node), language_id(language_id){};
     };
 
     class ParserContext {
@@ -32,33 +33,33 @@ namespace Common {
 
         public:
         template <typename Node>
-        requires (std::derived_from<Node,BaseNode>)
-        NodeHandle reserve_node()
+        requires (std::derived_from<Node, AST::BaseNode>)
+        AST::NodeHandle reserve_node()
         {
             return node_manager.create_node<Node>();
         }
 
         template <typename Node>
-        requires (std::derived_from<Node,BaseNode>)
-        NodeHandle reserve_compiler_node()
+        requires (std::derived_from<Node, AST::BaseNode>)
+        AST::NodeHandle reserve_compiler_node()
         {
-            return NodeHandle(NodeHandleTag::CompilerData,node_manager.create_node<Node>());
+            return NodeHandle(AST::NodeHandleTag::CompilerData,node_manager.create_node<Node>());
         }
     
         template <typename Node>
-        requires (std::derived_from<Node,BaseNode>)
-        Node& get_node_reference(NodeHandle node)
+        requires (std::derived_from<Node, AST::BaseNode>)
+        Node& get_node_reference(AST::NodeHandle node)
         {
             return node_manager.get_node_from_handle(node);
         };
 
         private:
-        NodeHandle null_node;
+        AST::NodeHandle null_node;
 
         public:
 
         Source* source;
-        NodeManager node_manager;
+        AST::NodeManager node_manager;
         std::vector<LanguageError> error_node_list;
 
         ParserContext():node_manager(0){};
@@ -143,19 +144,19 @@ namespace Common {
 
             return parser_state;
         };
-    
-        NodeHandle record_error(NodeHandle error_node, Common::uint64 language_id)
+
+        AST::NodeHandle record_error(AST::NodeHandle error_node, Common::uint64 language_id)
         {
             error_node_list.push_back(
                 LanguageError(error_node,language_id)
             );
-            return NodeHandle(
-                NodeHandleTag::Error,
+            return AST::NodeHandle(
+                AST::NodeHandleTag::Error,
                 error_node_list.size() - 1
             );
-        };  
+        };
 
-        NodeHandle get_null_node()
+        AST::NodeHandle get_null_node()
         {
             return null_node;
         };
@@ -181,6 +182,6 @@ namespace Common {
 
     class IParser 
     {
-        virtual NodeHandle generate_AST(ParserContext& parser_context) = 0;
+        virtual AST::NodeHandle generate_AST(ParserContext& parser_context) = 0;
     };
 }   

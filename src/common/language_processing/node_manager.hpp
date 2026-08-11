@@ -3,7 +3,6 @@
 #include <common/base.hpp>
 
 #include <concepts>
-#include <type_traits>
 
 #include <linear_allocator/linear_allocator.hpp>
 #include <common/language_processing/node_handle.hpp>

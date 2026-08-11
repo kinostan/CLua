@@ -1,13 +1,10 @@
 #pragma once
 
-#include <common/language_processing/base.hpp>
 #include <common/base.hpp>
 
 #include <debugger/debugger.hpp>
 
 #include <vector>
-#include <type_traits>
-#include <concepts>
 
 namespace Common {
     struct SourceView {

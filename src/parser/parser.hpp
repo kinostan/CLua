@@ -18,11 +18,11 @@ namespace CLua {
         };
 
         struct LocalDeclNode: AST::BaseNode {
-            NodeHandle identifier;
+            AST::NodeHandle identifier;
         };
 
         struct FuncCallNode: AST::BaseNode {
-            NodeHandle identifier;
+            AST::NodeHandle identifier;
         };
 
         struct Comment: AST::BaseNode {
