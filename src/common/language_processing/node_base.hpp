@@ -17,13 +17,13 @@ namespace AST {
         NullNode,
     };
 
-    NodeType Invalid = 0;
-    NodeType UErrorNode = Invalid;
+    inline NodeType Invalid = 0;
+    inline NodeType UErrorNode = Invalid;
 
     using ErrorCode = Common::uint16;
     
     namespace ErrorCodes {
-        ErrorCode None = 0;
+        inline ErrorCode None = 0;
     };
 
     struct BaseNode {
@@ -43,7 +43,7 @@ namespace AST {
 
     struct TokenSpanNode: public BaseNode{
         NodeType node_type = static_cast<NodeType>(BaseTypes::TokenSpan);
-        Common::TokenSpan token_span;
+        Common::TokenSpan token_span{};
     };
 
     struct BaseErrorNode: public BaseNode {

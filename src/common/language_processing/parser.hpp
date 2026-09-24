@@ -2,7 +2,6 @@
 
 #include <common/base.hpp>
 
-#include <common/language_processing/base.hpp>
 #include <common/language_processing/source.hpp>
 
 #include <common/language_processing/node_manager.hpp>
@@ -16,16 +15,17 @@ namespace Common {
     using Source = Common::Source;
 
     struct ParserState {
-        Common::uint64 peek_index;
-        Common::uint64 memory_offset;
-        Common::uint64 error_count;
+        uint64 peek_index;
+        uint64 memory_offset;
+        uint64 error_count;
     };
 
     struct LanguageError {
         AST::NodeHandle error_node;
-        Common::uint64 language_id;
-        
-        LanguageError(AST::NodeHandle error_node, Common::uint64 language_id): error_node(error_node), language_id(language_id){};
+        uint64 language_id;
+
+        LanguageError() = default;
+        LanguageError(AST::NodeHandle error_node, uint64 language_id): error_node(error_node), language_id(language_id){};
     };
 
     class ParserContext {
@@ -43,14 +43,14 @@ namespace Common {
         requires (std::derived_from<Node, AST::BaseNode>)
         AST::NodeHandle reserve_compiler_node()
         {
-            return NodeHandle(AST::NodeHandleTag::CompilerData,node_manager.create_node<Node>());
+            return AST::NodeHandle(AST::NodeHandleTag::CompilerData,node_manager.create_node<Node>());
         }
     
         template <typename Node>
         requires (std::derived_from<Node, AST::BaseNode>)
         Node& get_node_reference(AST::NodeHandle node)
         {
-            return node_manager.get_node_from_handle(node);
+            return node_manager.get_node_from_handle<Node>(node);
         };
 
         private:
@@ -62,7 +62,7 @@ namespace Common {
         AST::NodeManager node_manager;
         std::vector<LanguageError> error_node_list;
 
-        ParserContext():node_manager(0){};
+        ParserContext():source(nullptr), node_manager(0){};
 
         ParserContext(Source* source) : 
             source(source),
@@ -73,9 +73,9 @@ namespace Common {
         }
         
         public:
-        bool match_sequence(char* word,Common::uint64 offset = 0)
+        bool match_sequence(char* word, const uint64 offset = 0) const
         {
-            unsigned char* _word = reinterpret_cast<unsigned char*>(word);
+            auto* _word = reinterpret_cast<unsigned char*>(word);
 
             size_t i = offset;
             do {
@@ -83,10 +83,9 @@ namespace Common {
                 {
                     return false;
                 };
-                auto current_stream_char = source->peek(i);
-                auto current_word_char = _word[i - offset];
-                
-                if (current_stream_char != current_word_char)
+                const auto current_stream_char = source->peek(i);
+
+                if (const auto current_word_char = _word[i - offset]; current_stream_char != current_word_char)
                 {
                     return false;
                 };
@@ -97,27 +96,26 @@ namespace Common {
             return true;
         };
 
-        inline bool can_consume(Common::uint64 consume_size = 1)
+        [[nodiscard]] bool can_consume(const uint64 consume_size = 1) const
         {
             return source->can_consume_sentinel(consume_size);
         };
 
-        inline void consume(Common::uint64 size = 1)
-        {
+        void consume(uint64 size = 1) const {
             source->consume(size);
         };
 
-        inline auto peek(Common::uint64 offset = 0)
+        [[nodiscard]] auto peek(const uint64 offset = 0) const
         {
             return source->peek(offset);
         }
 
-        inline auto see_current()
+        [[nodiscard]] auto see_current() const
         {
             return source->see_current();
         };
 
-        inline void set_cursor(ParserState parser_state)
+        void set_cursor(const ParserState &parser_state)
         {
             Assert(
                 parser_state.memory_offset >= null_node.node_value + sizeof(AST::NullNode),
@@ -134,7 +132,7 @@ namespace Common {
             );
         };
 
-        inline ParserState record_cursor()
+        [[nodiscard]] ParserState record_cursor() const
         {
             auto parser_state = ParserState();
 
@@ -145,19 +143,18 @@ namespace Common {
             return parser_state;
         };
 
-        AST::NodeHandle record_error(AST::NodeHandle error_node, Common::uint64 language_id)
+        AST::NodeHandle record_error(AST::NodeHandle error_node, uint64 language_id)
         {
-            error_node_list.push_back(
-                LanguageError(error_node,language_id)
+            error_node_list.emplace_back(
+                error_node,language_id
             );
-            return AST::NodeHandle(
+            return {
                 AST::NodeHandleTag::Error,
                 error_node_list.size() - 1
-            );
+            };
         };
 
-        AST::NodeHandle get_null_node()
-        {
+        [[nodiscard]] AST::NodeHandle get_null_node() const {
             return null_node;
         };
     };
@@ -182,6 +179,10 @@ namespace Common {
 
     class IParser 
     {
+    public:
+        virtual ~IParser() = default;
+
+    private:
         virtual AST::NodeHandle generate_AST(ParserContext& parser_context) = 0;
     };
 }   

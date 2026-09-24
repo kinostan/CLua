@@ -27,6 +27,10 @@ namespace AST {
         }
 
         NodeHandle& operator=(const NodeHandle& node) = default;
+
+        operator Common::uint64() const {
+            return (static_cast<Common::uint64>(node_tag) << 62) + node_value;
+        }
         
         bool operator==(const NodeHandle& node) const noexcept
         {
@@ -34,17 +38,17 @@ namespace AST {
             return *reinterpret_cast<safe_uint64_ptr>(this) == *reinterpret_cast<safe_uint64_ptr>(&node);
         }
 
-        inline bool is_error() const
+        [[nodiscard]] bool is_error() const
         {
             return node_tag == NodeHandleTag::Error || node_tag == NodeHandleTag::CommitedError;
         }
 
-        inline bool is_commited_error() const
+        [[nodiscard]] bool is_commited_error() const
         {
             return node_tag == NodeHandleTag::CommitedError;
         }
 
-        inline NodeHandle& commit()
+        NodeHandle& commit()
         {
             Assert(
                 is_error(),

@@ -4,6 +4,14 @@ project(CLua)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(--target=x86_64-w64-mingw32)
+endif()
+if(WIN32 AND MINGW)
+    # Pass target to Clangd without breaking GCC
+    add_compile_options(-Xclang --target=x86_64-w64-mingw32)
+endif()
+
 include_directories(src)
 include_directories(src/common)
 include_directories(src/common/language_processing)
@@ -11,6 +19,7 @@ include_directories(src/debugger)
 include_directories(src/linear_allocator)
 include_directories(src/parser)
 include_directories(src/semantic_analyzer)
+
 
 add_executable(CLua
         src/common/language_processing/base.hpp

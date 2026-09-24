@@ -10,10 +10,7 @@
 
 namespace AST{ 
     class NodeManager {
- 
         using NodeHandle = NodeHandle;
-
-        private:
         Common::LinearAllocator allocator;
         public:
         NodeManager(Common::uint64 initial_allocated_memory_region): 
@@ -22,7 +19,7 @@ namespace AST{
 
         template<typename Node>
         
-        inline NodeHandle create_node()
+        [[nodiscard]] NodeHandle create_node()
         {
             auto offset = allocator.allocate(sizeof(Node));
             auto node = NodeHandle(NodeHandleTag::Valid,offset);
@@ -32,7 +29,7 @@ namespace AST{
 
         template<typename Node>
         requires (std::derived_from<Node,BaseNode>)
-        inline Node& get_node_from_handle(NodeHandle node_handle)
+        [[nodiscard]] Node& get_node_from_handle(const NodeHandle node_handle)
         {
             Assert(
                 node_handle.node_tag == NodeHandleTag::Valid,
@@ -42,8 +39,8 @@ namespace AST{
         };
 
         template<typename Node>
-        requires (std::derived_from<Node,BaseNode>) 
-        inline Node* get_node_pointer_from_handle(NodeHandle node_handle)
+        requires (std::derived_from<Node,BaseNode>)
+        [[nodiscard]] Node* get_node_pointer_from_handle(const NodeHandle node_handle)
         {
             Assert(
                 node_handle.node_tag == NodeHandleTag::Valid,
@@ -52,12 +49,12 @@ namespace AST{
             return reinterpret_cast<Node*>(allocator.memory_region_start + node_handle.node_value);
         };
 
-        void set_linear_memory_offset(Common::uint64 new_offset)
+        void set_linear_memory_offset(const Common::uint64 new_offset)
         {
             allocator.memory_top = new_offset;
         };
 
-        Common::uint64 get_linear_memory_offset()
+        [[nodiscard]] Common::uint64 get_linear_memory_offset() const
         {
             return allocator.memory_top;
         };
